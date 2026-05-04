@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "673530425307",
+    "project_id": "care-track-system-app",
+    "storage_bucket": "care-track-system-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:673530425307:android:74b173b1c3b0cbde2fc1fe",
+        "android_client_info": {
+          "package_name": "com.example.child_and_student_care_and_tracking_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBgZlwIipDjcPnJqlehTX1MA4ZxF36JF8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
