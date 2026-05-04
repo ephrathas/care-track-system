@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
 
       //the ff setting lets the system choose(or we can force one)
       themeMode: ThemeMode.system,
-      home: Placeholder(),
+      home: RoleSelectionScreen(),
     );
   }
 }
