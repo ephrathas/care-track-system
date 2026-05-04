@@ -8,11 +8,11 @@ void main() async {
   //for ensuring flutetr engine is loaded before firebase starts
   WidgetsFlutterBinding.ensureInitialized();
 
-  //Initializes Firebase with the generated options
+  //Initializes Firebase with the generated options(Connect to Firebase using the auto-generated options)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   runApp(const MyApp());
 }
 
