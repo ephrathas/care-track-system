@@ -11,9 +11,12 @@ class RegisterScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            const TextField(decoration: InputDecoration(labelText: "Full Name")),
+            const TextField(
+                decoration: InputDecoration(labelText: "Full Name")),
             const TextField(decoration: InputDecoration(labelText: "Email")),
-            const TextField(decoration: InputDecoration(labelText: "Password", obscureText: true)),
+            const TextField(
+                decoration:
+                    InputDecoration(labelText: "Password", obscureText: true)),
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {},
