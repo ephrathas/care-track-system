@@ -35,6 +35,8 @@ class RoleSelectionScreen extends StatelessWidget {
         trailing: const Icon(Icons.arrow_forward_ios),
         onTap: () {
           // Task for later: Navigate to Register Screen with this role
+          // Navigate to Register Screen and pass the selected role
+          Navigator.pushNamed(context, '/register', arguments: title);
         },
       ),
     );
