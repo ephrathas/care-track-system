@@ -40,9 +40,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Text(role),
                     );
                   }).toList(),
-                  onChanged: (newValue) {
-                    // You will need to wrap this in setState() if using a StatefulWidget
-                    print("Selected role: $newValue");
+                  onChanged: (String? newValue) {
+                    // 3. Update the UI
+                    setState(() {
+                      _selectedRole = newValue!;
+                    });
                   },
                 ),
               ),
