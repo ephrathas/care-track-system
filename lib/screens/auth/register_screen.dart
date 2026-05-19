@@ -13,6 +13,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  void _showError(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.red,
+    ),
+  );
+}
+
   String _selectedRole = 'Parent';
   final List<String> _roles = ['Parent', 'Teacher', 'Child', 'Healthcare'];
 
@@ -90,6 +99,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: () {
                   // We will call Ephratha's logic here next
                   print("Signing up: ${_nameController.text}");
+                  // 1. Get the values from controllers
+  String name = _nameController.text.trim();
+  String email = _emailController.text.trim();
+  String password = _passwordController.text.trim();
+
+                    // 2. Run the checks (Validation)
+                  if (name.isEmpty || email.isEmpty || password.isEmpty) {
+                    _showError("Please fill in all fields");
+                  } else if (!email.contains('@') || !email.contains('.')) {
+                    _showError("Please enter a valid email address");
+                  } else if (password.length < 6) {
+                    _showError("Password must be at least 6 characters");
+                  } else {
+                    // ✅ VALIDATION PASSED
+                    print("Logic passed! Calling Firebase for: $email");
+                    // This is where we call Ephratha's code next
+                  }
+
                 },
                 child: const Text("Sign Up", style: TextStyle(fontSize: 18)),
               ),
