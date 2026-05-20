@@ -4,6 +4,7 @@ import 'package:child_and_student_care_and_tracking_app/screens/auth/register_sc
 import 'package:child_and_student_care_and_tracking_app/screens/auth/role_selection_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'core/constants/routes.dart';
 
 void main() async {
   //for ensuring flutetr engine is loaded before firebase starts
