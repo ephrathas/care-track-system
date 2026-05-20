@@ -1,3 +1,4 @@
+import 'package:child_and_student_care_and_tracking_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -21,15 +22,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-
   void _showError(String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      backgroundColor: Colors.red,
-    ),
-  );
-}
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
 
   String _selectedRole = 'Parent';
   final List<String> _roles = ['Parent', 'Teacher', 'Child', 'Healthcare'];
@@ -105,15 +105,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: () {
-                  // We will call Ephratha's logic here next
+                onPressed: () async {
                   print("Signing up: ${_nameController.text}");
-                  // 1. Get the values from controllers
-  String name = _nameController.text.trim();
-  String email = _emailController.text.trim();
-  String password = _passwordController.text.trim();
+                  String name = _nameController.text.trim();
+                  String email = _emailController.text.trim();
+                  String password = _passwordController.text.trim();
 
-                    // 2. Run the checks (Validation)
                   if (name.isEmpty || email.isEmpty || password.isEmpty) {
                     _showError("Please fill in all fields");
                   } else if (!email.contains('@') || !email.contains('.')) {
@@ -121,11 +118,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   } else if (password.length < 6) {
                     _showError("Password must be at least 6 characters");
                   } else {
-                    // ✅ VALIDATION PASSED
                     print("Logic passed! Calling Firebase for: $email");
-                    // This is where we call Ephratha's code next
-                  }
 
+                    // 1. Show a loading indicator (Optional but professional)
+
+                    // 2. Call the backend service
+                    final authService =
+                        AuthService(); // Ensure you import your AuthService file
+                    final user = await authService.signUp(
+                        email, password, name, _selectedRole);
+
+                    if (user != null) {
+                      // 🎉 Success!
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Registration Successful!'),
+                        backgroundColor: Colors.green,
+                      ));
+                      // Navigate back to Role Selection (or a Dashboard later)
+                      Navigator.pushReplacementNamed(context, '/');
+                    } else {
+                      // ❌ Failed (Email already exists, etc.)
+                      _showError("Registration failed. Email may already be in use. Please try again.");
+                    }
+                  }
                 },
                 child: const Text("Sign Up", style: TextStyle(fontSize: 18)),
               ),
