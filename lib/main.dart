@@ -34,13 +34,10 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
 
       //define the 'Home' page
-      initialRoute: '/',
+      initialRoute: AppRoutes.roleSelection,
 
       //define the 'Map' of routes
-      routes: {
-        '/': (context) => const RoleSelectionScreen(),
-        '/register': (context)=> const RegisterScreen()
-      },
+      routes: AppRoutes.routes,
 
     );
   }
