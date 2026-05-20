@@ -9,6 +9,8 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  bool _isLoading = false;
+
   // 1. Controllers to capture text
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
