@@ -138,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Navigator.pushReplacementNamed(context, '/');
                     } else {
                       // ❌ Failed (Email already exists, etc.)
-                      _showError("Registration failed. Email may already be in use. Please try again.");
+                      _showError("Registration failed. Please try again.");
                     }
                   }
                 },
