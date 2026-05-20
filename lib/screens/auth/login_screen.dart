@@ -70,5 +70,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  
+  void _navigateBasedOnRole(String role) {
+    if (role == 'Parent')
+      Navigator.pushReplacementNamed(context, '/parent_home');
+    else if (role == 'Teacher')
+      Navigator.pushReplacementNamed(context, '/teacher_home');
+    // Add others as you build dashboards
+  }
 }
