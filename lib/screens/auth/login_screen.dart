@@ -52,7 +52,23 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  
+  void _handleLogin() async {
+    setState(() => _isLoading = true);
+    final user = await AuthService()
+        .signIn(_emailController.text, _passwordController.text);
+
+    if (user != null) {
+      // 🚀 Here is where Phase 4 magic happens: Role-based navigation
+      final userData = await AuthService().getUserData(user.uid);
+      if (userData != null) {
+        _navigateBasedOnRole(userData.role);
+      }
+    } else {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Login Failed")));
+    }
+  }
 
   
 }
