@@ -107,43 +107,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: () async {
-                  print("Signing up: ${_nameController.text}");
-                  String name = _nameController.text.trim();
-                  String email = _emailController.text.trim();
-                  String password = _passwordController.text.trim();
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        // 🚀 Disable button while loading
+                        String name = _nameController.text.trim();
+                        String email = _emailController.text.trim();
+                        String password = _passwordController.text.trim();
 
-                  if (name.isEmpty || email.isEmpty || password.isEmpty) {
-                    _showError("Please fill in all fields");
-                  } else if (!email.contains('@') || !email.contains('.')) {
-                    _showError("Please enter a valid email address");
-                  } else if (password.length < 6) {
-                    _showError("Password must be at least 6 characters");
-                  } else {
-                    print("Logic passed! Calling Firebase for: $email");
+                        if (name.isEmpty || email.isEmpty || password.isEmpty) {
+                          _showError("Please fill in all fields");
+                        } else if (!email.contains('@') ||
+                            !email.contains('.')) {
+                          _showError("Please enter a valid email address");
+                        } else if (password.length < 6) {
+                          _showError("Password must be at least 6 characters");
+                        } else {
+                          setState(() => _isLoading = true); // 🚀 START LOADING
 
-                    // 1. Show a loading indicator (Optional but professional)
+                          final authService = AuthService();
+                          final user = await authService.signUp(
+                              email, password, name, _selectedRole);
 
-                    // 2. Call the backend service
-                    final authService =
-                        AuthService(); // Ensure you import your AuthService file
-                    final user = await authService.signUp(
-                        email, password, name, _selectedRole);
+                          if (user != null) {
+                            if (mounted) {
+                              // Best practice to check if screen is still open
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Registration Successful!'),
+                                      backgroundColor: Colors.green));
+                              Navigator.pushReplacementNamed(context, '/');
+                            }
+                          } else {
+                            setState(() =>
+                                _isLoading = false); // 🚀 STOP LOADING ON ERROR
+                            _showError(
+                                "Registration failed. Please try again.");
+                          }
+                        }
+                      },
 
-                    if (user != null) {
-                      // 🎉 Success!
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Registration Successful!'),
-                        backgroundColor: Colors.green,
-                      ));
-                      // Navigate back to Role Selection (or a Dashboard later)
-                      Navigator.pushReplacementNamed(context, '/');
-                    } else {
-                      // ❌ Failed (Email already exists, etc.)
-                      _showError("Registration failed. Please try again.");
-                    }
-                  }
-                },
                 child: _isLoading? const CircularProgressIndicator(color: Colors.white) : const Text("Sign Up", style: TextStyle(fontSize: 18)),
               ),
             ),
