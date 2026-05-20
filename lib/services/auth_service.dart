@@ -26,4 +26,31 @@ class AuthService {
       return null;
     }
   }
+
+  // 🔑 Sign in with Email and Password
+  Future<User?> signIn(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
+      return result.user;
+    } catch (e) {
+      print("Login error: $e");
+      return null;
+    }
+  }
+
+// 🧐 Get User Data (To check their Role)
+  Future<UserModel?> getUserData(String uid) async {
+    try {
+      DocumentSnapshot doc = await _db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+
 }
