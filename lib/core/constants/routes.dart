@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../screens/auth/role_selection_screen.dart';
+import '../../screens/auth/register_screen.dart';
+import '../../screens/auth/login_screen.dart'; // Ensure this exists
 
 class AppRoutes {
-  // Route Names
+  // Route Names (Constants)
   static const String roleSelection = '/';
   static const String login = '/login';
   static const String register = '/register';
 
-  // Map of routes
+  // 🗺️ The Unified Map of Routes
   static Map<String, WidgetBuilder> get routes => {
         roleSelection: (context) => const RoleSelectionScreen(),
-        // These will be added as the team pushes their screens them
+        register: (context) => const RegisterScreen(),
+        login: (context) => const LoginScreen(), // ✅ Correctly inside the map
       };
 
-  // Helper function to navigate
+  // Helper function for clean navigation
   static void push(BuildContext context, String route, {Object? arguments}) {
     Navigator.pushNamed(context, route, arguments: arguments);
   }
