@@ -1,3 +1,4 @@
+import 'package:child_and_student_care_and_tracking_app/core/constants/routes.dart';
 import 'package:child_and_student_care_and_tracking_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -159,6 +160,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: _isLoading? const CircularProgressIndicator(color: Colors.white) : const Text("Sign Up", style: TextStyle(fontSize: 18)),
               ),
             ),
+            TextButton(
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+              child: const Text("Already have an account? Login here"),
+            ),
+
           ],
         ),
       ),
