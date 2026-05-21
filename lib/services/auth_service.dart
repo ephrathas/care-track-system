@@ -7,7 +7,7 @@ class AuthService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Sign up with Email and Password
-  Future<User?> signUp(
+ Future<User?> signUp(
       String email, String password, String name, String role) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
@@ -15,15 +15,23 @@ class AuthService {
       User? user = result.user;
 
       if (user != null) {
-        // Save user to Firestore using your UserModel
         UserModel newUser =
             UserModel(uid: user.uid, email: email, fullName: name, role: role);
-        await _db.collection('users').doc(user.uid).set(newUser.toMap());
+
+        // ⏱️ Add a timeout. If Firestore is slow, it won't hang the app.
+        await _db
+            .collection('users')
+            .doc(user.uid)
+            .set(newUser.toMap())
+            .timeout(const Duration(seconds: 10));
       }
       return user;
+    } on FirebaseAuthException catch (e) {
+      // 🚀 Rethrow the specific Firebase error so the UI can show the right message
+      rethrow;
     } catch (e) {
       print("Sign up error: $e");
-      return null;
+      rethrow;
     }
   }
 
