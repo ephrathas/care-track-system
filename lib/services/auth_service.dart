@@ -59,17 +59,6 @@ class AuthService {
       return null;
     }
   }
-
-  // 🔑 Sign in function
-  Future<User?> signIn(String email, String password) async {
-    try {
-      UserCredential result = await _auth.signInWithEmailAndPassword(
-          email: email, password: password);
-      return result.user;
-    } catch (e) {
-      print(e);
-      return null;
-    }
-  }
+  
 
 }
