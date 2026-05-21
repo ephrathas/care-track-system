@@ -139,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             Text('Registration Successful!'),
                                         backgroundColor: Colors.green));
                                 // 🚀 SUCCESS: Move to the next page
-                                Navigator.pushReplacementNamed(context, '/');
+                                Navigator.pushReplacementNamed(context, '/parent_home');
                               }
                             }
                           } on FirebaseAuthException catch (e) {
