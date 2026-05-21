@@ -1,4 +1,5 @@
 import 'package:child_and_student_care_and_tracking_app/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -125,26 +126,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         } else {
                           setState(() => _isLoading = true); // 🚀 START LOADING
 
-                          final authService = AuthService();
-                          final user = await authService.signUp(
-                              email, password, name, _selectedRole);
+                          try {
+                            final authService = AuthService();
+                            final user = await authService.signUp(
+                                email, password, name, _selectedRole);
 
-                          if (user != null) {
-                            if (mounted) {
-                              // Best practice to check if screen is still open
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Registration Successful!'),
-                                      backgroundColor: Colors.green));
-                              Navigator.pushReplacementNamed(context, '/');
+                            if (user != null) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text('Registration Successful!'),
+                                        backgroundColor: Colors.green));
+                                // 🚀 SUCCESS: Move to the next page
+                                Navigator.pushReplacementNamed(context, '/');
+                              }
                             }
-                          } else {
-                            setState(() =>
-                                _isLoading = false); // 🚀 STOP LOADING ON ERROR
+                          } on FirebaseAuthException catch (e) {
+                            // 🛑 Catch specific Firebase errors (like email already in use)
+                            setState(() => _isLoading = false);
+                            _showError(e.message ?? "Authentication failed");
+                          } catch (e) {
+                            // 🛑 Catch any other unexpected errors
+                            setState(() => _isLoading = false);
                             _showError(
-                                "Registration failed. Please try again.");
+                                "An unexpected error occurred. Please try again.");
                           }
                         }
+
                       },
 
                 child: _isLoading? const CircularProgressIndicator(color: Colors.white) : const Text("Sign Up", style: TextStyle(fontSize: 18)),
