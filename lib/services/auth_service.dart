@@ -26,7 +26,7 @@ class AuthService {
             .timeout(const Duration(seconds: 10));
       }
       return user;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       // 🚀 Rethrow the specific Firebase error so the UI can show the right message
       rethrow;
     } catch (e) {
