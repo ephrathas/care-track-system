@@ -39,7 +39,7 @@ class AuthWrapper extends StatelessWidget {
               return const Scaffold(
                 body: Center(
                   child: Text(
-                    "Welcome Teacher! Dashboard.",
+                    "Welcome Teacher! Dashboard under construction.",
                     style: TextStyle(fontSize: 18),
                   ),
                 ),
