@@ -94,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.lock_rounded,
                       size: 48,
                       color: AppTheme.primaryBlue,
                     ),
