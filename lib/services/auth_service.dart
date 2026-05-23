@@ -35,7 +35,19 @@ class AuthService {
     }
   }
 
- 
+  // 🔑 Sign in with Email and Password
+  Future<User?> signIn(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
+      return result.user;
+    } on FirebaseAuthException {
+      rethrow;
+    } catch (e) {
+      print("Login error: $e");
+      rethrow;
+    }
+  }
 
 // 🧐 Get User Data (To check their Role)
   Future<UserModel?> getUserData(String uid) async {
