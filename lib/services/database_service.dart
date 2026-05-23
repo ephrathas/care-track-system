@@ -16,7 +16,15 @@ class DatabaseService {
   }
 
   // 👶 Function to save a child with a pre-generated ID (useful for photo uploads)
-  
+  Future<void> setChild(String childId, ChildModel child) async {
+    try {
+      await _db.collection('children').doc(childId).set(child.toMap()).timeout(const Duration(seconds: 10));
+      print("Child set successfully!");
+    } catch (e) {
+      print("Error setting child: $e");
+      rethrow;
+    }
+  }
 
   // 📝 Function to get all children for a specific parent
   Stream<List<ChildModel>> getChildrenByParent(String parentId) {
