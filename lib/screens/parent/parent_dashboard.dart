@@ -47,7 +47,7 @@ class ParentDashboard extends StatelessWidget {
               await Provider.of<AuthProvider>(context, listen: false).logout();
             },
           ),
-          const SizedBox(width: 8),
+          
         ],
       ),
       body: Column(
