@@ -32,6 +32,7 @@ class WelcomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Center(child: KidCareLogo()),
                 const SizedBox(height: 14),
                 const AuthIllustration(
                   assetPath: AuthAssets.welcomeHero,
