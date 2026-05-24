@@ -43,6 +43,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           content: Text(authProvider.errorMessage ?? 'Could not send reset email.'),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
         ),
       );
     }
