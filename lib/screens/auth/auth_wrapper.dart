@@ -4,7 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../parent/parent_dashboard.dart';
-import 'role_selection_screen.dart';
+import 'welcome_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -66,8 +66,7 @@ class AuthWrapper extends StatelessWidget {
           }
         }
 
-        // 🚪 No session found, show role selection onboarding
-        return const RoleSelectionScreen();
+        return const WelcomeScreen();
       },
     );
   }

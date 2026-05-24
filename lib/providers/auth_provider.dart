@@ -111,6 +111,28 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> sendPasswordReset(String email) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      if (e is FirebaseAuthException) {
+        _errorMessage = e.message ?? 'Could not send reset email';
+      } else {
+        _errorMessage = e.toString();
+      }
+      notifyListeners();
+      return false;
+    }
+  }
+
   // 🚪 Sign Out Action
   Future<void> logout() async {
     _isLoading = true;

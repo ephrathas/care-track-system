@@ -50,6 +50,10 @@ class AuthService {
   }
 
 // 🧐 Get User Data (To check their Role)
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
   Future<UserModel?> getUserData(String uid) async {
     try {
       DocumentSnapshot doc = await _db.collection('users').doc(uid).get().timeout(const Duration(seconds: 10));
