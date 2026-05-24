@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/auth/kidcare_logo.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
@@ -53,159 +54,321 @@ class RoleSelectionScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [const Color(0xFF1A2744), AppTheme.darkBackground]
+                : [AppTheme.authGradientTop, AppTheme.warmNeutral],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
-                // Premium Greeting Header
-                Center(
-                  child: Column(
-                    children: [
-                      // Friendly Visual Logo Holder
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue.withOpacity(0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.supervised_user_circle_rounded,
-                          size: 54,
-                          color: AppTheme.primaryBlue,
-                        ),
+                const KidCareLogo(),
+                const SizedBox(height: 14),
+                _WelcomeHero(isDark: isDark),
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppTheme.darkSurface : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
-                      const SizedBox(height: 20),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        "KinderCare Connect",
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        'Welcome to KidCare',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87,
-                              letterSpacing: -0.5,
+                              letterSpacing: -0.4,
                             ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Select your role to personalize your dashboard",
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
-                            ),
+                        'Choose your role and get personalized tools for learning, care, and progress tracking.',
+                        style: TextStyle(
+                          color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                          height: 1.5,
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 40),
-
-                // Beautiful interactive list
-                ...roles.map((role) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 20.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
-                        ],
+                      const SizedBox(height: 18),
+                      const _FeatureRow(
+                        icon: Icons.verified_user_rounded,
+                        text: 'Secure child profiles and records',
                       ),
-                      child: Material(
-                        color: isDark ? AppTheme.darkSurface : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
-                          onTap: () {
-                            // Smoothly navigate to registration screen with the role passed as argument
+                      const SizedBox(height: 10),
+                      const _FeatureRow(
+                        icon: Icons.insights_rounded,
+                        text: 'Daily updates and progress insights',
+                      ),
+                      const SizedBox(height: 10),
+                      const _FeatureRow(
+                        icon: Icons.groups_rounded,
+                        text: 'Parents, teachers, and healthcare in one app',
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () {
                             Navigator.pushNamed(
                               context,
                               AppRoutes.register,
-                              arguments: role['title'],
+                              arguments: 'Parent',
                             );
                           },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Row(
-                              children: [
-                                // Playful Icon Box with Gradient Background
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    gradient: role['gradient'],
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    role['icon'],
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                // Text Details
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        role['title'],
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: -0.2,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        role['subtitle'],
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          height: 1.4,
-                                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: isDark ? Colors.grey[600] : Colors.grey[400],
-                                  size: 24,
-                                ),
-                              ],
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            'Get Started',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: TextButton(
+                          onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                          child: const Text(
+                            'Already have an account? Sign In',
+                            style: TextStyle(
+                              color: AppTheme.primaryBlue,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }),
-
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.login);
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.primaryBlue,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                    child: const Text(
-                      "Already have an account? Sign In",
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Continue as',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[300] : const Color(0xFF374151),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                ...roles.map((role) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _RoleCard(
+                      role: role,
+                      isDark: isDark,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.register,
+                          arguments: role['title'],
+                        );
+                      },
+                    ),
+                  );
+                }),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WelcomeHero extends StatelessWidget {
+  final bool isDark;
+
+  const _WelcomeHero({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 170,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(top: 10, right: 26, child: _bubble(42, AppTheme.primaryBlue.withOpacity(0.16))),
+          Positioned(top: 24, left: 28, child: _bubble(24, AppTheme.softGreen.withOpacity(0.2))),
+          Positioned(bottom: 18, left: 24, child: _bubble(30, const Color(0xFFE2894A).withOpacity(0.22))),
+          Container(
+            width: 112,
+            height: 112,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.primaryBlue, AppTheme.primaryBlueDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryBlue.withOpacity(0.28),
+                  blurRadius: 22,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 52),
+          ),
+          Positioned(
+            bottom: 24,
+            right: 26,
+            child: _chip(
+              Icons.school_rounded,
+              isDark ? AppTheme.darkSurface : Colors.white,
+              AppTheme.softGreen,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bubble(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+
+  Widget _chip(IconData icon, Color background, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: background,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Icon(icon, color: color, size: 22),
+    );
+  }
+}
+
+class _FeatureRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _FeatureRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        Icon(icon, color: AppTheme.primaryBlue, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.grey[300] : const Color(0xFF374151),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RoleCard extends StatelessWidget {
+  final Map<String, dynamic> role;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _RoleCard({
+    required this.role,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isDark ? AppTheme.darkSurface : Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  gradient: role['gradient'],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(role['icon'], color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      role['title'],
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      role['subtitle'],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: isDark ? Colors.grey[500] : Colors.grey[400],
+              ),
+            ],
           ),
         ),
       ),
