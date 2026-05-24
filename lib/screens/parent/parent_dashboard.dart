@@ -2,12 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/child_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
-import '../../models/child_model.dart';
+import '../../widgets/dashboard/dashboard_section_header.dart';
+import '../../widgets/dashboard/dashboard_stat_card.dart';
 
-class ParentDashboard extends StatelessWidget {
+class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
+
+  @override
+  State<ParentDashboard> createState() => _ParentDashboardState();
+}
+
+class _ParentDashboardState extends State<ParentDashboard> {
+  int _navIndex = 0;
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _navIndex,
+        children: [
+          _ParentHomeTab(greeting: _greeting()),
+          const _MarketplaceTab(),
+          const _AlertsTab(),
+          const _ProfileTab(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _navIndex,
+        onDestinationSelected: (index) => setState(() => _navIndex = index),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront_rounded), label: 'Shop'),
+          NavigationDestination(icon: Icon(Icons.notifications_outlined), selectedIcon: Icon(Icons.notifications_rounded), label: 'Alerts'),
+          NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+}
+
+class _ParentHomeTab extends StatelessWidget {
+  final String greeting;
+
+  const _ParentHomeTab({required this.greeting});
 
   @override
   Widget build(BuildContext context) {
@@ -16,330 +63,502 @@ class ParentDashboard extends StatelessWidget {
     final user = authProvider.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Greeting time-of-day helper
-    String getGreeting() {
-      final hour = DateTime.now().hour;
-      if (hour < 12) return 'Good Morning';
-      if (hour < 17) return 'Good Afternoon';
-      return 'Good Evening';
-    }
-
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          "Dashboard",
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout_rounded, color: isDark ? Colors.white70 : Colors.black87),
-            tooltip: "Logout",
-            onPressed: () async {
-              // Stop listening to children first, then sign out
-              Provider.of<ChildProvider>(context, listen: false).stopListening();
-              await Provider.of<AuthProvider>(context, listen: false).logout();
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 🌸 Top Premium Header Greeting Card
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTheme.primaryBlue, Color(0xFF5A9FE6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryBlue.withOpacity(0.3),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                  )
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      getGreeting(),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      user?.fullName ?? "Parent",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.child_care_rounded, color: Colors.white, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            "${childProvider.children.length} Children Registered",
-                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // 👶 "My Children" Label Section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Text(
-              "My Children",
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
-                  ),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // 🌀 Loading state inside dynamic body
-          Expanded(
-            child: childProvider.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
-                    ),
-                  )
-                : childProvider.children.isEmpty
-                    ? _buildEmptyState(context, isDark)
-                    : _buildChildrenList(context, childProvider.children, isDark),
-          ),
-        ],
-      ),
+      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, AppRoutes.addChildScreen),
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        label: const Text("Add Child", style: TextStyle(fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.add_rounded),
+        label: const Text('Add Child', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+      body: SafeArea(
+        child: childProvider.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                ),
+              )
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(child: _buildGreetingCard(context, user?.fullName ?? 'Parent', childProvider.children.length)),
+                  SliverToBoxAdapter(child: _buildQuickStats(context)),
+                  SliverToBoxAdapter(child: _buildQuickActions(context)),
+                  const SliverToBoxAdapter(child: DashboardSectionHeader(title: 'My Children')),
+                  if (childProvider.children.isEmpty)
+                    SliverToBoxAdapter(child: _buildEmptyChildrenState(isDark))
+                  else
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => Padding(
+                          padding: EdgeInsets.fromLTRB(20, 0, 20, index == childProvider.children.length - 1 ? 0 : 12),
+                          child: _ChildProfileCard(child: childProvider.children[index], isDark: isDark),
+                        ),
+                        childCount: childProvider.children.length,
+                      ),
+                    ),
+                  SliverToBoxAdapter(child: _buildInsightCards(context, isDark)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              ),
       ),
     );
   }
 
-  // Visual Helper for Empty State
-  Widget _buildEmptyState(BuildContext context, bool isDark) {
+  Widget _buildGreetingCard(BuildContext context, String name, int childCount) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32.0),
-      child: Center(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppTheme.primaryBlue, AppTheme.primaryBlueDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withOpacity(0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withOpacity(0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.child_care_rounded,
-                size: 72,
-                color: AppTheme.primaryBlue,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              "No Children Added Yet",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
+            Text(greeting, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+            const SizedBox(height: 6),
             Text(
-              "Add your children profiles to track their growth, health logs, class schedules, and unlock immunization tracking.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                fontSize: 13,
-                height: 1.5,
+              name,
+              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$childCount ${childCount == 1 ? 'child' : 'children'} on your care plan',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
               ),
             ),
-            const SizedBox(height: 48), // Padding so FAB doesn't overlay too much
           ],
         ),
       ),
     );
   }
 
-  // Children Profile Card List
-  Widget _buildChildrenList(BuildContext context, List<ChildModel> children, bool isDark) {
-    return ListView.builder(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 90.0),
-      itemCount: children.length,
-      itemBuilder: (context, index) {
-        final child = children[index];
-        return _buildChildCard(context, child, isDark);
-      },
+  Widget _buildQuickStats(BuildContext context) {
+    return SizedBox(
+      height: 132,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: const [
+          DashboardStatCard(
+            icon: Icons.school_rounded,
+            label: 'Attendance',
+            value: '96%',
+            subtitle: 'This week',
+            accent: AppTheme.primaryBlue,
+          ),
+          SizedBox(width: 12),
+          DashboardStatCard(
+            icon: Icons.favorite_rounded,
+            label: 'Health',
+            value: 'Good',
+            subtitle: 'All checkups current',
+            accent: AppTheme.softGreen,
+          ),
+          SizedBox(width: 12),
+          DashboardStatCard(
+            icon: Icons.receipt_long_rounded,
+            label: 'Billing',
+            value: '\$120',
+            subtitle: 'Due in 5 days',
+            accent: Color(0xFFE2894A),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildChildCard(BuildContext context, ChildModel child, bool isDark) {
+  Widget _buildQuickActions(BuildContext context) {
+    final actions = [
+      ('Marketplace', Icons.storefront_rounded, AppTheme.primaryBlue),
+      ('Reports', Icons.bar_chart_rounded, AppTheme.softGreen),
+      ('Messages', Icons.chat_bubble_rounded, const Color(0xFF9013FE)),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      child: Row(
+        children: actions
+            .map(
+              (item) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Material(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InkWell(
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${item.$1} coming soon')),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Column(
+                          children: [
+                            Icon(item.$2, color: item.$3, size: 22),
+                            const SizedBox(height: 6),
+                            Text(
+                              item.$1,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildEmptyChildrenState(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.child_care_rounded, size: 56, color: AppTheme.primaryBlue),
+          ),
+          const SizedBox(height: 16),
+          const Text('No children added yet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          Text(
+            'Add a child profile to track academics, health records, and marketplace recommendations.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary, height: 1.45),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightCards(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Column(
+        children: [
+          _InsightPanel(
+            isDark: isDark,
+            title: 'Academic Progress',
+            subtitle: 'Math improved 12% this month. Reading homework due Friday.',
+            icon: Icons.auto_graph_rounded,
+            color: AppTheme.primaryBlue,
+          ),
+          const SizedBox(height: 12),
+          _InsightPanel(
+            isDark: isDark,
+            title: 'Health Updates',
+            subtitle: 'Flu vaccination scheduled for May 28. No new alerts today.',
+            icon: Icons.health_and_safety_rounded,
+            color: AppTheme.softGreen,
+          ),
+          const SizedBox(height: 12),
+          _InsightPanel(
+            isDark: isDark,
+            title: 'Billing & Payments',
+            subtitle: 'Tuition invoice #1042 is ready. Pay securely in one tap.',
+            icon: Icons.payments_rounded,
+            color: const Color(0xFFE2894A),
+            actionLabel: 'View invoice',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChildProfileCard extends StatelessWidget {
+  final ChildModel child;
+  final bool isDark;
+
+  const _ChildProfileCard({required this.child, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
     final vaxCount = child.vaccinations.length;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 18.0),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          )
+        border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 32,
+            backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+            backgroundImage: child.imageUrl.isNotEmpty ? NetworkImage(child.imageUrl) : null,
+            child: child.imageUrl.isEmpty
+                ? Text(
+                    child.name.isNotEmpty ? child.name[0].toUpperCase() : 'C',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(child.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Text(
+                  '${child.age} years old • Grade 3',
+                  style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  vaxCount > 0 ? '$vaxCount vaccines logged' : 'Vaccination profile incomplete',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: vaxCount > 0 ? AppTheme.softGreen : Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.chevron_right_rounded, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Opening timeline for ${child.name}')),
+              );
+            },
+          ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            // 📸 Circular Image / Avatar
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.2), width: 2),
-                color: AppTheme.primaryBlue.withOpacity(0.08),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(36),
-                child: child.imageUrl.isNotEmpty
-                    ? Image.network(
-                        child.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(child.name),
-                      )
-                    : _buildInitialsAvatar(child.name),
-              ),
+    );
+  }
+}
+
+class _InsightPanel extends StatelessWidget {
+  final bool isDark;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String? actionLabel;
+
+  const _InsightPanel({
+    required this.isDark,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    this.actionLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 18),
-            // 📝 Text Data Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    child.name,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.2,
-                    ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.4,
+                    color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "${child.age} Years Old",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
+                ),
+                if (actionLabel != null) ...[
                   const SizedBox(height: 8),
-                  // Vaccination status chip
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: vaxCount > 0
-                          ? AppTheme.softGreen.withOpacity(0.12)
-                          : Colors.grey.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          vaxCount > 0 ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-                          size: 14,
-                          color: vaxCount > 0 ? AppTheme.softGreen : Colors.grey,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          vaxCount > 0 ? "$vaxCount Vaccines Logged" : "No Vaccines Logged",
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: vaxCount > 0 ? AppTheme.softGreen : Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
+                  Text(
+                    actionLabel!,
+                    style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                  ),
                 ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketplaceTab extends StatelessWidget {
+  const _MarketplaceTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return _PlaceholderTab(
+      icon: Icons.storefront_rounded,
+      title: 'KidCare Marketplace',
+      message: 'Browse books, uniforms, school supplies, and healthcare essentials tailored to your children.',
+      actionLabel: 'Explore categories',
+    );
+  }
+}
+
+class _AlertsTab extends StatelessWidget {
+  const _AlertsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final alerts = [
+      ('Attendance marked present', 'Emma checked in at 8:12 AM', Icons.check_circle_rounded, AppTheme.softGreen),
+      ('Homework reminder', 'Math worksheet due tomorrow', Icons.menu_book_rounded, AppTheme.primaryBlue),
+      ('Health notice', 'Annual checkup scheduled next week', Icons.medical_information_rounded, const Color(0xFFE2894A)),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Notifications'), centerTitle: false),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(20),
+        itemCount: alerts.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          final alert = alerts[index];
+          return ListTile(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: const BorderSide(color: AppTheme.inputBorder),
+            ),
+            leading: Icon(alert.$3, color: alert.$4),
+            title: Text(alert.$1, style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text(alert.$2),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ProfileTab extends StatelessWidget {
+  const _ProfileTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context).currentUser;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile')),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 40,
+              backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+              child: Text(
+                (user?.fullName.isNotEmpty == true) ? user!.fullName[0].toUpperCase() : 'P',
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
               ),
             ),
-            const SizedBox(width: 8),
-            // Chevron arrow button
-            IconButton(
-              icon: Icon(Icons.arrow_forward_ios_rounded, color: isDark ? Colors.white30 : Colors.black26, size: 18),
-              onPressed: () {
-                // Future Detail page hook
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Viewing detail timeline for ${child.name}")),
-                );
-              },
+            const SizedBox(height: 12),
+            Text(user?.fullName ?? 'Parent', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(user?.email ?? '', style: const TextStyle(color: AppTheme.textSecondary)),
+            const SizedBox(height: 8),
+            Chip(label: Text(user?.role ?? 'Parent')),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  Provider.of<ChildProvider>(context, listen: false).stopListening();
+                  await Provider.of<AuthProvider>(context, listen: false).logout();
+                },
+                icon: const Icon(Icons.logout_rounded),
+                label: const Text('Sign Out'),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  // Fallback Initials Avatar
-  Widget _buildInitialsAvatar(String name) {
-    final initials = name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'C';
-    return Center(
-      child: Text(
-        initials,
-        style: const TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.primaryBlue,
+class _PlaceholderTab extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+  final String actionLabel;
+
+  const _PlaceholderTab({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 64, color: AppTheme.primaryBlue),
+              const SizedBox(height: 16),
+              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textSecondary, height: 1.5)),
+              const SizedBox(height: 20),
+              FilledButton(onPressed: () {}, child: Text(actionLabel)),
+            ],
+          ),
         ),
       ),
     );
