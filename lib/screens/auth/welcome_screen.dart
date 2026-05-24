@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/auth_assets.dart';
-import '../../core/constants/routes.dart';
+import '../../core/constants/role_options.dart';
+import '../../core/navigation/auth_navigation.dart';
 import '../../core/theme/app_theme.dart';
-import '../../widgets/auth/auth_feature_card.dart';
 import '../../widgets/auth/auth_illustration.dart';
 import '../../widgets/auth/kidcare_logo.dart';
+import '../../widgets/auth/role_option_tile.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -29,16 +30,16 @@ class WelcomeScreen extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const KidCareLogo(),
+                const Center(child: KidCareLogo()),
                 const SizedBox(height: 14),
                 const AuthIllustration(
                   assetPath: AuthAssets.welcomeHero,
-                  height: 170,
+                  height: 160,
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: isDark ? AppTheme.darkSurface : Colors.white,
@@ -69,60 +70,34 @@ class WelcomeScreen extends StatelessWidget {
                           height: 1.5,
                         ),
                       ),
-                      const SizedBox(height: 18),
-                      const AuthFeatureCard(
-                        imageAsset: AuthAssets.featureParent,
-                        title: 'For Parents',
-                        subtitle: "Track your child's progress and health",
+                      const SizedBox(height: 20),
+                      Text(
+                        'Continue as',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.grey[300] : const Color(0xFF374151),
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                      const AuthFeatureCard(
-                        imageAsset: AuthAssets.featureTeacher,
-                        title: 'For Teachers',
-                        subtitle: 'Manage students and academics easily',
-                      ),
-                      const SizedBox(height: 10),
-                      const AuthFeatureCard(
-                        imageAsset: AuthAssets.featureHealthcare,
-                        title: 'For Healthcare',
-                        subtitle: 'Monitor health records and vaccinations',
-                      ),
-                      const SizedBox(height: 10),
-                      const AuthFeatureCard(
-                        imageAsset: AuthAssets.featureSecure,
-                        title: 'Safe & Secure',
-                        subtitle: 'Your data is protected and private',
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, AppRoutes.welcomeRoleSelection),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryBlue,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: const Text(
-                            'Get Started',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      const SizedBox(height: 12),
+                      ...RoleOptions.all.map(
+                        (option) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: RoleOptionTile(
+                            option: option,
+                            onTap: () => AuthNavigation.openRegister(context, option.role),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
                       Center(
                         child: TextButton(
-                          onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                          onPressed: () => AuthNavigation.openLogin(context),
                           child: const Text(
-                            'Sign In',
+                            'Already have an account? Sign In',
                             style: TextStyle(
                               color: AppTheme.primaryBlue,
                               fontWeight: FontWeight.w600,
-                              fontSize: 15,
                             ),
                           ),
                         ),

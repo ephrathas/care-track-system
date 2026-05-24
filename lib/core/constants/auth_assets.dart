@@ -12,6 +12,7 @@ class AuthAssets {
   static const String featureParent = '$_base/feature_parent.svg';
   static const String featureTeacher = '$_base/feature_teacher.svg';
   static const String featureHealthcare = '$_base/feature_healthcare.svg';
+  static const String featureChild = '$_base/feature_child.svg';
   static const String featureSecure = '$_base/feature_secure.svg';
 
   static String registerHeroForRole(String role) {

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/role_options.dart';
-import '../../core/constants/routes.dart';
+import '../../core/navigation/auth_navigation.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/auth/kidcare_logo.dart';
+import '../../widgets/auth/role_option_tile.dart';
 
+/// Optional dedicated role picker (same four roles as welcome).
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
 
@@ -67,7 +69,7 @@ class RoleSelectionScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
                 child: Text(
-                  'Select how you will use KidCare. You can personalize your dashboard after sign up.',
+                  'Select one of the four roles to create your KidCare account.',
                   style: TextStyle(
                     color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
                     height: 1.45,
@@ -80,19 +82,12 @@ class RoleSelectionScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: RoleOptions.all.length,
                   itemBuilder: (context, index) {
-                    final role = RoleOptions.all[index];
+                    final option = RoleOptions.all[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _RoleCard(
-                        role: role,
-                        isDark: isDark,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.register,
-                            arguments: role['title'],
-                          );
-                        },
+                      child: RoleOptionTile(
+                        option: option,
+                        onTap: () => AuthNavigation.openRegister(context, option.role),
                       ),
                     );
                   },
@@ -102,7 +97,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Center(
                   child: TextButton(
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                    onPressed: () => AuthNavigation.openLogin(context),
                     child: const Text(
                       'Already have an account? Sign In',
                       style: TextStyle(
@@ -112,80 +107,6 @@ class RoleSelectionScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleCard extends StatelessWidget {
-  final Map<String, dynamic> role;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _RoleCard({
-    required this.role,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: isDark ? AppTheme.darkSurface : Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: role['gradient'] as LinearGradient,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(role['icon'] as IconData, color: Colors.white, size: 26),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      role['title'] as String,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      role['subtitle'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.35,
-                        color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: isDark ? Colors.grey[500] : Colors.grey[400],
               ),
             ],
           ),

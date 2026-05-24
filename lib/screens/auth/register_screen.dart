@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/routes.dart';
 import '../../core/constants/role_styles.dart';
+import '../../core/constants/user_role.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth/auth_text_field.dart';
@@ -20,19 +21,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  String _selectedRole = 'Parent';
+  String _selectedRole = UserRole.parent.label;
   bool _obscurePassword = true;
   bool _isInit = true;
+  bool _roleLocked = false;
 
-  final List<String> _roles = ['Parent', 'Teacher', 'Child', 'Healthcare'];
+  List<String> get _roles => UserRole.labels;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_isInit) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args != null && args is String && _roles.contains(args)) {
-        _selectedRole = args;
+      final parsed = args is String ? UserRole.fromLabel(args) : null;
+      if (parsed != null) {
+        _selectedRole = parsed.label;
+        _roleLocked = true;
       }
       _isInit = false;
     }
@@ -243,39 +247,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            value: _selectedRole,
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(
-                                RoleStyles.forRole(_selectedRole)['icon'] as IconData,
-                                color: roleAccent,
-                                size: 22,
-                              ),
-                              filled: true,
-                              fillColor: isDark ? AppTheme.darkBackground : const Color(0xFFF9FAFB),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(
-                                  color: isDark ? Colors.grey[700]! : const Color(0xFFE5E7EB),
+                          if (_roleLocked)
+                            InputDecorator(
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  RoleStyles.forRole(_selectedRole)['icon'] as IconData,
+                                  color: roleAccent,
+                                  size: 22,
+                                ),
+                                filled: true,
+                                fillColor: isDark ? AppTheme.darkBackground : const Color(0xFFF9FAFB),
+                                contentPadding:
+                                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: isDark ? Colors.grey[700]! : const Color(0xFFE5E7EB),
+                                  ),
                                 ),
                               ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(
-                                  color: isDark ? Colors.grey[700]! : const Color(0xFFE5E7EB),
+                              child: Text(
+                                _selectedRole,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            )
+                          else
+                            DropdownButtonFormField<String>(
+                              value: _selectedRole,
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  RoleStyles.forRole(_selectedRole)['icon'] as IconData,
+                                  color: roleAccent,
+                                  size: 22,
+                                ),
+                                filled: true,
+                                fillColor: isDark ? AppTheme.darkBackground : const Color(0xFFF9FAFB),
+                                contentPadding:
+                                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: isDark ? Colors.grey[700]! : const Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: isDark ? Colors.grey[700]! : const Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(color: roleAccent, width: 1.5),
                                 ),
                               ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                borderSide: BorderSide(color: roleAccent, width: 1.5),
-                              ),
+                              items: _roles
+                                  .map((role) => DropdownMenuItem(value: role, child: Text(role)))
+                                  .toList(),
+                              onChanged: (val) => setState(() => _selectedRole = val!),
                             ),
-                            items: _roles
-                                .map((role) => DropdownMenuItem(value: role, child: Text(role)))
-                                .toList(),
-                            onChanged: (val) => setState(() => _selectedRole = val!),
-                          ),
                           const SizedBox(height: 32),
 
                           SizedBox(
