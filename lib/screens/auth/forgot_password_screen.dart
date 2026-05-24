@@ -25,29 +25,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _handleReset() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.sendPasswordReset(
-      _emailController.text.trim(),
-    );
-
-    if (!mounted) return;
-
-    if (success) {
-      setState(() => _emailSent = true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Could not send reset email.'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-        ),
-      );
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
