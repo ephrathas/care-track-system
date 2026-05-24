@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../core/constants/auth_assets.dart';
 import '../../core/theme/app_theme.dart';
 
 class KidCareLogo extends StatelessWidget {
@@ -20,21 +22,10 @@ class KidCareLogo extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: EdgeInsets.all(iconSize * 0.35),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF4A90E2), Color(0xFF357ABD)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.favorite_rounded,
-            color: Colors.white,
-            size: iconSize,
-          ),
+        SvgPicture.asset(
+          AuthAssets.logoMark,
+          width: iconSize * 1.75,
+          height: iconSize * 1.75,
         ),
         const SizedBox(width: 10),
         Text(

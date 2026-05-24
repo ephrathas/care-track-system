@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" fill="none">
+  <circle cx="120" cy="98" r="58" fill="url(#tGrad)"/>
+  <rect x="86" y="74" width="68" height="48" rx="10" fill="#fff"/>
+  <path d="M98 92h44M98 106h30" stroke="#7ED321" stroke-width="5" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="tGrad" x1="70" y1="40" x2="170" y2="156" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7ED321"/>
+      <stop offset="1" stop-color="#5CA216"/>
+    </linearGradient>
+  </defs>
+</svg>

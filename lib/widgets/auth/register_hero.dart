@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/auth_assets.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
+import 'auth_illustration.dart';
 import 'kidcare_logo.dart';
 
 class RegisterHeroIllustration extends StatelessWidget {
@@ -14,31 +16,32 @@ class RegisterHeroIllustration extends StatelessWidget {
     final accent = roleStyle['accent'] as Color;
     final icon = roleStyle['icon'] as IconData;
 
+    return AuthIllustration(
+      assetPath: AuthAssets.registerHeroForRole(role),
+      height: 180,
+      fallback: _IconHeroFallback(accent: accent, icon: icon),
+    );
+  }
+}
+
+class _IconHeroFallback extends StatelessWidget {
+  final Color accent;
+  final IconData icon;
+
+  const _IconHeroFallback({required this.accent, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
       height: 180,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Positioned(
-            top: 10,
-            right: 30,
-            child: _bubble(48, accent.withOpacity(0.15)),
-          ),
-          Positioned(
-            bottom: 20,
-            left: 24,
-            child: _bubble(32, AppTheme.softGreen.withOpacity(0.2)),
-          ),
-          Positioned(
-            top: 40,
-            left: 50,
-            child: _bubble(20, const Color(0xFFE2894A).withOpacity(0.2)),
-          ),
           Container(
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              gradient: roleStyle['gradient'] as LinearGradient,
+              color: accent,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -50,39 +53,8 @@ class RegisterHeroIllustration extends StatelessWidget {
             ),
             child: Icon(icon, color: Colors.white, size: 56),
           ),
-          Positioned(
-            bottom: 30,
-            right: 40,
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.verified_user_rounded,
-                color: AppTheme.softGreen,
-                size: 24,
-              ),
-            ),
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _bubble(double size, Color color) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
@@ -142,7 +114,7 @@ class RegisterHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       children: [

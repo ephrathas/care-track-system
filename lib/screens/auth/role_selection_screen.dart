@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/auth_assets.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/auth/auth_feature_card.dart';
+import '../../widgets/auth/auth_illustration.dart';
 import '../../widgets/auth/kidcare_logo.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
@@ -72,7 +75,10 @@ class RoleSelectionScreen extends StatelessWidget {
               children: [
                 const KidCareLogo(),
                 const SizedBox(height: 14),
-                _WelcomeHero(isDark: isDark),
+                AuthIllustration(
+                  assetPath: AuthAssets.welcomeHero,
+                  height: 170,
+                ),
                 const SizedBox(height: 20),
                 Container(
                   width: double.infinity,
@@ -100,26 +106,35 @@ class RoleSelectionScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Choose your role and get personalized tools for learning, care, and progress tracking.',
+                        'Your complete child management and educational marketplace platform.',
                         style: TextStyle(
                           color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
                           height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 18),
-                      const _FeatureRow(
-                        icon: Icons.verified_user_rounded,
-                        text: 'Secure child profiles and records',
+                      const AuthFeatureCard(
+                        imageAsset: AuthAssets.featureParent,
+                        title: 'For Parents',
+                        subtitle: "Track your child's progress and health",
                       ),
                       const SizedBox(height: 10),
-                      const _FeatureRow(
-                        icon: Icons.insights_rounded,
-                        text: 'Daily updates and progress insights',
+                      const AuthFeatureCard(
+                        imageAsset: AuthAssets.featureTeacher,
+                        title: 'For Teachers',
+                        subtitle: 'Manage students and academics easily',
                       ),
                       const SizedBox(height: 10),
-                      const _FeatureRow(
-                        icon: Icons.groups_rounded,
-                        text: 'Parents, teachers, and healthcare in one app',
+                      const AuthFeatureCard(
+                        imageAsset: AuthAssets.featureHealthcare,
+                        title: 'For Healthcare',
+                        subtitle: 'Monitor health records and vaccinations',
+                      ),
+                      const SizedBox(height: 10),
+                      const AuthFeatureCard(
+                        imageAsset: AuthAssets.featureSecure,
+                        title: 'Safe & Secure',
+                        subtitle: 'Your data is protected and private',
                       ),
                       const SizedBox(height: 24),
                       SizedBox(
@@ -190,6 +205,8 @@ class RoleSelectionScreen extends StatelessWidget {
                     ),
                   );
                 }),
+                const SizedBox(height: 8),
+                _TrustBadges(isDark: isDark),
               ],
             ),
           ),
@@ -199,105 +216,46 @@ class RoleSelectionScreen extends StatelessWidget {
   }
 }
 
-class _WelcomeHero extends StatelessWidget {
+class _TrustBadges extends StatelessWidget {
   final bool isDark;
 
-  const _WelcomeHero({required this.isDark});
+  const _TrustBadges({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 170,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(top: 10, right: 26, child: _bubble(42, AppTheme.primaryBlue.withOpacity(0.16))),
-          Positioned(top: 24, left: 28, child: _bubble(24, AppTheme.softGreen.withOpacity(0.2))),
-          Positioned(bottom: 18, left: 24, child: _bubble(30, const Color(0xFFE2894A).withOpacity(0.22))),
-          Container(
-            width: 112,
-            height: 112,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.primaryBlue, AppTheme.primaryBlueDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBlue.withOpacity(0.28),
-                  blurRadius: 22,
-                  offset: const Offset(0, 8),
+    const badges = [
+      'Secure & Private',
+      'HIPAA Compliant',
+      'Mobile Friendly',
+      'Award Winning',
+    ];
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: badges
+          .map(
+            (label) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.darkSurface : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
                 ),
-              ],
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
+                ),
+              ),
             ),
-            child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 52),
-          ),
-          Positioned(
-            bottom: 24,
-            right: 26,
-            child: _chip(
-              Icons.school_rounded,
-              isDark ? AppTheme.darkSurface : Colors.white,
-              AppTheme.softGreen,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _bubble(double size, Color color) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Widget _chip(IconData icon, Color background, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: background,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Icon(icon, color: color, size: 22),
-    );
-  }
-}
-
-class _FeatureRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _FeatureRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      children: [
-        Icon(icon, color: AppTheme.primaryBlue, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.grey[300] : const Color(0xFF374151),
-            ),
-          ),
-        ),
-      ],
+          )
+          .toList(),
     );
   }
 }

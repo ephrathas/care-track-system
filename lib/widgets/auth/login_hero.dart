@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/auth_assets.dart';
 import '../../core/theme/app_theme.dart';
+import 'auth_illustration.dart';
 import 'kidcare_logo.dart';
 
 class LoginHeroIllustration extends StatelessWidget {
@@ -7,27 +9,13 @@ class LoginHeroIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return AuthIllustration(
+      assetPath: AuthAssets.loginHero,
       height: 180,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            top: 10,
-            right: 30,
-            child: _bubble(48, AppTheme.primaryBlue.withOpacity(0.15)),
-          ),
-          Positioned(
-            bottom: 20,
-            left: 24,
-            child: _bubble(32, AppTheme.softGreen.withOpacity(0.2)),
-          ),
-          Positioned(
-            top: 40,
-            left: 50,
-            child: _bubble(20, const Color(0xFFE2894A).withOpacity(0.2)),
-          ),
-          Container(
+      fallback: SizedBox(
+        height: 180,
+        child: Center(
+          child: Container(
             width: 120,
             height: 120,
             decoration: BoxDecoration(
@@ -47,44 +35,8 @@ class LoginHeroIllustration extends StatelessWidget {
             ),
             child: const Icon(Icons.lock_rounded, color: Colors.white, size: 52),
           ),
-          Positioned(
-            bottom: 28,
-            right: 36,
-            child: _featureChip(Icons.family_restroom_rounded, AppTheme.primaryBlue),
-          ),
-          Positioned(
-            top: 32,
-            left: 36,
-            child: _featureChip(Icons.school_rounded, AppTheme.softGreen),
-          ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _bubble(double size, Color color) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Widget _featureChip(IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Icon(icon, color: color, size: 22),
     );
   }
 }

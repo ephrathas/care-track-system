@@ -1,0 +1,29 @@
+/// Auth screen illustration and feature image paths.
+class AuthAssets {
+  AuthAssets._();
+
+  static const String _base = 'assets/images/auth';
+
+  static const String welcomeHero = '$_base/welcome_hero.svg';
+  static const String loginHero = '$_base/login_hero.svg';
+  static const String registerHero = '$_base/register_hero.svg';
+  static const String logoMark = '$_base/logo_mark.svg';
+
+  static const String featureParent = '$_base/feature_parent.svg';
+  static const String featureTeacher = '$_base/feature_teacher.svg';
+  static const String featureHealthcare = '$_base/feature_healthcare.svg';
+  static const String featureSecure = '$_base/feature_secure.svg';
+
+  static String registerHeroForRole(String role) {
+    switch (role) {
+      case 'Teacher':
+        return '$_base/register_teacher.svg';
+      case 'Healthcare':
+        return '$_base/register_healthcare.svg';
+      case 'Child':
+        return '$_base/register_child.svg';
+      default:
+        return registerHero;
+    }
+  }
+}
