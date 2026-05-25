@@ -1,0 +1,313 @@
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+
+class MarketplaceTab extends StatefulWidget {
+  const MarketplaceTab({super.key});
+
+  @override
+  State<MarketplaceTab> createState() => _MarketplaceTabState();
+}
+
+class _MarketplaceTabState extends State<MarketplaceTab> {
+  int _selectedCategory = 0;
+
+  static const _categories = [
+    _Category('All', Icons.apps_rounded, AppTheme.primaryBlue),
+    _Category('Books', Icons.menu_book_rounded, Color(0xFF6366F1)),
+    _Category('Uniforms', Icons.checkroom_rounded, Color(0xFF7ED321)),
+    _Category('Supplies', Icons.backpack_rounded, Color(0xFFF59E0B)),
+    _Category('Health', Icons.medical_services_rounded, Color(0xFFE2894A)),
+  ];
+
+  static const _products = [
+    _Product('School Starter Kit', 'Grades K–2 essentials bundle', '\$24.99', 'Books', 4.8),
+    _Product('Classic Polo Uniform', 'Breathable cotton, navy blue', '\$18.50', 'Uniforms', 4.6),
+    _Product('STEM Activity Pack', 'Hands-on science for ages 8–12', '\$32.00', 'Supplies', 4.9),
+    _Product('Vitamin Gummies', 'Pediatrician-recommended daily', '\$14.25', 'Health', 4.7),
+    _Product('Reading Adventure Set', '5 illustrated storybooks', '\$29.99', 'Books', 4.5),
+    _Product('Art & Craft Box', 'Crayons, paper, safe scissors', '\$19.99', 'Supplies', 4.4),
+  ];
+
+  List<_Product> get _filteredProducts {
+    if (_selectedCategory == 0) return _products;
+    final label = _categories[_selectedCategory].label;
+    return _products.where((p) => p.category == label).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _buildHeader(context, isDark)),
+            SliverToBoxAdapter(child: _buildPromoBanner(isDark)),
+            SliverToBoxAdapter(child: _buildCategoryRow(isDark)),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.72,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final product = _filteredProducts[index];
+                    return _ProductCard(product: product, isDark: isDark);
+                  },
+                  childCount: _filteredProducts.length,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'KidCare Shop',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.4,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Books, uniforms, supplies & health essentials',
+            style: TextStyle(
+              color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Search products...',
+              prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary),
+              filled: true,
+              fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromoBanner(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppTheme.primaryBlue, AppTheme.primaryBlueDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryBlue.withOpacity(0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Back to School',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.95),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Up to 20% off curated bundles for your children.',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.85),
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.local_offer_rounded, color: Colors.white, size: 36),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryRow(bool isDark) {
+    return SizedBox(
+      height: 52,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+        itemCount: _categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final category = _categories[index];
+          final selected = _selectedCategory == index;
+
+          return FilterChip(
+            selected: selected,
+            showCheckmark: false,
+            label: Text(category.label),
+            avatar: Icon(
+              category.icon,
+              size: 18,
+              color: selected ? Colors.white : category.color,
+            ),
+            selectedColor: category.color,
+            backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+            labelStyle: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: selected ? Colors.white : (isDark ? Colors.grey[300] : AppTheme.textPrimary),
+            ),
+            side: BorderSide(
+              color: selected ? category.color : (isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+            ),
+            onSelected: (_) => setState(() => _selectedCategory = index),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _Category {
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _Category(this.label, this.icon, this.color);
+}
+
+class _Product {
+  final String name;
+  final String subtitle;
+  final String price;
+  final String category;
+  final double rating;
+
+  const _Product(this.name, this.subtitle, this.price, this.category, this.rating);
+}
+
+class _ProductCard extends StatelessWidget {
+  final _Product product;
+  final bool isDark;
+
+  const _ProductCard({required this.product, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isDark ? AppTheme.darkSurface : Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${product.name} — checkout coming soon')),
+          );
+        },
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.shopping_bag_outlined, color: AppTheme.primaryBlue, size: 36),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  product.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.3,
+                    color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                  ),
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    Text(
+                      product.price,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
+                    Text(
+                      product.rating.toStringAsFixed(1),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

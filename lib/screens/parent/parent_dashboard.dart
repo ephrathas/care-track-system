@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
 import '../../widgets/dashboard/dashboard_stat_card.dart';
+import 'marketplace_tab.dart';
 
 class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
@@ -32,7 +33,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
         index: _navIndex,
         children: [
           _ParentHomeTab(greeting: _greeting()),
-          const _MarketplaceTab(),
+          const MarketplaceTab(),
           const _AlertsTab(),
           const _ProfileTab(),
         ],
@@ -434,20 +435,6 @@ class _InsightPanel extends StatelessWidget {
   }
 }
 
-class _MarketplaceTab extends StatelessWidget {
-  const _MarketplaceTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return _PlaceholderTab(
-      icon: Icons.storefront_rounded,
-      title: 'KidCare Marketplace',
-      message: 'Browse books, uniforms, school supplies, and healthcare essentials tailored to your children.',
-      actionLabel: 'Explore categories',
-    );
-  }
-}
-
 class _AlertsTab extends StatelessWidget {
   const _AlertsTab();
 
@@ -521,44 +508,6 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String message;
-  final String actionLabel;
-
-  const _PlaceholderTab({
-    required this.icon,
-    required this.title,
-    required this.message,
-    required this.actionLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 64, color: AppTheme.primaryBlue),
-              const SizedBox(height: 16),
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textSecondary, height: 1.5)),
-              const SizedBox(height: 20),
-              FilledButton(onPressed: () {}, child: Text(actionLabel)),
-            ],
-          ),
         ),
       ),
     );
