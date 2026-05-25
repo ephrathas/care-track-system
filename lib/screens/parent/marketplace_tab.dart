@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/marketplace_catalog.dart';
+import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/product_model.dart';
 
 class MarketplaceTab extends StatefulWidget {
   const MarketplaceTab({super.key});
@@ -10,33 +13,32 @@ class MarketplaceTab extends StatefulWidget {
 
 class _MarketplaceTabState extends State<MarketplaceTab> {
   int _selectedCategory = 0;
+  String _searchQuery = '';
 
-  static const _categories = [
-    _Category('All', Icons.apps_rounded, AppTheme.primaryBlue),
-    _Category('Books', Icons.menu_book_rounded, Color(0xFF6366F1)),
-    _Category('Uniforms', Icons.checkroom_rounded, Color(0xFF7ED321)),
-    _Category('Supplies', Icons.backpack_rounded, Color(0xFFF59E0B)),
-    _Category('Health', Icons.medical_services_rounded, Color(0xFFE2894A)),
-  ];
-
-  static const _products = [
-    _Product('School Starter Kit', 'Grades K–2 essentials bundle', '\$24.99', 'Books', 4.8),
-    _Product('Classic Polo Uniform', 'Breathable cotton, navy blue', '\$18.50', 'Uniforms', 4.6),
-    _Product('STEM Activity Pack', 'Hands-on science for ages 8–12', '\$32.00', 'Supplies', 4.9),
-    _Product('Vitamin Gummies', 'Pediatrician-recommended daily', '\$14.25', 'Health', 4.7),
-    _Product('Reading Adventure Set', '5 illustrated storybooks', '\$29.99', 'Books', 4.5),
-    _Product('Art & Craft Box', 'Crayons, paper, safe scissors', '\$19.99', 'Supplies', 4.4),
-  ];
-
-  List<_Product> get _filteredProducts {
-    if (_selectedCategory == 0) return _products;
-    final label = _categories[_selectedCategory].label;
-    return _products.where((p) => p.category == label).toList();
+  List<ProductModel> get _filteredProducts {
+    var list = MarketplaceCatalog.products;
+    if (_selectedCategory > 0) {
+      final label = MarketplaceCatalog.categories[_selectedCategory].label;
+      list = list.where((p) => p.category == label).toList();
+    }
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list
+          .where(
+            (p) =>
+                p.name.toLowerCase().contains(q) ||
+                p.subtitle.toLowerCase().contains(q) ||
+                p.category.toLowerCase().contains(q),
+          )
+          .toList();
+    }
+    return list;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final products = _filteredProducts;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
@@ -47,24 +49,32 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
             SliverToBoxAdapter(child: _buildHeader(context, isDark)),
             SliverToBoxAdapter(child: _buildPromoBanner(isDark)),
             SliverToBoxAdapter(child: _buildCategoryRow(isDark)),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.72,
+            if (products.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    'No products match your search.',
+                    style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                  ),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final product = _filteredProducts[index];
-                    return _ProductCard(product: product, isDark: isDark);
-                  },
-                  childCount: _filteredProducts.length,
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.72,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _ProductCard(product: products[index], isDark: isDark),
+                    childCount: products.length,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -94,6 +104,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           ),
           const SizedBox(height: 16),
           TextField(
+            onChanged: (value) => setState(() => _searchQuery = value.trim()),
             decoration: InputDecoration(
               hintText: 'Search products...',
               prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary),
@@ -173,10 +184,10 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-        itemCount: _categories.length,
+        itemCount: MarketplaceCatalog.categories.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final category = _categories[index];
+          final category = MarketplaceCatalog.categories[index];
           final selected = _selectedCategory == index;
 
           return FilterChip(
@@ -206,42 +217,22 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
   }
 }
 
-class _Category {
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  const _Category(this.label, this.icon, this.color);
-}
-
-class _Product {
-  final String name;
-  final String subtitle;
-  final String price;
-  final String category;
-  final double rating;
-
-  const _Product(this.name, this.subtitle, this.price, this.category, this.rating);
-}
-
 class _ProductCard extends StatelessWidget {
-  final _Product product;
+  final ProductModel product;
   final bool isDark;
 
   const _ProductCard({required this.product, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final accent = MarketplaceCatalog.accentForCategory(product.category);
+
     return Material(
       color: isDark ? AppTheme.darkSurface : Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${product.name} — checkout coming soon')),
-          );
-        },
+        onTap: () => AppRoutes.push(context, AppRoutes.productDetail, arguments: product),
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
@@ -256,10 +247,10 @@ class _ProductCard extends StatelessWidget {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withOpacity(0.08),
+                      color: accent.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.shopping_bag_outlined, color: AppTheme.primaryBlue, size: 36),
+                    child: Icon(Icons.shopping_bag_outlined, color: accent, size: 36),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -284,7 +275,7 @@ class _ProductCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      product.price,
+                      product.priceDisplay,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryBlue,
