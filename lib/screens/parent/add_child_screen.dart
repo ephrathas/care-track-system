@@ -39,7 +39,29 @@ class _AddChildScreenState extends State<AddChildScreen> {
     super.dispose();
   }
 
+  // Pick Image Action
+  Future<void> _selectPhoto() async {
+    try {
+      final XFile? selected = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 80,
+      );
 
+      if (selected != null) {
+        final bytes = await selected.readAsBytes();
+        setState(() {
+          _pickedFile = selected;
+          _imageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to pick image: $e"), backgroundColor: Colors.redAccent),
+      );
+    }
+  }
 
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
