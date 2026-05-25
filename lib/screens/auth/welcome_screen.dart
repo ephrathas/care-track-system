@@ -130,7 +130,14 @@ class _TrustBadges extends StatelessWidget {
 
   const _TrustBadges({required this.isDark});
 
- 
+  @override
+  Widget build(BuildContext context) {
+    const badges = [
+      'Secure & Private',
+      'HIPAA Compliant',
+      'Mobile Friendly',
+      'Award Winning',
+    ];
 
     return Wrap(
       alignment: WrapAlignment.center,
