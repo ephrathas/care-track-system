@@ -130,14 +130,7 @@ class _TrustBadges extends StatelessWidget {
 
   const _TrustBadges({required this.isDark});
 
-  @override
-  Widget build(BuildContext context) {
-    const badges = [
-      'Secure & Private',
-      'HIPAA Compliant',
-      'Mobile Friendly',
-      'Award Winning',
-    ];
+ 
 
     return Wrap(
       alignment: WrapAlignment.center,
@@ -145,27 +138,21 @@ class _TrustBadges extends StatelessWidget {
       runSpacing: 8,
       children: badges
           .map(
-            (label) => ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 160),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
-                  ),
+            (label) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.darkSurface : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
                 ),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
-                  ),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
                 ),
               ),
             ),
