@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
+import 'marketplace_assets.dart';
 import '../theme/app_theme.dart';
 
 class MarketplaceCategory {
@@ -32,6 +33,8 @@ class MarketplaceCatalog {
       price: 24.99,
       category: 'Books',
       rating: 4.8,
+      imageAsset: MarketplaceAssets.schoolStarterKit,
+      imageUrl: MarketplaceAssets.urlSchoolStarterKit,
     ),
     ProductModel(
       id: 'classic-polo-uniform',
@@ -42,6 +45,8 @@ class MarketplaceCatalog {
       price: 18.50,
       category: 'Uniforms',
       rating: 4.6,
+      imageAsset: MarketplaceAssets.classicPoloUniform,
+      imageUrl: MarketplaceAssets.urlClassicPoloUniform,
     ),
     ProductModel(
       id: 'stem-activity-pack',
@@ -52,6 +57,8 @@ class MarketplaceCatalog {
       price: 32.00,
       category: 'Supplies',
       rating: 4.9,
+      imageAsset: MarketplaceAssets.stemActivityPack,
+      imageUrl: MarketplaceAssets.urlStemActivityPack,
     ),
     ProductModel(
       id: 'vitamin-gummies',
@@ -62,6 +69,8 @@ class MarketplaceCatalog {
       price: 14.25,
       category: 'Health',
       rating: 4.7,
+      imageAsset: MarketplaceAssets.vitaminGummies,
+      imageUrl: MarketplaceAssets.urlVitaminGummies,
     ),
     ProductModel(
       id: 'reading-adventure-set',
@@ -72,6 +81,8 @@ class MarketplaceCatalog {
       price: 29.99,
       category: 'Books',
       rating: 4.5,
+      imageAsset: MarketplaceAssets.readingAdventureSet,
+      imageUrl: MarketplaceAssets.urlReadingAdventureSet,
     ),
     ProductModel(
       id: 'art-craft-box',
@@ -82,6 +93,8 @@ class MarketplaceCatalog {
       price: 19.99,
       category: 'Supplies',
       rating: 4.4,
+      imageAsset: MarketplaceAssets.artCraftBox,
+      imageUrl: MarketplaceAssets.urlArtCraftBox,
     ),
   ];
 

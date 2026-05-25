@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/marketplace_catalog.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/product_model.dart';
+import '../../widgets/marketplace/product_image.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -42,20 +43,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      Chip(
-                        label: Text(product.category),
-                        backgroundColor: _accent.withOpacity(0.12),
-                        labelStyle: TextStyle(
-                          color: _accent,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                      Flexible(
+                        child: Chip(
+                          label: Text(
+                            product.category,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          backgroundColor: _accent.withOpacity(0.12),
+                          labelStyle: TextStyle(
+                            color: _accent,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                          side: BorderSide.none,
+                          padding: EdgeInsets.zero,
                         ),
-                        side: BorderSide.none,
-                        padding: EdgeInsets.zero,
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
-                      const SizedBox(width: 4),
                       Text(
                         product.rating.toStringAsFixed(1),
                         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -104,15 +109,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildImageHero(bool isDark) {
-    return Container(
-      height: 220,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: _accent.withOpacity(isDark ? 0.15 : 0.1),
+    return AspectRatio(
+      aspectRatio: 16 / 10,
+      child: ProductImage(
+        assetPath: product.imageAsset,
+        networkUrl: product.imageUrl,
+        accent: _accent,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+        fit: BoxFit.cover,
       ),
-      child: Icon(Icons.shopping_bag_rounded, size: 72, color: _accent.withOpacity(0.85)),
     );
   }
 
@@ -161,29 +166,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         top: false,
         child: Row(
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Total',
-                  style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
-                ),
-                Text(
-                  '\$${total.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
-                ),
-              ],
+            Flexible(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Total',
+                    style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '\$${total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
+            const SizedBox(width: 12),
+            Flexible(
+              flex: 3,
               child: FilledButton.icon(
                 onPressed: _addToCart,
-                icon: const Icon(Icons.add_shopping_cart_rounded),
+                icon: const Icon(Icons.add_shopping_cart_rounded, size: 20),
                 label: const Text('Add to Cart'),
                 style: FilledButton.styleFrom(
                   backgroundColor: _accent,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
                 ),
               ),
             ),

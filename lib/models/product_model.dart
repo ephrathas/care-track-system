@@ -6,6 +6,8 @@ class ProductModel {
   final double price;
   final String category;
   final double rating;
+  final String imageAsset;
+  final String? imageUrl;
 
   const ProductModel({
     required this.id,
@@ -15,6 +17,8 @@ class ProductModel {
     required this.price,
     required this.category,
     required this.rating,
+    required this.imageAsset,
+    this.imageUrl,
   });
 
   String get priceDisplay => '\$${price.toStringAsFixed(2)}';
@@ -28,6 +32,8 @@ class ProductModel {
       price: (map['price'] is num) ? (map['price'] as num).toDouble() : 0,
       category: map['category'] ?? 'Supplies',
       rating: (map['rating'] is num) ? (map['rating'] as num).toDouble() : 0,
+      imageAsset: map['imageAsset'] ?? '',
+      imageUrl: map['imageUrl'] as String?,
     );
   }
 
@@ -39,6 +45,8 @@ class ProductModel {
       'price': price,
       'category': category,
       'rating': rating,
+      'imageAsset': imageAsset,
+      if (imageUrl != null) 'imageUrl': imageUrl,
     };
   }
 }

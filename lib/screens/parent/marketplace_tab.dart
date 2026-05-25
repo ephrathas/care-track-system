@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/marketplace_assets.dart';
 import '../../core/constants/marketplace_catalog.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/product_model.dart';
+import '../../widgets/marketplace/product_image.dart';
 
 class MarketplaceTab extends StatefulWidget {
   const MarketplaceTab({super.key});
@@ -67,7 +69,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 0.72,
+                    childAspectRatio: 0.78,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _ProductCard(product: products[index], isDark: isDark),
@@ -128,51 +130,67 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
   Widget _buildPromoBanner(bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.primaryBlue, AppTheme.primaryBlueDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.25),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Back to School',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.95),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Up to 20% off curated bundles for your children.',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 12,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          height: 120,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ProductImage(
+                assetPath: MarketplaceAssets.promoBackToSchool,
+                networkUrl: MarketplaceAssets.urlPromoBackToSchool,
+                fit: BoxFit.cover,
               ),
-            ),
-            const Icon(Icons.local_offer_rounded, color: Colors.white, size: 36),
-          ],
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withOpacity(0.85),
+                      AppTheme.primaryBlueDark.withOpacity(0.75),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Back to School',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.95),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Up to 20% off curated bundles.',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.local_offer_rounded, color: Colors.white, size: 36),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -180,7 +198,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
 
   Widget _buildCategoryRow(bool isDark) {
     return SizedBox(
-      height: 52,
+      height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -193,10 +211,12 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           return FilterChip(
             selected: selected,
             showCheckmark: false,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
             label: Text(category.label),
             avatar: Icon(
               category.icon,
-              size: 18,
+              size: 16,
               color: selected ? Colors.white : category.color,
             ),
             selectedColor: category.color,
@@ -239,51 +259,54 @@ class _ProductCard extends StatelessWidget {
             border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: accent.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.shopping_bag_outlined, color: accent, size: 36),
+                AspectRatio(
+                  aspectRatio: 1.15,
+                  child: ProductImage(
+                    assetPath: product.imageAsset,
+                    networkUrl: product.imageUrl,
+                    accent: accent,
+                    borderRadius: BorderRadius.circular(12),
+                    fit: BoxFit.cover,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   product.name,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   product.subtitle,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11,
-                    height: 1.3,
                     color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    Text(
-                      product.priceDisplay,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryBlue,
-                        fontSize: 14,
+                    Flexible(
+                      child: Text(
+                        product.priceDisplay,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryBlue,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
-                    const Spacer(),
-                    const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.star_rounded, size: 13, color: Color(0xFFF59E0B)),
                     Text(
                       product.rating.toStringAsFixed(1),
                       style: TextStyle(
