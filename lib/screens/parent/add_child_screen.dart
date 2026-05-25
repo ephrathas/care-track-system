@@ -99,17 +99,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
     );
   }
 
-  Future<void> _submitChildForm() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final childProvider = Provider.of<ChildProvider>(context, listen: false);
-
-    final parentId = authProvider.currentUser?.uid;
-    if (parentId == null) {
-      _showErrorSnackbar("Session expired. Please log in again.");
-      return;
-    }
+  
 
     final String name = _nameController.text.trim();
     final int age = int.parse(_ageController.text.trim());
