@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/user_role.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
@@ -13,7 +14,6 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
-        // 🌀 Show smooth loading screen while checking session
         if (authProvider.isLoading) {
           return const Scaffold(
             body: Center(
@@ -24,51 +24,85 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // 🛡️ User is Authenticated, route based on role
         if (authProvider.isAuthenticated) {
           final user = authProvider.currentUser;
           if (user != null) {
-            // Auto start child stream if user is a Parent
-            if (user.role == 'Parent') {
+            final role = UserRole.fromLabel(user.role);
+
+            if (role == UserRole.parent) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 Provider.of<ChildProvider>(context, listen: false)
                     .startListeningToChildren(user.uid);
               });
               return const ParentDashboard();
-            } else if (user.role == 'Teacher') {
-              return const Scaffold(
-                body: Center(
-                  child: Text(
-                    "Welcome Teacher! Dashboard under construction.",
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-              );
-            } else if (user.role == 'Healthcare') {
-              return const Scaffold(
-                body: Center(
-                  child: Text(
-                    "Welcome Doctor! Dashboard under construction.",
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-              );
-            } else if (user.role == 'Child') {
-              return const Scaffold(
-                body: Center(
-                  child: Text(
-                    "Welcome Child! Dashboard under construction.",
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-              );
             }
+
+            return _RolePlaceholderDashboard(
+              title: switch (role) {
+                UserRole.teacher => 'Teacher Dashboard',
+                UserRole.healthcare => 'Healthcare Dashboard',
+                UserRole.child => 'Child Dashboard',
+                _ => 'Dashboard',
+              },
+              message: switch (role) {
+                UserRole.teacher =>
+                  'Class attendance, grades, and parent messaging are coming soon.',
+                UserRole.healthcare =>
+                  'Medical records, vaccinations, and appointments are coming soon.',
+                UserRole.child =>
+                  'Assignments, schedules, and rewards are coming soon.',
+                _ => 'This role dashboard is under construction.',
+              },
+            );
           }
         }
 
-        // 🚪 No session found, show role selection onboarding
-        return const RoleSelectionScreen();
+        return const WelcomeScreen();
       },
+    );
+  }
+}
+
+class _RolePlaceholderDashboard extends StatelessWidget {
+  final String title;
+  final String message;
+
+  const _RolePlaceholderDashboard({
+    required this.title,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            onPressed: () => Provider.of<AuthProvider>(context, listen: false).logout(),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.construction_rounded, size: 56, color: AppTheme.primaryBlue),
+              const SizedBox(height: 16),
+              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppTheme.textSecondary, height: 1.5),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
