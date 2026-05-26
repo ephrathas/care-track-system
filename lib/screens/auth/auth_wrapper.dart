@@ -4,7 +4,9 @@ import '../../core/constants/user_role.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
+import '../child/child_dashboard.dart';
 import '../parent/parent_dashboard.dart';
+import '../teacher/teacher_dashboard.dart';
 import 'welcome_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -37,20 +39,22 @@ class AuthWrapper extends StatelessWidget {
               return const ParentDashboard();
             }
 
+            if (role == UserRole.teacher) {
+              return const TeacherDashboard();
+            }
+
+            if (role == UserRole.child) {
+              return const ChildDashboard();
+            }
+
             return _RolePlaceholderDashboard(
               title: switch (role) {
-                UserRole.teacher => 'Teacher Dashboard',
                 UserRole.healthcare => 'Healthcare Dashboard',
-                UserRole.child => 'Child Dashboard',
                 _ => 'Dashboard',
               },
               message: switch (role) {
-                UserRole.teacher =>
-                  'Class attendance, grades, and parent messaging are coming soon.',
                 UserRole.healthcare =>
                   'Medical records, vaccinations, and appointments are coming soon.',
-                UserRole.child =>
-                  'Assignments, schedules, and rewards are coming soon.',
                 _ => 'This role dashboard is under construction.',
               },
             );
