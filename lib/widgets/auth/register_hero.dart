@@ -16,9 +16,9 @@ class RegisterHeroIllustration extends StatelessWidget {
     final accent = roleStyle['accent'] as Color;
     final icon = roleStyle['icon'] as IconData;
 
-    return AuthIllustration(
+    return AuthIllustration.hero(
       assetPath: AuthAssets.registerHeroForRole(role),
-      height: 180,
+      height: 160,
       fallback: _IconHeroFallback(accent: accent, icon: icon),
     );
   }
@@ -144,7 +144,10 @@ class RegisterHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        RegisterHeroIllustration(role: role),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: RegisterHeroIllustration(role: role),
+        ),
       ],
     );
   }

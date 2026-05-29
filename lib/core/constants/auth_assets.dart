@@ -1,4 +1,7 @@
+import 'image_sources.dart';
+
 /// Auth screen illustration and feature image paths.
+/// Bundled JPEG (same base name as SVG) is preferred at runtime; SVG is fallback.
 class AuthAssets {
   AuthAssets._();
 
@@ -14,6 +17,38 @@ class AuthAssets {
   static const String featureHealthcare = '$_base/feature_healthcare.svg';
   static const String featureChild = '$_base/feature_child.svg';
   static const String featureSecure = '$_base/feature_secure.svg';
+
+  static String jpegPath(String svgAssetPath) =>
+      svgAssetPath.replaceAll('.svg', '.jpg');
+
+  static String? networkUrlFor(String svgAssetPath) {
+    switch (svgAssetPath) {
+      case welcomeHero:
+        return ImageSources.welcomeHero;
+      case loginHero:
+        return ImageSources.loginHero;
+      case registerHero:
+        return ImageSources.registerHero;
+      case '$_base/register_teacher.svg':
+        return ImageSources.registerTeacher;
+      case '$_base/register_healthcare.svg':
+        return ImageSources.registerHealthcare;
+      case '$_base/register_child.svg':
+        return ImageSources.registerChild;
+      case featureParent:
+        return ImageSources.featureParent;
+      case featureTeacher:
+        return ImageSources.featureTeacher;
+      case featureHealthcare:
+        return ImageSources.featureHealthcare;
+      case featureChild:
+        return ImageSources.featureChild;
+      case featureSecure:
+        return ImageSources.featureSecure;
+      default:
+        return null;
+    }
+  }
 
   static String registerHeroForRole(String role) {
     switch (role) {

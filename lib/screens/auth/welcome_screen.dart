@@ -34,9 +34,9 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 const Center(child: KidCareLogo()),
                 const SizedBox(height: 14),
-                const AuthIllustration(
+                AuthIllustration.hero(
                   assetPath: AuthAssets.welcomeHero,
-                  height: 160,
+                  height: 200,
                 ),
                 const SizedBox(height: 20),
                 Container(

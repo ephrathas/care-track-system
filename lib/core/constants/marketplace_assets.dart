@@ -1,4 +1,6 @@
-/// Product imagery — bundled SVG + optional JPEG (see scripts/download_product_images.ps1).
+import 'image_sources.dart';
+
+/// Product imagery — bundled SVG + optional JPEG (see tool/download_assets.dart).
 class MarketplaceAssets {
   MarketplaceAssets._();
 
@@ -13,21 +15,13 @@ class MarketplaceAssets {
   static const String readingAdventureSet = '$_base/reading_adventure_set.svg';
   static const String artCraftBox = '$_base/art_craft_box.svg';
 
-  /// Unsplash (free) — used when bundled JPEG is not present yet.
-  static const String urlSchoolStarterKit =
-      'https://images.unsplash.com/photo-1588072432836-e345f2c79d54?w=480&q=80';
-  static const String urlClassicPoloUniform =
-      'https://images.unsplash.com/photo-1519238263530-7522f504fee8?w=480&q=80';
-  static const String urlStemActivityPack =
-      'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=480&q=80';
-  static const String urlVitaminGummies =
-      'https://images.unsplash.com/photo-1550572017-edd226bffa55?w=480&q=80';
-  static const String urlReadingAdventureSet =
-      'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=480&q=80';
-  static const String urlArtCraftBox =
-      'https://images.unsplash.com/photo-1513364776144-60967b33f800?w=480&q=80';
-  static const String urlPromoBackToSchool =
-      'https://images.unsplash.com/photo-1503676260728-1c00da280a02?w=720&q=80';
+  static const String urlSchoolStarterKit = ImageSources.schoolStarterKit;
+  static const String urlClassicPoloUniform = ImageSources.classicPoloUniform;
+  static const String urlStemActivityPack = ImageSources.stemActivityPack;
+  static const String urlVitaminGummies = ImageSources.vitaminGummies;
+  static const String urlReadingAdventureSet = ImageSources.readingAdventureSet;
+  static const String urlArtCraftBox = ImageSources.artCraftBox;
+  static const String urlPromoBackToSchool = ImageSources.promoBackToSchool;
 
   static String jpegPath(String svgAssetPath) =>
       svgAssetPath.replaceAll('.svg', '.jpg');

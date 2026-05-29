@@ -96,7 +96,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ],
                 ),
               ),
-              const AuthIllustration(assetPath: AuthAssets.loginHero, height: 140),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: AuthIllustration.hero(
+                  assetPath: AuthAssets.loginHero,
+                  height: 140,
+                ),
+              ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),

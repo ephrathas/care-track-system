@@ -37,25 +37,19 @@ class RoleOptionTile extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: AuthIllustration(
-                    assetPath: option.featureAsset,
-                    height: 52,
+                AuthIllustration.thumbnail(
+                  assetPath: option.featureAsset,
+                  fallback: Container(
                     width: 52,
-                    fit: BoxFit.cover,
-                    fallback: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: style['gradient'] as LinearGradient,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        style['icon'] as IconData,
-                        color: Colors.white,
-                        size: 26,
-                      ),
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: style['gradient'] as LinearGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      style['icon'] as IconData,
+                      color: Colors.white,
+                      size: 26,
                     ),
                   ),
                 ),

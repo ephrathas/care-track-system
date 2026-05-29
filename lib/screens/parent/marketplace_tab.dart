@@ -69,7 +69,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 0.78,
+                    childAspectRatio: 0.72,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _ProductCard(product: products[index], isDark: isDark),

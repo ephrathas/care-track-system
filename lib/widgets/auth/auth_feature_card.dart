@@ -29,14 +29,8 @@ class AuthFeatureCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AuthIllustration(
-              assetPath: imageAsset,
-              height: 52,
-              width: 52,
-              fit: BoxFit.cover,
-            ),
+          AuthIllustration.thumbnail(
+            assetPath: imageAsset,
           ),
           const SizedBox(width: 12),
           Expanded(

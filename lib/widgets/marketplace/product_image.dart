@@ -27,8 +27,9 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = ClipRRect(
+    return ClipRRect(
       borderRadius: borderRadius,
+      clipBehavior: Clip.antiAlias,
       child: SizedBox(
         height: height,
         width: width,
@@ -41,9 +42,6 @@ class ProductImage extends StatelessWidget {
         ),
       ),
     );
-
-    if (height == null && width == null) return child;
-    return child;
   }
 
   Widget _buildNetworkOrSvg() {

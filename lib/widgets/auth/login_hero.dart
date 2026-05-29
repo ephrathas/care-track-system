@@ -9,11 +9,11 @@ class LoginHeroIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AuthIllustration(
+    return AuthIllustration.hero(
       assetPath: AuthAssets.loginHero,
-      height: 180,
+      height: 160,
       fallback: SizedBox(
-        height: 180,
+        height: 160,
         child: Center(
           child: Container(
             width: 120,
@@ -78,7 +78,10 @@ class LoginHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        const LoginHeroIllustration(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: const LoginHeroIllustration(),
+        ),
       ],
     );
   }
