@@ -46,16 +46,6 @@ A cross-platform Flutter application that helps **parents** and **teachers** man
 
 ---
 
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Flutter (Dart) |
-| Backend | Firebase (Auth + Firestore + Storage) |
-| State Management | Provider |
-| Fonts | Google Fonts (Poppins) |
-| Platform | Android, iOS, Web |
-
 ### Dependencies
 
 ```yaml
@@ -111,53 +101,6 @@ lib/
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Flutter SDK `>=3.5.0`
-- Dart SDK `>=3.5.0`
-- Firebase project with Auth + Firestore + Storage enabled
-- Android Studio or VS Code with Flutter extension
-
-### Installation
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/your-username/care-track-system.git
-cd care-track-system
-
-# 2. Install dependencies
-flutter pub get
-
-# 3. Run the app
-flutter run
-```
-
-### Firebase Setup
-
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Email/Password** authentication
-3. Enable **Cloud Firestore** database
-4. Enable **Firebase Storage**
-5. Download `google-services.json` → place in `android/app/`
-6. Download `GoogleService-Info.plist` → place in `ios/Runner/`
-7. Run `flutterfire configure` to regenerate `firebase_options.dart`
-
-> ⚠️ **Note:** The `google-services.json` and `firebase_options.dart` in this repo are for development only. Replace them with your own Firebase config before deploying.
-
----
-
-## 🌿 Branching Strategy
-
-| Branch | Purpose |
-|---|---|
-| `main` | Stable, reviewed code |
-| `feature/parent-dashboard-ui` | Current UI redesign work |
-| `feature/teacher-dashboard` | Upcoming teacher screens |
-| `feature/attendance-tracking` | Attendance module |
-| `feature/health-records` | Health records module |
-
 ### How to push your branch
 
 ```bash
@@ -195,16 +138,3 @@ Then open a **Pull Request** into `main` on GitHub.
 - [ ] Reports & Billing screens
 
 ---
-
-## 👥 Team
-
-| Role | Name |
-|---|---|
-| Project Lead | _(your name)_ |
-| Flutter Developer | _(your name)_ |
-
----
-
-## 📄 License
-
-This project is for educational purposes as part of a university/college project.
