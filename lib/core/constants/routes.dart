@@ -1,5 +1,7 @@
+import 'package:child_and_student_care_and_tracking_app/models/product_model.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/add_child_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/parent_dashboard.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/parent/product_detail_screen.dart';
 import 'package:flutter/material.dart';
 import '../../screens/auth/auth_wrapper.dart';
 import '../../screens/auth/forgot_password_screen.dart';
@@ -16,6 +18,7 @@ class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String parentHome = '/parent_home';
   static const String addChildScreen = '/add_child';
+  static const String productDetail = '/product_detail';
 
   // 🗺️ The Unified Map of Routes
   static Map<String, WidgetBuilder> get routes => {
@@ -25,7 +28,16 @@ class AppRoutes {
         login: (context) => const LoginScreen(),
         forgotPassword: (context) => const ForgotPasswordScreen(),
         parentHome: (context) => const ParentDashboard(),
-        addChildScreen: (context)=> const AddChildScreen()
+        addChildScreen: (context) => const AddChildScreen(),
+        productDetail: (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is! ProductModel) {
+            return const Scaffold(
+              body: Center(child: Text('Product not found')),
+            );
+          }
+          return ProductDetailScreen(product: args);
+        },
       };
 
   // Helper function for clean navigation

@@ -71,6 +71,8 @@ class RoleOptionTile extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         option.subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12,
                           height: 1.35,

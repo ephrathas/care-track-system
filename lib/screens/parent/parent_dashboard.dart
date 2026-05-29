@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
 import '../../widgets/dashboard/dashboard_stat_card.dart';
+import 'marketplace_tab.dart';
 
 class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
@@ -32,7 +33,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
         index: _navIndex,
         children: [
           _ParentHomeTab(greeting: _greeting()),
-          const _MarketplaceTab(),
+          const MarketplaceTab(),
           const _AlertsTab(),
           const _ProfileTab(),
         ],
@@ -41,10 +42,22 @@ class _ParentDashboardState extends State<ParentDashboard> {
         selectedIndex: _navIndex,
         onDestinationSelected: (index) => setState(() => _navIndex = index),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront_rounded), label: 'Shop'),
-          NavigationDestination(icon: Icon(Icons.notifications_outlined), selectedIcon: Icon(Icons.notifications_rounded), label: 'Alerts'),
-          NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
+          NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Home'),
+          NavigationDestination(
+              icon: Icon(Icons.storefront_outlined),
+              selectedIcon: Icon(Icons.storefront_rounded),
+              label: 'Shop'),
+          NavigationDestination(
+              icon: Icon(Icons.notifications_outlined),
+              selectedIcon: Icon(Icons.notifications_rounded),
+              label: 'Alerts'),
+          NavigationDestination(
+              icon: Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(Icons.person_rounded),
+              label: 'Profile'),
         ],
       ),
     );
@@ -70,35 +83,51 @@ class _ParentHomeTab extends StatelessWidget {
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Child', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: const Text('Add Child',
+            style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: childProvider.isLoading
             ? const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
                 ),
               )
             : CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(child: _buildGreetingCard(context, user?.fullName ?? 'Parent', childProvider.children.length)),
+                  SliverToBoxAdapter(
+                      child: _buildGreetingCard(
+                          context,
+                          user?.fullName ?? 'Parent',
+                          childProvider.children.length)),
                   SliverToBoxAdapter(child: _buildQuickStats(context)),
                   SliverToBoxAdapter(child: _buildQuickActions(context)),
-                  const SliverToBoxAdapter(child: DashboardSectionHeader(title: 'My Children')),
+                  const SliverToBoxAdapter(
+                      child: DashboardSectionHeader(title: 'My Children')),
                   if (childProvider.children.isEmpty)
                     SliverToBoxAdapter(child: _buildEmptyChildrenState(isDark))
                   else
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => Padding(
-                          padding: EdgeInsets.fromLTRB(20, 0, 20, index == childProvider.children.length - 1 ? 0 : 12),
-                          child: _ChildProfileCard(child: childProvider.children[index], isDark: isDark),
+                          padding: EdgeInsets.fromLTRB(
+                              20,
+                              0,
+                              20,
+                              index == childProvider.children.length - 1
+                                  ? 0
+                                  : 12),
+                          child: _ChildProfileCard(
+                              child: childProvider.children[index],
+                              isDark: isDark),
                         ),
                         childCount: childProvider.children.length,
                       ),
                     ),
-                  SliverToBoxAdapter(child: _buildInsightCards(context, isDark)),
+                  SliverToBoxAdapter(
+                      child: _buildInsightCards(context, isDark)),
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
@@ -130,11 +159,15 @@ class _ParentHomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(greeting, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+            Text(greeting,
+                style: const TextStyle(color: Colors.white70, fontSize: 14)),
             const SizedBox(height: 6),
             Text(
               name,
-              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 14),
             Container(
@@ -145,7 +178,10 @@ class _ParentHomeTab extends StatelessWidget {
               ),
               child: Text(
                 '$childCount ${childCount == 1 ? 'child' : 'children'} on your care plan',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13),
               ),
             ),
           ],
@@ -222,7 +258,8 @@ class _ParentHomeTab extends StatelessWidget {
                             const SizedBox(height: 6),
                             Text(
                               item.$1,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                  fontSize: 11, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -248,15 +285,19 @@ class _ParentHomeTab extends StatelessWidget {
               color: AppTheme.primaryBlue.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.child_care_rounded, size: 56, color: AppTheme.primaryBlue),
+            child: const Icon(Icons.child_care_rounded,
+                size: 56, color: AppTheme.primaryBlue),
           ),
           const SizedBox(height: 16),
-          const Text('No children added yet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text('No children added yet',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 8),
           Text(
             'Add a child profile to track academics, health records, and marketplace recommendations.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary, height: 1.45),
+            style: TextStyle(
+                color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                height: 1.45),
           ),
         ],
       ),
@@ -271,7 +312,8 @@ class _ParentHomeTab extends StatelessWidget {
           _InsightPanel(
             isDark: isDark,
             title: 'Academic Progress',
-            subtitle: 'Math improved 12% this month. Reading homework due Friday.',
+            subtitle:
+                'Math improved 12% this month. Reading homework due Friday.',
             icon: Icons.auto_graph_rounded,
             color: AppTheme.primaryBlue,
           ),
@@ -279,7 +321,8 @@ class _ParentHomeTab extends StatelessWidget {
           _InsightPanel(
             isDark: isDark,
             title: 'Health Updates',
-            subtitle: 'Flu vaccination scheduled for May 28. No new alerts today.',
+            subtitle:
+                'Flu vaccination scheduled for May 28. No new alerts today.',
             icon: Icons.health_and_safety_rounded,
             color: AppTheme.softGreen,
           ),
@@ -287,7 +330,8 @@ class _ParentHomeTab extends StatelessWidget {
           _InsightPanel(
             isDark: isDark,
             title: 'Billing & Payments',
-            subtitle: 'Tuition invoice #1042 is ready. Pay securely in one tap.',
+            subtitle:
+                'Tuition invoice #1042 is ready. Pay securely in one tap.',
             icon: Icons.payments_rounded,
             color: const Color(0xFFE2894A),
             actionLabel: 'View invoice',
@@ -313,18 +357,23 @@ class _ChildProfileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+        border: Border.all(
+            color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 32,
             backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
-            backgroundImage: child.imageUrl.isNotEmpty ? NetworkImage(child.imageUrl) : null,
+            backgroundImage:
+                child.imageUrl.isNotEmpty ? NetworkImage(child.imageUrl) : null,
             child: child.imageUrl.isEmpty
                 ? Text(
                     child.name.isNotEmpty ? child.name[0].toUpperCase() : 'C',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue),
                   )
                 : null,
           ),
@@ -333,15 +382,22 @@ class _ChildProfileCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(child.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(child.name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 4),
                 Text(
                   '${child.age} years old • Grade 3',
-                  style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color:
+                          isDark ? Colors.grey[400] : AppTheme.textSecondary),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  vaxCount > 0 ? '$vaxCount vaccines logged' : 'Vaccination profile incomplete',
+                  vaxCount > 0
+                      ? '$vaxCount vaccines logged'
+                      : 'Vaccination profile incomplete',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -352,7 +408,8 @@ class _ChildProfileCard extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right_rounded, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+            icon: Icon(Icons.chevron_right_rounded,
+                color: isDark ? Colors.grey[500] : Colors.grey[400]),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Opening timeline for ${child.name}')),
@@ -390,7 +447,8 @@ class _InsightPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+        border: Border.all(
+            color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,7 +466,9 @@ class _InsightPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 6),
                 Text(
                   subtitle,
@@ -422,7 +482,10 @@ class _InsightPanel extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     actionLabel!,
-                    style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                    style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12),
                   ),
                 ],
               ],
@@ -434,29 +497,30 @@ class _InsightPanel extends StatelessWidget {
   }
 }
 
-class _MarketplaceTab extends StatelessWidget {
-  const _MarketplaceTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return _PlaceholderTab(
-      icon: Icons.storefront_rounded,
-      title: 'KidCare Marketplace',
-      message: 'Browse books, uniforms, school supplies, and healthcare essentials tailored to your children.',
-      actionLabel: 'Explore categories',
-    );
-  }
-}
-
 class _AlertsTab extends StatelessWidget {
   const _AlertsTab();
 
   @override
   Widget build(BuildContext context) {
     final alerts = [
-      ('Attendance marked present', 'Emma checked in at 8:12 AM', Icons.check_circle_rounded, AppTheme.softGreen),
-      ('Homework reminder', 'Math worksheet due tomorrow', Icons.menu_book_rounded, AppTheme.primaryBlue),
-      ('Health notice', 'Annual checkup scheduled next week', Icons.medical_information_rounded, const Color(0xFFE2894A)),
+      (
+        'Attendance marked present',
+        'Emma checked in at 8:12 AM',
+        Icons.check_circle_rounded,
+        AppTheme.softGreen
+      ),
+      (
+        'Homework reminder',
+        'Math worksheet due tomorrow',
+        Icons.menu_book_rounded,
+        AppTheme.primaryBlue
+      ),
+      (
+        'Health notice',
+        'Annual checkup scheduled next week',
+        Icons.medical_information_rounded,
+        const Color(0xFFE2894A)
+      ),
     ];
 
     return Scaffold(
@@ -473,7 +537,8 @@ class _AlertsTab extends StatelessWidget {
               side: const BorderSide(color: AppTheme.inputBorder),
             ),
             leading: Icon(alert.$3, color: alert.$4),
-            title: Text(alert.$1, style: const TextStyle(fontWeight: FontWeight.w600)),
+            title: Text(alert.$1,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(alert.$2),
           );
         },
@@ -499,13 +564,21 @@ class _ProfileTab extends StatelessWidget {
               radius: 40,
               backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
               child: Text(
-                (user?.fullName.isNotEmpty == true) ? user!.fullName[0].toUpperCase() : 'P',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+                (user?.fullName.isNotEmpty == true)
+                    ? user!.fullName[0].toUpperCase()
+                    : 'P',
+                style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryBlue),
               ),
             ),
             const SizedBox(height: 12),
-            Text(user?.fullName ?? 'Parent', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            Text(user?.email ?? '', style: const TextStyle(color: AppTheme.textSecondary)),
+            Text(user?.fullName ?? 'Parent',
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(user?.email ?? '',
+                style: const TextStyle(color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
             Chip(label: Text(user?.role ?? 'Parent')),
             const Spacer(),
@@ -513,52 +586,16 @@ class _ProfileTab extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () async {
-                  Provider.of<ChildProvider>(context, listen: false).stopListening();
-                  await Provider.of<AuthProvider>(context, listen: false).logout();
+                  Provider.of<ChildProvider>(context, listen: false)
+                      .stopListening();
+                  await Provider.of<AuthProvider>(context, listen: false)
+                      .logout();
                 },
                 icon: const Icon(Icons.logout_rounded),
                 label: const Text('Sign Out'),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String message;
-  final String actionLabel;
-
-  const _PlaceholderTab({
-    required this.icon,
-    required this.title,
-    required this.message,
-    required this.actionLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 64, color: AppTheme.primaryBlue),
-              const SizedBox(height: 16),
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textSecondary, height: 1.5)),
-              const SizedBox(height: 20),
-              FilledButton(onPressed: () {}, child: Text(actionLabel)),
-            ],
-          ),
         ),
       ),
     );
