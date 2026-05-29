@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 import 'auth_illustration.dart';
 
 /// Tappable role row used on welcome and role-selection screens.
-class RoleOptionTile extends StatelessWidget {
+class RoleOptionTile extends StatefulWidget {
   final RoleOption option;
   final VoidCallback onTap;
 
@@ -16,72 +16,86 @@ class RoleOptionTile extends StatelessWidget {
   });
 
   @override
+  State<RoleOptionTile> createState() => _RoleOptionTileState();
+}
+
+class _RoleOptionTileState extends State<RoleOptionTile> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final style = RoleStyles.forRole(option.title);
+    final style = RoleStyles.forRole(widget.option.title);
 
-    return Material(
-      color: isDark ? AppTheme.darkSurface : Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
+    return AnimatedScale(
+      scale: _pressed ? 0.98 : 1.0,
+      duration: const Duration(milliseconds: 100),
+      child: Material(
+        color: isDark ? AppTheme.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
+        child: InkWell(
+          onTap: widget.onTap,
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
+              ),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                AuthIllustration.thumbnail(
-                  assetPath: option.featureAsset,
-                  fallback: Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      gradient: style['gradient'] as LinearGradient,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      style['icon'] as IconData,
-                      color: Colors.white,
-                      size: 26,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  AuthIllustration.thumbnail(
+                    assetPath: widget.option.featureAsset,
+                    fallback: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        gradient: style['gradient'] as LinearGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        style['icon'] as IconData,
+                        color: Colors.white,
+                        size: 26,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        option.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        option.subtitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          height: 1.35,
-                          color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.option.title,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.option.subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.35,
+                            color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: isDark ? Colors.grey[500] : Colors.grey[400],
-                ),
-              ],
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -104,7 +104,7 @@ class RoleSelectionScreen extends StatelessWidget {
                             itemBuilder: (context, index) {
                               return _PremiumRoleCard(
                                 option: RoleOptions.all[index],
-                                onTap: () => AuthNavigation.openRegister(
+                                onTap: () => AuthNavigation.openOnboarding(
                                   context,
                                   RoleOptions.all[index].role,
                                 ),
@@ -120,7 +120,7 @@ class RoleSelectionScreen extends StatelessWidget {
                                 padding: const EdgeInsets.only(bottom: 16),
                                 child: _PremiumRoleCard(
                                   option: RoleOptions.all[index],
-                                  onTap: () => AuthNavigation.openRegister(
+                                  onTap: () => AuthNavigation.openOnboarding(
                                     context,
                                     RoleOptions.all[index].role,
                                   ),

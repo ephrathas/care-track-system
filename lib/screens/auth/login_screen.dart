@@ -4,6 +4,7 @@ import '../../core/constants/routes.dart';
 import '../../core/navigation/auth_navigation.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../../widgets/auth/login_hero.dart';
 
@@ -190,33 +191,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          SizedBox(
-                            width: double.infinity,
-                            height: 54,
-                            child: ElevatedButton(
-                              onPressed: authProvider.isLoading ? null : _handleLogin,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryBlue,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: authProvider.isLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.5,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Sign In',
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                    ),
-                            ),
+                          AuthPrimaryButton(
+                            label: 'Sign In',
+                            isLoading: authProvider.isLoading,
+                            onPressed: authProvider.isLoading ? null : _handleLogin,
                           ),
                           const SizedBox(height: 20),
 

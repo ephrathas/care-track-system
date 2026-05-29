@@ -7,6 +7,7 @@ import '../../screens/auth/auth_wrapper.dart';
 import '../../screens/auth/forgot_password_screen.dart';
 import '../../screens/auth/register_screen.dart';
 import '../../screens/auth/login_screen.dart';
+import '../../screens/auth/role_onboarding_screen.dart';
 import '../../screens/auth/role_selection_screen.dart';
 
 class AppRoutes {
@@ -16,6 +17,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
+  static const String onboarding = '/onboarding';
   static const String parentHome = '/parent_home';
   static const String addChildScreen = '/add_child';
   static const String productDetail = '/product_detail';
@@ -27,6 +29,7 @@ class AppRoutes {
         register: (context) => const RegisterScreen(),
         login: (context) => const LoginScreen(),
         forgotPassword: (context) => const ForgotPasswordScreen(),
+        onboarding: (context) => const RoleOnboardingScreen(),
         parentHome: (context) => const ParentDashboard(),
         addChildScreen: (context) => const AddChildScreen(),
         productDetail: (context) {
