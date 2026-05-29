@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/teacher/grade_entry_sheet.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -830,74 +831,87 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
             _ => const Color(0xFFE2894A),
           };
 
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? AppTheme.darkSurface : Colors.white,
+          return Material(
+            color: isDark ? AppTheme.darkSurface : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: subjectColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        hw['subject'],
-                        style: TextStyle(color: subjectColor, fontWeight: FontWeight.bold, fontSize: 10),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.teal.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        hw['status'],
-                        style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 10),
-                      ),
-                    ),
-                  ],
+              onTap: () => GradeEntrySheet.show(
+                context,
+                assignmentTitle: hw['title'] as String,
+                subject: hw['subject'] as String,
+              ),
+              child: Ink(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  hw['title'],
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: subjectColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              hw['subject'] as String,
+                              style: TextStyle(color: subjectColor, fontWeight: FontWeight.bold, fontSize: 10),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              hw['status'] as String,
+                              style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 10),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        hw['title'] as String,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Class: ${hw['grade']}',
+                        style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_month_rounded, size: 14, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Due: ${hw['dueDate']}',
+                            style: TextStyle(fontSize: 11, color: isDark ? Colors.grey[300] : AppTheme.textPrimary, fontWeight: FontWeight.w500),
+                          ),
+                          const Spacer(),
+                          Icon(Icons.grade_rounded, size: 14, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Tap to grade',
+                            style: TextStyle(fontSize: 11, color: isDark ? Colors.grey[300] : AppTheme.textPrimary, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Class: ${hw['grade']}',
-                  style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(Icons.calendar_month_rounded, size: 14, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Due: ${hw['dueDate']}',
-                      style: TextStyle(fontSize: 11, color: isDark ? Colors.grey[300] : AppTheme.textPrimary, fontWeight: FontWeight.w500),
-                    ),
-                    const Spacer(),
-                    Icon(Icons.check_circle_outline_rounded, size: 14, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Done: ${hw['submissions']}',
-                      style: TextStyle(fontSize: 11, color: isDark ? Colors.grey[300] : AppTheme.textPrimary, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           );
         },
