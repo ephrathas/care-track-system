@@ -23,7 +23,8 @@ class DashboardStatCard extends StatelessWidget {
 
     return Container(
       width: 150,
-      padding: const EdgeInsets.all(14),
+      height: 110,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -33,6 +34,7 @@ class DashboardStatCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
@@ -42,23 +44,26 @@ class DashboardStatCard extends StatelessWidget {
             ),
             child: Icon(icon, color: accent, size: 20),
           ),
-          const SizedBox(height: 12),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
             ),
           ),
-          const SizedBox(height: 4),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 2),
           Text(
             subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11,
               color: isDark ? Colors.grey[500] : AppTheme.textSecondary,
