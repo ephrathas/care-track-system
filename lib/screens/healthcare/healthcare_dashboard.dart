@@ -392,7 +392,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.between,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Growth Tracker - ${patient.name}',
@@ -502,7 +502,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.between,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Immunization Registry - ${patient.name}',
@@ -819,7 +819,7 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.between,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             visit.$2,
@@ -953,7 +953,7 @@ class _ProfileStatRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.between,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
           Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),

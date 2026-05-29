@@ -237,7 +237,7 @@ class _TeacherHomeTab extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.between,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Icon(s.$5, color: s.$4, size: 20),
                     Container(
@@ -671,7 +671,7 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.between,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         'Create Assignment',
@@ -841,7 +841,7 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.between,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -979,7 +979,7 @@ class _TeacherMessagesTabState extends State<_TeacherMessagesTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.between,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     parentName,
@@ -1070,7 +1070,7 @@ class _TeacherMessagesTabState extends State<_TeacherMessagesTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.between,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               msg['parent'],
@@ -1207,7 +1207,7 @@ class _ProfileStatRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.between,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
           Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),

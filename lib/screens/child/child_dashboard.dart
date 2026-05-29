@@ -209,7 +209,7 @@ class _ChildHomeTabState extends State<_ChildHomeTab> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: item.$4.withOpacity(0.12),
+                              color: item.$5.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(item.$4, color: item.$5, size: 24),
@@ -319,11 +319,11 @@ class _ChildHomeTabState extends State<_ChildHomeTab> {
             ),
             const SizedBox(height: 20),
             Row(
-              mainAxisAlignment: MainAxisAlignment.between,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'My Progress (XP)',
-                  style: TextStyle(color: Colors.white90, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 Text(
                   '${_GamificationData.currentXp} / 500 XP',
@@ -655,7 +655,7 @@ class _ChildRewardsTab extends StatelessWidget {
               border: Border.all(
                 color: unlocked
                     ? accent.withOpacity(0.3)
-                    : (isDark ? Colors.grey.shade850 : Colors.grey.shade200),
+                    : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
               ),
               boxShadow: [
                 if (unlocked)
@@ -807,7 +807,7 @@ class _ProfileStatRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.between,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
           Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
