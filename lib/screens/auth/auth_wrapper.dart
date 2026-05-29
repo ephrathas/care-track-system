@@ -67,7 +67,7 @@ class AuthWrapper extends StatelessWidget {
         }
 
         // 🚪 No session found, show role selection onboarding
-        return const RoleSelectionScreen();
+        return WelcomeScreen();
       },
     );
   }
