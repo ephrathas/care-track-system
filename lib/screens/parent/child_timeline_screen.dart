@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
 import '../../models/parent_insights.dart';
 import '../../widgets/dashboard/simple_bar_chart.dart';
+import '../../widgets/parent/child_photo_avatar.dart';
 
 class ChildTimelineScreen extends StatefulWidget {
   const ChildTimelineScreen({super.key});
@@ -53,7 +54,7 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 220,
             pinned: true,
             stretch: true,
             flexibleSpace: FlexibleSpaceBar(
@@ -67,33 +68,26 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
+                    padding: const EdgeInsets.fromLTRB(20, 52, 20, 12),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        CircleAvatar(
+                        ChildPhotoAvatar(
+                          child: child,
                           radius: 36,
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          backgroundImage:
-                              child.imageUrl.isNotEmpty ? NetworkImage(child.imageUrl) : null,
-                          child: child.imageUrl.isEmpty
-                              ? Text(
-                                  child.name.isNotEmpty ? child.name[0].toUpperCase() : 'C',
-                                  style: const TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : null,
+                          borderColor: Colors.white,
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 child.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 22,
@@ -105,9 +99,9 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
                                 '${child.age} years • ${ParentDemoData.gradeForAge(child.age)}',
                                 style: const TextStyle(color: Colors.white70, fontSize: 13),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               Text(
-                                '${child.vaccinations.length} vaccines on record',
+                                'Tap photo to update',
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.85),
                                   fontSize: 11,

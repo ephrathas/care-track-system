@@ -171,67 +171,81 @@ class _AddChildScreenState extends State<AddChildScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 📸 Premium Profile Picture Upload Holder
+                // 📸 Profile picture — tap anywhere on avatar or label to pick
                 Center(
-                  child: Stack(
+                  child: Column(
                     children: [
-                      Container(
-                        width: 110,
-                        height: 110,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.3), width: 3),
-                          color: isDark ? AppTheme.darkSurface : Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 12,
-                              offset: const Offset(0, 6),
-                            )
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(55),
-                          child: _imageBytes != null
-                              ? Image.memory(_imageBytes!, fit: BoxFit.cover)
-                              : Icon(
-                                  Icons.child_care_rounded,
-                                  size: 56,
-                                  color: isDark ? Colors.white24 : Colors.grey[300],
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _selectPhoto,
+                          customBorder: const CircleBorder(),
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: AppTheme.primaryBlue.withOpacity(0.3), width: 3),
+                                  color: isDark ? AppTheme.darkSurface : Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                    )
+                                  ],
                                 ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(55),
+                                  child: _imageBytes != null
+                                      ? Image.memory(_imageBytes!, fit: BoxFit.cover, width: 110, height: 110)
+                                      : Icon(
+                                          Icons.child_care_rounded,
+                                          size: 56,
+                                          color: isDark ? Colors.white24 : Colors.grey[300],
+                                        ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: const BoxDecoration(
+                                    color: AppTheme.primaryBlue,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt_rounded,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: _selectPhoto,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: _selectPhoto,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: Text(
+                            _imageBytes != null ? 'Change Photo' : 'Upload Child Photo',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
                               color: AppTheme.primaryBlue,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_rounded,
-                              size: 18,
-                              color: Colors.white,
                             ),
                           ),
                         ),
-                      )
+                      ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    _imageBytes != null ? "Change Image" : "Upload Child Photo",
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryBlue,
-                    ),
                   ),
                 ),
 
