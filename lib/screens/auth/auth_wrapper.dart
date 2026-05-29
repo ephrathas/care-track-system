@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../child/child_dashboard.dart';
+import '../healthcare/healthcare_dashboard.dart';
 import '../parent/parent_dashboard.dart';
 import '../teacher/teacher_dashboard.dart';
 import 'welcome_screen.dart';
@@ -47,16 +48,13 @@ class AuthWrapper extends StatelessWidget {
               return const ChildDashboard();
             }
 
+            if (role == UserRole.healthcare) {
+              return const HealthcareDashboard();
+            }
+
             return _RolePlaceholderDashboard(
-              title: switch (role) {
-                UserRole.healthcare => 'Healthcare Dashboard',
-                _ => 'Dashboard',
-              },
-              message: switch (role) {
-                UserRole.healthcare =>
-                  'Medical records, vaccinations, and appointments are coming soon.',
-                _ => 'This role dashboard is under construction.',
-              },
+              title: 'Dashboard',
+              message: 'This role dashboard is under construction.',
             );
           }
         }
@@ -84,7 +82,8 @@ class _RolePlaceholderDashboard extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded),
-            onPressed: () => Provider.of<AuthProvider>(context, listen: false).logout(),
+            onPressed: () =>
+                Provider.of<AuthProvider>(context, listen: false).logout(),
           ),
         ],
       ),
@@ -94,14 +93,18 @@ class _RolePlaceholderDashboard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.construction_rounded, size: 56, color: AppTheme.primaryBlue),
+              const Icon(Icons.construction_rounded,
+                  size: 56, color: AppTheme.primaryBlue),
               const SizedBox(height: 16),
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textSecondary, height: 1.5),
+                style:
+                    const TextStyle(color: AppTheme.textSecondary, height: 1.5),
               ),
             ],
           ),
