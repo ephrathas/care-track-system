@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/parent_demo_data.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
@@ -196,29 +197,32 @@ class _ParentHomeTab extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        children: const [
-          DashboardStatCard(
+        children: [
+          const DashboardStatCard(
             icon: Icons.school_rounded,
             label: 'Attendance',
             value: '96%',
             subtitle: 'This week',
             accent: AppTheme.primaryBlue,
           ),
-          SizedBox(width: 12),
-          DashboardStatCard(
+          const SizedBox(width: 12),
+          const DashboardStatCard(
             icon: Icons.favorite_rounded,
             label: 'Health',
             value: 'Good',
             subtitle: 'All checkups current',
             accent: AppTheme.softGreen,
           ),
-          SizedBox(width: 12),
-          DashboardStatCard(
-            icon: Icons.receipt_long_rounded,
-            label: 'Billing',
-            value: '\$120',
-            subtitle: 'Due in 5 days',
-            accent: Color(0xFFE2894A),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, AppRoutes.billing),
+            child: const DashboardStatCard(
+              icon: Icons.receipt_long_rounded,
+              label: 'Billing',
+              value: '\$120',
+              subtitle: 'Due in 5 days',
+              accent: Color(0xFFE2894A),
+            ),
           ),
         ],
       ),
@@ -227,9 +231,9 @@ class _ParentHomeTab extends StatelessWidget {
 
   Widget _buildQuickActions(BuildContext context) {
     final actions = [
-      ('Marketplace', Icons.storefront_rounded, AppTheme.primaryBlue),
-      ('Reports', Icons.bar_chart_rounded, AppTheme.softGreen),
-      ('Messages', Icons.chat_bubble_rounded, const Color(0xFF9013FE)),
+      ('Marketplace', Icons.storefront_rounded, AppTheme.primaryBlue, null),
+      ('Reports', Icons.bar_chart_rounded, AppTheme.softGreen, AppRoutes.reports),
+      ('Billing', Icons.payments_rounded, const Color(0xFFE2894A), AppRoutes.billing),
     ];
 
     return Padding(
@@ -245,9 +249,14 @@ class _ParentHomeTab extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     child: InkWell(
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${item.$1} coming soon')),
-                        );
+                        final route = item.$4;
+                        if (route != null) {
+                          Navigator.pushNamed(context, route);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Open ${item.$1} from the Shop tab')),
+                          );
+                        }
                       },
                       borderRadius: BorderRadius.circular(14),
                       child: Padding(
@@ -316,6 +325,7 @@ class _ParentHomeTab extends StatelessWidget {
                 'Math improved 12% this month. Reading homework due Friday.',
             icon: Icons.auto_graph_rounded,
             color: AppTheme.primaryBlue,
+            onTap: () => Navigator.pushNamed(context, AppRoutes.reports),
           ),
           const SizedBox(height: 12),
           _InsightPanel(
@@ -335,6 +345,7 @@ class _ParentHomeTab extends StatelessWidget {
             icon: Icons.payments_rounded,
             color: const Color(0xFFE2894A),
             actionLabel: 'View invoice',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.billing),
           ),
         ],
       ),
@@ -352,71 +363,77 @@ class _ChildProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final vaxCount = child.vaccinations.length;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkSurface : Colors.white,
+    return Material(
+      color: isDark ? AppTheme.darkSurface : Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-            color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
-            backgroundImage:
-                child.imageUrl.isNotEmpty ? NetworkImage(child.imageUrl) : null,
-            child: child.imageUrl.isEmpty
-                ? Text(
-                    child.name.isNotEmpty ? child.name[0].toUpperCase() : 'C',
-                    style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryBlue),
-                  )
-                : null,
+        onTap: () => Navigator.pushNamed(
+          context,
+          AppRoutes.childTimeline,
+          arguments: child,
+        ),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+                color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
               children: [
-                Text(child.name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 4),
-                Text(
-                  '${child.age} years old • Grade 3',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color:
-                          isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+                  backgroundImage:
+                      child.imageUrl.isNotEmpty ? NetworkImage(child.imageUrl) : null,
+                  child: child.imageUrl.isEmpty
+                      ? Text(
+                          child.name.isNotEmpty ? child.name[0].toUpperCase() : 'C',
+                          style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryBlue),
+                        )
+                      : null,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  vaxCount > 0
-                      ? '$vaxCount vaccines logged'
-                      : 'Vaccination profile incomplete',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: vaxCount > 0 ? AppTheme.softGreen : Colors.orange,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(child.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${child.age} years old • ${ParentDemoData.gradeForAge(child.age)}',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        vaxCount > 0
+                            ? '$vaxCount vaccines logged'
+                            : 'Vaccination profile incomplete',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: vaxCount > 0 ? AppTheme.softGreen : Colors.orange,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                Icon(Icons.chevron_right_rounded,
+                    color: isDark ? Colors.grey[500] : Colors.grey[400]),
               ],
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.chevron_right_rounded,
-                color: isDark ? Colors.grey[500] : Colors.grey[400]),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Opening timeline for ${child.name}')),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -429,6 +446,7 @@ class _InsightPanel extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String? actionLabel;
+  final VoidCallback? onTap;
 
   const _InsightPanel({
     required this.isDark,
@@ -437,61 +455,70 @@ class _InsightPanel extends StatelessWidget {
     required this.icon,
     required this.color,
     this.actionLabel,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkSurface : Colors.white,
+    return Material(
+      color: isDark ? AppTheme.darkSurface : Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 22),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+                color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.4,
-                    color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                        ),
+                      ),
+                      if (actionLabel != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          actionLabel!,
+                          style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (actionLabel != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    actionLabel!,
-                    style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12),
-                  ),
-                ],
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
