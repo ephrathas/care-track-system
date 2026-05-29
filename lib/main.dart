@@ -1,6 +1,7 @@
 import 'package:child_and_student_care_and_tracking_app/core/theme/app_theme.dart';
 import 'package:child_and_student_care_and_tracking_app/firebase_options.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/auth_provider.dart';
+import 'package:child_and_student_care_and_tracking_app/providers/child_gamification_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/child_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ChildProvider()),
+        ChangeNotifierProvider(create: (_) => ChildGamificationProvider()),
       ],
       child: const MyApp(),
     ),
