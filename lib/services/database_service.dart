@@ -26,6 +26,15 @@ class DatabaseService {
     }
   }
 
+  Future<void> updateChildFields(String childId, Map<String, dynamic> fields) async {
+    try {
+      await _db.collection('children').doc(childId).update(fields).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      print('Error updating child: $e');
+      rethrow;
+    }
+  }
+
   // 📝 Function to get all children for a specific parent
   Stream<List<ChildModel>> getChildrenByParent(String parentId) {
     return _db
