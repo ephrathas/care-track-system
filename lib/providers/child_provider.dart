@@ -55,6 +55,35 @@ class ChildProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> updateChildPhoto({
+    required String childId,
+    Uint8List? imageBytes,
+    File? imageFile,
+  }) async {
+    if (imageBytes == null && imageFile == null) return false;
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final imageUrl = imageBytes != null
+          ? await _storageService.uploadChildPhotoFromBytes(childId, imageBytes)
+          : await _storageService.uploadChildPhotoFromFile(childId, imageFile!);
+
+      await _dbService.updateChildFields(childId, {'imageUrl': imageUrl});
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   // 👶 Add Child Profile with dynamic photo upload
   Future<bool> addChild({
     required String name,
