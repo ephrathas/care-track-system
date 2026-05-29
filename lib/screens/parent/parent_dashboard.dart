@@ -193,7 +193,7 @@ class _ParentHomeTab extends StatelessWidget {
 
   Widget _buildQuickStats(BuildContext context) {
     return SizedBox(
-      height: 132,
+      height: 128,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -583,9 +583,9 @@ class _ProfileTab extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
           children: [
             CircleAvatar(
               radius: 40,
@@ -602,13 +602,15 @@ class _ProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(user?.fullName ?? 'Parent',
+                textAlign: TextAlign.center,
                 style:
                     const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             Text(user?.email ?? '',
+                textAlign: TextAlign.center,
                 style: const TextStyle(color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
-            Chip(label: Text(user?.role ?? 'Parent')),
-            const Spacer(),
+            Center(child: Chip(label: Text(user?.role ?? 'Parent'))),
+            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
