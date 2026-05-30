@@ -5,6 +5,9 @@ class ChildModel {
   final String parentId;
   final String imageUrl;
   final List<String> vaccinations;
+  final double? latestHeight;
+  final double? latestWeight;
+  final String lastCheckup;
 
   ChildModel({
     required this.id,
@@ -13,6 +16,9 @@ class ChildModel {
     required this.parentId,
     required this.imageUrl,
     this.vaccinations = const [],
+    this.latestHeight,
+    this.latestWeight,
+    this.lastCheckup = '',
   });
 
   // Convert Firebase Document to Flutter Object

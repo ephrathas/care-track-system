@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/auth_assets.dart';
 import '../../core/constants/role_styles.dart';
-import '../../core/theme/app_theme.dart';
 import 'auth_illustration.dart';
 import 'kidcare_logo.dart';
 
