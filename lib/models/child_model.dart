@@ -52,6 +52,9 @@ class ChildModel {
       'parentId': parentId,
       'imageUrl': imageUrl,
       'vaccinations': vaccinations,
+      if (latestHeight != null) 'latestHeight': latestHeight,
+      if (latestWeight != null) 'latestWeight': latestWeight,
+      if (lastCheckup.isNotEmpty) 'lastCheckup': lastCheckup,
     };
   }
 }
