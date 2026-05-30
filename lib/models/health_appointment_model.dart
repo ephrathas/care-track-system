@@ -35,3 +35,12 @@ factory HealthAppointment.fromMap(Map<String, dynamic> map, String documentId) {
       status: map['status'] ?? 'Active',
     );
   }
+ Map<String, dynamic> toMap() {
+    return {
+      'childId': childId,
+      'childName': childName,
+      'title': title,
+      'scheduledAt': Timestamp.fromDate(scheduledAt),
+      'status': status,
+    };
+  }
