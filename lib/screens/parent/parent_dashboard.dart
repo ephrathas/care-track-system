@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
 import '../../widgets/dashboard/dashboard_stat_card.dart';
+import '../../widgets/profile/user_profile_avatar.dart';
 import 'marketplace_tab.dart';
 
 class ParentDashboard extends StatefulWidget {
@@ -160,15 +161,28 @@ class _ParentHomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(greeting,
-                style: const TextStyle(color: Colors.white70, fontSize: 14)),
-            const SizedBox(height: 6),
-            Text(
-              name,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(greeting,
+                          style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                      const SizedBox(height: 6),
+                      Text(
+                        name,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                const UserProfileAvatar(radius: 28, editable: false, showGradientRing: true),
+              ],
             ),
             const SizedBox(height: 14),
             Container(
@@ -587,17 +601,14 @@ class _ProfileTab extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
-              child: Text(
-                (user?.fullName.isNotEmpty == true)
-                    ? user!.fullName[0].toUpperCase()
-                    : 'P',
-                style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBlue),
+            Center(child: UserProfileAvatar(radius: 44, user: user)),
+            const SizedBox(height: 8),
+            Text(
+              'Tap your photo to update',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.textSecondary.withOpacity(0.8),
               ),
             ),
             const SizedBox(height: 12),

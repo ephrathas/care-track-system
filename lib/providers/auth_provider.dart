@@ -1,10 +1,13 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
+  final StorageService _storageService = StorageService();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   UserModel? _currentUser;
@@ -90,7 +93,7 @@ class AuthProvider with ChangeNotifier {
     try {
       User? user = await _authService.signUp(email, password, name, role);
       if (user != null) {
-        _currentUser = UserModel(uid: user.uid, email: email, fullName: name, role: role);
+        _currentUser = await _authService.getUserData(user.uid);
         _isLoading = false;
         notifyListeners();
         return true;
@@ -128,6 +131,27 @@ class AuthProvider with ChangeNotifier {
       } else {
         _errorMessage = e.toString();
       }
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateProfilePhoto({required Uint8List imageBytes}) async {
+    if (_currentUser == null) return false;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final imageUrl = await _storageService.uploadUserPhotoFromBytes(_currentUser!.uid, imageBytes);
+      await _authService.updateProfilePic(_currentUser!.uid, imageUrl);
+      _currentUser = _currentUser!.copyWith(profilePic: imageUrl);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
       notifyListeners();
       return false;
     }

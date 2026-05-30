@@ -58,7 +58,9 @@ class AuthService {
     try {
       DocumentSnapshot doc = await _db.collection('users').doc(uid).get().timeout(const Duration(seconds: 10));
       if (doc.exists) {
-        return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+        final data = Map<String, dynamic>.from(doc.data() as Map<String, dynamic>);
+        data['uid'] = uid;
+        return UserModel.fromMap(data);
       }
       return null;
     } catch (e) {
@@ -66,6 +68,8 @@ class AuthService {
       rethrow;
     }
   }
-  
 
+  Future<void> updateProfilePic(String uid, String profilePicUrl) async {
+    await _db.collection('users').doc(uid).update({'profilePic': profilePicUrl}).timeout(const Duration(seconds: 10));
+  }
 }

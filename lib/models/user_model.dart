@@ -13,6 +13,22 @@ class UserModel {
     this.profilePic,
   });
 
+  UserModel copyWith({
+    String? fullName,
+    String? role,
+    String? profilePic,
+  }) {
+    return UserModel(
+      uid: uid,
+      email: email,
+      fullName: fullName ?? this.fullName,
+      role: role ?? this.role,
+      profilePic: profilePic ?? this.profilePic,
+    );
+  }
+
+  bool get hasProfilePhoto => profilePic != null && profilePic!.isNotEmpty;
+
   // Convert Firebase Data to Dart Object
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(

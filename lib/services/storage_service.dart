@@ -19,7 +19,6 @@ class StorageService {
     }
   }
 
-  // 🌐 Upload child photo from Web or raw platform bytes (Uint8List)
   Future<String> uploadChildPhotoFromBytes(String childId, Uint8List bytes) async {
     try {
       Reference ref = _storage.ref().child('child_photos').child('$childId.jpg');
@@ -30,6 +29,31 @@ class StorageService {
       return downloadUrl;
     } catch (e) {
       print("Error uploading bytes to storage: $e");
+      rethrow;
+    }
+  }
+
+  Future<String> uploadUserPhotoFromFile(String uid, File file) async {
+    try {
+      Reference ref = _storage.ref().child('user_photos').child('$uid.jpg');
+      UploadTask uploadTask = ref.putFile(file);
+      TaskSnapshot snapshot = await uploadTask;
+      return snapshot.ref.getDownloadURL();
+    } catch (e) {
+      print("Error uploading user photo file: $e");
+      rethrow;
+    }
+  }
+
+  Future<String> uploadUserPhotoFromBytes(String uid, Uint8List bytes) async {
+    try {
+      Reference ref = _storage.ref().child('user_photos').child('$uid.jpg');
+      SettableMetadata metadata = SettableMetadata(contentType: 'image/jpeg');
+      UploadTask uploadTask = ref.putData(bytes, metadata);
+      TaskSnapshot snapshot = await uploadTask;
+      return snapshot.ref.getDownloadURL();
+    } catch (e) {
+      print("Error uploading user photo bytes: $e");
       rethrow;
     }
   }

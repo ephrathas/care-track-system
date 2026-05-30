@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_gamification_provider.dart';
+import '../../widgets/profile/user_profile_avatar.dart';
 
 class ChildDashboard extends StatefulWidget {
   const ChildDashboard({super.key});
@@ -216,11 +217,7 @@ class _PlayfulHeader extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Colors.white.withOpacity(0.2),
-                  child: const Text('👧', style: TextStyle(fontSize: 28)),
-                ),
+                const UserProfileAvatar(radius: 26, editable: false, showGradientRing: false),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -876,10 +873,12 @@ class _ChildProfileTab extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const SizedBox(height: 12),
-          CircleAvatar(
-            radius: 44,
-            backgroundColor: const Color(0xFF9013FE).withOpacity(0.12),
-            child: const Text('👧', style: TextStyle(fontSize: 48)),
+          Center(child: UserProfileAvatar(radius: 44, user: user)),
+          const SizedBox(height: 8),
+          Text(
+            'Tap your photo to update',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
           ),
           const SizedBox(height: 16),
           Text(

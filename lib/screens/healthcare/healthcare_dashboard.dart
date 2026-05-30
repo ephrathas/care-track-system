@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/profile/user_profile_avatar.dart';
 
 class HealthcareDashboard extends StatefulWidget {
   const HealthcareDashboard({super.key});
@@ -279,14 +280,27 @@ class _HealthcareHomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Healthcare Center',
-              style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Hello, $name',
-              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Healthcare Center',
+                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Hello, $name',
+                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                const UserProfileAvatar(radius: 28, editable: false, showGradientRing: true),
+              ],
             ),
             const SizedBox(height: 12),
             Container(
@@ -870,30 +884,31 @@ class _HealthcareProfileTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(title: const Text('Profile Settings')),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            CircleAvatar(
-              radius: 44,
-              backgroundColor: const Color(0xFFE2894A).withOpacity(0.12),
-              child: Text(
-                (user?.fullName.isNotEmpty == true) ? user!.fullName[0].toUpperCase() : 'H',
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFE2894A)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              user?.fullName ?? 'Healthcare Provider',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              user?.email ?? 'pediatrician@kidcare.com',
-              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-            ),
-            const SizedBox(height: 14),
-            Chip(
+        children: [
+          const SizedBox(height: 12),
+          Center(child: UserProfileAvatar(radius: 44, user: user)),
+          const SizedBox(height: 8),
+          Text(
+            'Tap your photo to update',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            user?.fullName ?? 'Healthcare Provider',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            user?.email ?? 'pediatrician@kidcare.com',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+          ),
+          const SizedBox(height: 14),
+          Center(
+            child: Chip(
               label: Text(
                 user?.role ?? 'Healthcare',
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -901,42 +916,43 @@ class _HealthcareProfileTab extends StatelessWidget {
               backgroundColor: const Color(0xFFE2894A).withOpacity(0.12),
               side: BorderSide.none,
             ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurface : Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-              ),
-              child: const Column(
-                children: [
-                  _ProfileStatRow(label: 'Assigned Clinic', value: 'Metro Pediatrics Clinic'),
-                  Divider(),
-                  _ProfileStatRow(label: 'License Registry', value: 'MD-9283-49A'),
-                  Divider(),
-                  _ProfileStatRow(label: 'Room Registry', value: 'Clinic Room 402'),
-                ],
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.darkSurface : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+            ),
+            child: const Column(
+              children: [
+                _ProfileStatRow(label: 'Assigned Clinic', value: 'Metro Pediatrics Clinic'),
+                Divider(),
+                _ProfileStatRow(label: 'License Registry', value: 'MD-9283-49A'),
+                Divider(),
+                _ProfileStatRow(label: 'Room Registry', value: 'Clinic Room 402'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                await Provider.of<AuthProvider>(context, listen: false).logout();
+              },
+              icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
             ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await Provider.of<AuthProvider>(context, listen: false).logout();
-                },
-                icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-                label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.redAccent),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
