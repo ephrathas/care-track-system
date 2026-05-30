@@ -8,16 +8,17 @@ class HealthAppointment {
   final String title;
   final DateTime scheduledAt;
   final String status;
- HealthAppointment({
+
+  HealthAppointment({
     required this.id,
     required this.childId,
     required this.childName,
     required this.title,
     required this.scheduledAt,
     this.status = 'Active',
-  }); 
-}
-factory HealthAppointment.fromMap(Map<String, dynamic> map, String documentId) {
+  });
+
+  factory HealthAppointment.fromMap(Map<String, dynamic> map, String documentId) {
     DateTime scheduledAt = DateTime.now();
     final raw = map['scheduledAt'];
     if (raw is Timestamp) {
@@ -35,7 +36,8 @@ factory HealthAppointment.fromMap(Map<String, dynamic> map, String documentId) {
       status: map['status'] ?? 'Active',
     );
   }
- Map<String, dynamic> toMap() {
+
+  Map<String, dynamic> toMap() {
     return {
       'childId': childId,
       'childName': childName,
@@ -44,3 +46,13 @@ factory HealthAppointment.fromMap(Map<String, dynamic> map, String documentId) {
       'status': status,
     };
   }
+
+  String get timeLabel => DateFormat('hh:mm a').format(scheduledAt);
+
+  bool get isToday {
+    final now = DateTime.now();
+    return scheduledAt.year == now.year &&
+        scheduledAt.month == now.month &&
+        scheduledAt.day == now.day;
+  }
+}
