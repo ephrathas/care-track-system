@@ -21,6 +21,14 @@ class ChildModel {
     this.lastCheckup = '',
   });
 
+  String get heightLabel =>
+      latestHeight != null ? '${latestHeight!.toStringAsFixed(1)} cm' : 'Not recorded';
+
+  String get weightLabel =>
+      latestWeight != null ? '${latestWeight!.toStringAsFixed(1)} kg' : 'Not recorded';
+
+  String get checkupLabel => lastCheckup.isNotEmpty ? lastCheckup : 'Not recorded';
+
   // Convert Firebase Document to Flutter Object
   factory ChildModel.fromMap(Map<String, dynamic> map, String documentId) {
     return ChildModel(
