@@ -38,6 +38,9 @@ class ChildModel {
       parentId: map['parentId'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
       vaccinations: List<String>.from(map['vaccinations'] ?? []),
+      latestHeight: (map['latestHeight'] as num?)?.toDouble(),
+      latestWeight: (map['latestWeight'] as num?)?.toDouble(),
+      lastCheckup: map['lastCheckup'] ?? '',
     );
   }
 
