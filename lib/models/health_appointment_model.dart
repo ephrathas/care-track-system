@@ -17,3 +17,21 @@ class HealthAppointment {
     this.status = 'Active',
   }); 
 }
+factory HealthAppointment.fromMap(Map<String, dynamic> map, String documentId) {
+    DateTime scheduledAt = DateTime.now();
+    final raw = map['scheduledAt'];
+    if (raw is Timestamp) {
+      scheduledAt = raw.toDate();
+    } else if (raw is String) {
+      scheduledAt = DateTime.tryParse(raw) ?? scheduledAt;
+    }
+
+    return HealthAppointment(
+      id: documentId,
+      childId: map['childId'] ?? '',
+      childName: map['childName'] ?? '',
+      title: map['title'] ?? '',
+      scheduledAt: scheduledAt,
+      status: map['status'] ?? 'Active',
+    );
+  }
