@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/navigation/dashboard_header_actions.dart';
-import '../../widgets/navigation/dashboard_shell_scope.dart';
-import '../../widgets/navigation/kidcare_drawer.dart';
-import '../../widgets/navigation/kidcare_quick_panel.dart';
+import '../../widgets/dashboard/dashboard_hero_header.dart';
+import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
+import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/teacher/grade_entry_sheet.dart';
 
@@ -19,62 +19,46 @@ class TeacherDashboard extends StatefulWidget {
 
 class _TeacherDashboardState extends State<TeacherDashboard> {
   int _navIndex = 0;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: KidCareDrawer(
-        selectedNavIndex: _navIndex,
-        onTabSelected: (index) => setState(() => _navIndex = index),
-      ),
-      endDrawer: const KidCareQuickPanel(),
-      body: DashboardShellScope(
-        openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
-        openEndDrawer: () => _scaffoldKey.currentState?.openEndDrawer(),
-        child: IndexedStack(
-          index: _navIndex,
-          children: const [
-            _TeacherHomeTab(),
-            _TeacherAttendanceTab(),
-            _TeacherHomeworkTab(),
-            _TeacherMessagesTab(),
-            _TeacherProfileTab(),
-          ],
+    return KidCareDashboardShell(
+      selectedIndex: _navIndex,
+      onIndexChanged: (index) => setState(() => _navIndex = index),
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard_rounded),
+          label: 'Overview',
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _navIndex,
-        onDestinationSelected: (index) => setState(() => _navIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard_rounded),
-            label: 'Overview',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline_rounded),
-            selectedIcon: Icon(Icons.people_rounded),
-            label: 'Attendance',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment_rounded),
-            label: 'Homework',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            selectedIcon: Icon(Icons.chat_bubble_rounded),
-            label: 'Messages',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
-      ),
+        NavigationDestination(
+          icon: Icon(Icons.people_outline_rounded),
+          selectedIcon: Icon(Icons.people_rounded),
+          label: 'Attendance',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.assignment_outlined),
+          selectedIcon: Icon(Icons.assignment_rounded),
+          label: 'Homework',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.chat_bubble_outline_rounded),
+          selectedIcon: Icon(Icons.chat_bubble_rounded),
+          label: 'Messages',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.person_outline_rounded),
+          selectedIcon: Icon(Icons.person_rounded),
+          label: 'Profile',
+        ),
+      ],
+      children: const [
+        _TeacherHomeTab(),
+        _TeacherAttendanceTab(),
+        _TeacherHomeworkTab(),
+        _TeacherMessagesTab(),
+        _TeacherProfileTab(),
+      ],
     );
   }
 }
@@ -96,7 +80,13 @@ class _TeacherHomeTab extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-              child: _buildWelcomeHeader(context, user?.fullName ?? 'Educator', isDark),
+              child: DashboardHeroHeader(
+                gradient: RoleStyles.forRole('Teacher')['gradient'] as LinearGradient,
+                accentColor: RoleStyles.forRole('Teacher')['accent'] as Color,
+                subtitle: 'Teacher Center',
+                title: 'Hello, ${user?.fullName ?? 'Educator'}',
+                badgeText: 'Class Grade: 3-A • Classroom 104',
+              ),
             ),
             SliverToBoxAdapter(
               child: _buildQuickStats(isDark),
@@ -168,72 +158,6 @@ class _TeacherHomeTab extends StatelessWidget {
                 ),
               ),
             )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWelcomeHeader(BuildContext context, String name, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF7ED321), Color(0xFF5CA216)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF7ED321).withOpacity(0.25),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const DashboardHeaderActions(),
-            const SizedBox(height: 18),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Teacher Center',
-                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Hello, $name',
-                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                const UserProfileAvatar(radius: 28, editable: false, showGradientRing: true),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'Class Grade: 3-A • Classroom 104',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
-              ),
-            ),
           ],
         ),
       ),
@@ -473,17 +397,9 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final list = _filteredStudents;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Attendance Registry', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        elevation: 0,
-        actions: const [DashboardToolbarTrailing()],
-      ),
-      body: SafeArea(
-        child: Column(
+    return DashboardTabScaffold(
+      title: 'Attendance Registry',
+      body: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(20),
@@ -638,7 +554,6 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -837,14 +752,8 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Homework & Tasks', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        actions: const [DashboardToolbarTrailing()],
-      ),
+    return DashboardTabScaffold(
+      title: 'Homework & Tasks',
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddAssignmentSheet,
         backgroundColor: const Color(0xFF9013FE),
@@ -1078,14 +987,8 @@ class _TeacherMessagesTabState extends State<_TeacherMessagesTab> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Inbox Communication', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        actions: const [DashboardToolbarTrailing()],
-      ),
+    return DashboardTabScaffold(
+      title: 'Inbox Communication',
       body: ListView.separated(
         padding: const EdgeInsets.all(20),
         physics: const BouncingScrollPhysics(),
@@ -1172,13 +1075,8 @@ class _TeacherProfileTab extends StatelessWidget {
     final user = Provider.of<AuthProvider>(context).currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Profile Settings'),
-        actions: const [DashboardToolbarTrailing()],
-      ),
+    return DashboardTabScaffold(
+      title: 'Profile Settings',
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

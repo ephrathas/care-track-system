@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/layout/app_breakpoints.dart';
 import '../../core/constants/role_options.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/navigation/auth_navigation.dart';
@@ -11,8 +12,7 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
-    final isWide = size.width > 680;
+    final isWide = AppBreakpoints.isMediumOrWider(context);
 
     return Scaffold(
       body: Container(

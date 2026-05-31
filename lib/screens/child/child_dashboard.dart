@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_gamification_provider.dart';
-import '../../widgets/navigation/dashboard_header_actions.dart';
-import '../../widgets/navigation/dashboard_shell_scope.dart';
-import '../../widgets/navigation/kidcare_drawer.dart';
-import '../../widgets/navigation/kidcare_quick_panel.dart';
+import '../../widgets/dashboard/dashboard_hero_header.dart';
+import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
+import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 
 class ChildDashboard extends StatefulWidget {
@@ -18,58 +18,42 @@ class ChildDashboard extends StatefulWidget {
 
 class _ChildDashboardState extends State<ChildDashboard> {
   int _navIndex = 0;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _goToTasks() => setState(() => _navIndex = 1);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: KidCareDrawer(
-        selectedNavIndex: _navIndex,
-        onTabSelected: (index) => setState(() => _navIndex = index),
-      ),
-      endDrawer: const KidCareQuickPanel(),
-      body: DashboardShellScope(
-        openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
-        openEndDrawer: () => _scaffoldKey.currentState?.openEndDrawer(),
-        child: IndexedStack(
-          index: _navIndex,
-          children: [
-            _ChildHomeTab(onOpenTasks: _goToTasks),
-            const _ChildHomeworkTab(),
-            const _ChildRewardsTab(),
-            const _ChildProfileTab(),
-          ],
+    return KidCareDashboardShell(
+      selectedIndex: _navIndex,
+      onIndexChanged: (index) => setState(() => _navIndex = index),
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.stars_outlined),
+          selectedIcon: Icon(Icons.stars_rounded),
+          label: 'Home',
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _navIndex,
-        onDestinationSelected: (index) => setState(() => _navIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.stars_outlined),
-            selectedIcon: Icon(Icons.stars_rounded),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment_rounded),
-            label: 'My Tasks',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.emoji_events_outlined),
-            selectedIcon: Icon(Icons.emoji_events_rounded),
-            label: 'My Badges',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.face_outlined),
-            selectedIcon: Icon(Icons.face_rounded),
-            label: 'My Profile',
-          ),
-        ],
-      ),
+        NavigationDestination(
+          icon: Icon(Icons.assignment_outlined),
+          selectedIcon: Icon(Icons.assignment_rounded),
+          label: 'My Tasks',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.emoji_events_outlined),
+          selectedIcon: Icon(Icons.emoji_events_rounded),
+          label: 'My Badges',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.face_outlined),
+          selectedIcon: Icon(Icons.face_rounded),
+          label: 'My Profile',
+        ),
+      ],
+      children: [
+        _ChildHomeTab(onOpenTasks: _goToTasks),
+        const _ChildHomeworkTab(),
+        const _ChildRewardsTab(),
+        const _ChildProfileTab(),
+      ],
     );
   }
 }
@@ -220,121 +204,77 @@ class _PlayfulHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        padding: const EdgeInsets.all(22),
+    return DashboardHeroHeader(
+      gradient: RoleStyles.forRole('Child')['gradient'] as LinearGradient,
+      accentColor: RoleStyles.forRole('Child')['accent'] as Color,
+      subtitle: 'Level $level Explorer',
+      title: name,
+      avatarOnRight: false,
+      showGradientRing: false,
+      margin: const EdgeInsets.all(20),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF9013FE), Color(0xFF700CB5)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF9013FE).withOpacity(0.3),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(16),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            const DashboardHeaderActions(),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const UserProfileAvatar(
-                    radius: 26, editable: false, showGradientRing: false),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Level $level Explorer',
-                        style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.emoji_events_rounded,
-                          color: Colors.amber, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        '$badgeCount Badges',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'My Progress (XP)',
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  '$xp / ${ChildGamificationProvider.xpPerLevel} XP',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: xpProgress),
-              duration: const Duration(milliseconds: 700),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, _) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: value,
-                    minHeight: 10,
-                    color: Colors.amber,
-                    backgroundColor: Colors.white.withOpacity(0.2),
-                  ),
-                );
-              },
+            const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              '$badgeCount Badges',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
             ),
           ],
         ),
+      ),
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'My Progress (XP)',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                '$xp / ${ChildGamificationProvider.xpPerLevel} XP',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: xpProgress),
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: value,
+                  minHeight: 10,
+                  color: Colors.amber,
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -693,14 +633,8 @@ class _ChildHomeworkTab extends StatelessWidget {
     final game = Provider.of<ChildGamificationProvider>(context);
     final list = game.quests;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('My Homework Quests', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        actions: const [DashboardToolbarTrailing()],
-      ),
+    return DashboardTabScaffold(
+      title: 'My Homework Quests',
       body: list.every((q) => q.completed)
           ? Center(
               child: Padding(
@@ -886,26 +820,21 @@ class _ChildRewardsTab extends StatelessWidget {
     final game = Provider.of<ChildGamificationProvider>(context);
     final badges = game.badges;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('My Vault Badges', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Center(
-              child: Text(
-                '${game.unlockedBadgeCount}/${badges.length}',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.amber),
-              ),
-            ),
+    return DashboardTabScaffold(
+      title: 'My Vault Badges',
+      trailingActions: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.amber.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(10),
           ),
-          const DashboardToolbarTrailing(),
-        ],
-      ),
+          child: Text(
+            '${game.unlockedBadgeCount}/${badges.length}',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber),
+          ),
+        ),
+      ],
       body: GridView.builder(
         padding: const EdgeInsets.all(20),
         physics: const BouncingScrollPhysics(),
@@ -1017,13 +946,8 @@ class _ChildProfileTab extends StatelessWidget {
     final game = Provider.of<ChildGamificationProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('My Profile'),
-        actions: const [DashboardToolbarTrailing()],
-      ),
+    return DashboardTabScaffold(
+      title: 'My Profile',
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/add_child_display_mode.dart';
 import '../../core/constants/parent_demo_data.dart';
+import '../../core/constants/role_styles.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/parent_preferences_provider.dart';
+import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
 import '../../widgets/dashboard/dashboard_stat_card.dart';
-import '../../widgets/navigation/dashboard_header_actions.dart';
-import '../../widgets/navigation/dashboard_shell_scope.dart';
-import '../../widgets/navigation/kidcare_drawer.dart';
-import '../../widgets/navigation/kidcare_quick_panel.dart';
+import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
+import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/parent/add_child_action_button.dart';
 import '../../widgets/parent/add_child_display_setting.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
@@ -28,7 +28,6 @@ class ParentDashboard extends StatefulWidget {
 
 class _ParentDashboardState extends State<ParentDashboard> {
   int _navIndex = 0;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   String _greeting() {
     final hour = DateTime.now().hour;
@@ -39,48 +38,33 @@ class _ParentDashboardState extends State<ParentDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: KidCareDrawer(
-        selectedNavIndex: _navIndex,
-        onTabSelected: (index) => setState(() => _navIndex = index),
-      ),
-      endDrawer: const KidCareQuickPanel(),
-      body: DashboardShellScope(
-        openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
-        openEndDrawer: () => _scaffoldKey.currentState?.openEndDrawer(),
-        child: IndexedStack(
-          index: _navIndex,
-          children: [
-            _ParentHomeTab(greeting: _greeting()),
-            const MarketplaceTab(),
-            const _AlertsTab(),
-            const _ProfileTab(),
-          ],
-        ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _navIndex,
-        onDestinationSelected: (index) => setState(() => _navIndex = index),
-        destinations: const [
-          NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Home'),
-          NavigationDestination(
-              icon: Icon(Icons.storefront_outlined),
-              selectedIcon: Icon(Icons.storefront_rounded),
-              label: 'Shop'),
-          NavigationDestination(
-              icon: Icon(Icons.notifications_outlined),
-              selectedIcon: Icon(Icons.notifications_rounded),
-              label: 'Alerts'),
-          NavigationDestination(
-              icon: Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded),
-              label: 'Profile'),
-        ],
-      ),
+    return KidCareDashboardShell(
+      selectedIndex: _navIndex,
+      onIndexChanged: (index) => setState(() => _navIndex = index),
+      destinations: const [
+        NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home'),
+        NavigationDestination(
+            icon: Icon(Icons.storefront_outlined),
+            selectedIcon: Icon(Icons.storefront_rounded),
+            label: 'Shop'),
+        NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications_rounded),
+            label: 'Alerts'),
+        NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Profile'),
+      ],
+      children: [
+        _ParentHomeTab(greeting: _greeting()),
+        const MarketplaceTab(),
+        const _AlertsTab(),
+        const _ProfileTab(),
+      ],
     );
   }
 }
@@ -116,10 +100,15 @@ class _ParentHomeTab extends StatelessWidget {
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   SliverToBoxAdapter(
-                      child: _buildGreetingCard(
-                          context,
-                          user?.fullName ?? 'Parent',
-                          childProvider.children.length)),
+                    child: DashboardHeroHeader(
+                      gradient: RoleStyles.forRole('Parent')['gradient'] as LinearGradient,
+                      accentColor: RoleStyles.forRole('Parent')['accent'] as Color,
+                      subtitle: greeting,
+                      title: user?.fullName ?? 'Parent',
+                      badgeText:
+                          '${childProvider.children.length} ${childProvider.children.length == 1 ? 'child' : 'children'} on your care plan',
+                    ),
+                  ),
                   SliverToBoxAdapter(child: _buildQuickStats(context)),
                   SliverToBoxAdapter(child: _buildQuickActions(context)),
                   SliverToBoxAdapter(
@@ -153,76 +142,6 @@ class _ParentHomeTab extends StatelessWidget {
                   SliverToBoxAdapter(child: SizedBox(height: showFloatingAdd ? 88 : 24)),
                 ],
               ),
-      ),
-    );
-  }
-
-  Widget _buildGreetingCard(BuildContext context, String name, int childCount) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.primaryBlue, AppTheme.primaryBlueDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryBlue.withOpacity(0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const DashboardHeaderActions(),
-            const SizedBox(height: 18),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(greeting,
-                          style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                      const SizedBox(height: 6),
-                      Text(
-                        name,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                const UserProfileAvatar(radius: 28, editable: false, showGradientRing: true),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '$childCount ${childCount == 1 ? 'child' : 'children'} on your care plan',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -600,13 +519,8 @@ class _AlertsTab extends StatelessWidget {
       ),
     ];
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Notifications'),
-        centerTitle: false,
-        actions: const [DashboardToolbarTrailing()],
-      ),
+    return DashboardTabScaffold(
+      title: 'Notifications',
       body: ListView.separated(
         padding: const EdgeInsets.all(20),
         itemCount: alerts.length,
@@ -636,14 +550,9 @@ class _ProfileTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).currentUser;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Profile'),
-        actions: const [DashboardToolbarTrailing()],
-      ),
-      body: SafeArea(
-        child: ListView(
+    return DashboardTabScaffold(
+      title: 'Profile',
+      body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
             Center(child: UserProfileAvatar(radius: 44, user: user)),
@@ -684,7 +593,6 @@ class _ProfileTab extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

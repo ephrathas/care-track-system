@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/healthcare_provider.dart';
-import '../../widgets/navigation/dashboard_header_actions.dart';
-import '../../widgets/navigation/dashboard_shell_scope.dart';
-import '../../widgets/navigation/kidcare_drawer.dart';
-import '../../widgets/navigation/kidcare_quick_panel.dart';
+import '../../widgets/dashboard/dashboard_hero_header.dart';
+import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
+import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 
 class HealthcareDashboard extends StatefulWidget {
@@ -20,56 +20,40 @@ class HealthcareDashboard extends StatefulWidget {
 
 class _HealthcareDashboardState extends State<HealthcareDashboard> {
   int _navIndex = 0;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: KidCareDrawer(
-        selectedNavIndex: _navIndex,
-        onTabSelected: (index) => setState(() => _navIndex = index),
-      ),
-      endDrawer: const KidCareQuickPanel(),
-      body: DashboardShellScope(
-        openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
-        openEndDrawer: () => _scaffoldKey.currentState?.openEndDrawer(),
-        child: IndexedStack(
-          index: _navIndex,
-          children: const [
-            _HealthcareHomeTab(),
-            _HealthcarePatientsTab(),
-            _HealthcareAppointmentsTab(),
-            _HealthcareProfileTab(),
-          ],
+    return KidCareDashboardShell(
+      selectedIndex: _navIndex,
+      onIndexChanged: (index) => setState(() => _navIndex = index),
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.healing_outlined),
+          selectedIcon: Icon(Icons.healing_rounded),
+          label: 'Home Center',
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _navIndex,
-        onDestinationSelected: (index) => setState(() => _navIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.healing_outlined),
-            selectedIcon: Icon(Icons.healing_rounded),
-            label: 'Home Center',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.folder_shared_outlined),
-            selectedIcon: Icon(Icons.folder_shared_rounded),
-            label: 'Directory',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month_rounded),
-            label: 'Visits',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.medical_services_outlined),
-            selectedIcon: Icon(Icons.medical_services_rounded),
-            label: 'Credentials',
-          ),
-        ],
-      ),
+        NavigationDestination(
+          icon: Icon(Icons.folder_shared_outlined),
+          selectedIcon: Icon(Icons.folder_shared_rounded),
+          label: 'Directory',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.calendar_month_outlined),
+          selectedIcon: Icon(Icons.calendar_month_rounded),
+          label: 'Visits',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.medical_services_outlined),
+          selectedIcon: Icon(Icons.medical_services_rounded),
+          label: 'Credentials',
+        ),
+      ],
+      children: const [
+        _HealthcareHomeTab(),
+        _HealthcarePatientsTab(),
+        _HealthcareAppointmentsTab(),
+        _HealthcareProfileTab(),
+      ],
     );
   }
 }
@@ -111,10 +95,14 @@ class _HealthcareHomeTab extends StatelessWidget {
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   SliverToBoxAdapter(
-                    child: _buildWelcomeHeader(
-                      context,
-                      user?.fullName ?? 'Healthcare Professional',
-                      isDark,
+                    child: DashboardHeroHeader(
+                      gradient: RoleStyles.forRole('Healthcare')['gradient'] as LinearGradient,
+                      accentColor: RoleStyles.forRole('Healthcare')['accent'] as Color,
+                      subtitle: 'Healthcare Center',
+                      title: 'Hello, ${user?.fullName ?? 'Healthcare Professional'}',
+                      badgeText: 'Metro Pediatrics Clinic • Room 402',
+                      margin: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                     ),
                   ),
                   SliverToBoxAdapter(
@@ -269,82 +257,6 @@ class _HealthcareHomeTab extends StatelessWidget {
                   ),
                 ],
               ),
-      ),
-    );
-  }
-
-  Widget _buildWelcomeHeader(BuildContext context, String name, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFE2894A), Color(0xFFBD7135)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFE2894A).withOpacity(0.25),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const DashboardHeaderActions(),
-            const SizedBox(height: 18),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Healthcare Center',
-                        style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Hello, $name',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                const UserProfileAvatar(
-                    radius: 28, editable: false, showGradientRing: true),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'Metro Pediatrics Clinic • Room 402',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -818,16 +730,9 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
     final healthcare = Provider.of<HealthcareProvider>(context);
     final list = healthcare.searchPatients(_searchQuery);
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Pediatric Directory', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        actions: const [DashboardToolbarTrailing()],
-      ),
-      body: SafeArea(
-        child: healthcare.isLoading
+    return DashboardTabScaffold(
+      title: 'Pediatric Directory',
+      body: healthcare.isLoading
             ? const Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE2894A)),
@@ -1027,7 +932,6 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                   ),
                 ],
               ),
-      ),
     );
   }
 }
@@ -1042,14 +946,8 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
     final healthcare = Provider.of<HealthcareProvider>(context);
     final appointments = healthcare.upcomingAppointments;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Upcoming Clinic Visits', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: false,
-        actions: const [DashboardToolbarTrailing()],
-      ),
+    return DashboardTabScaffold(
+      title: 'Upcoming Clinic Visits',
       body: healthcare.isLoading
           ? const Center(
               child: CircularProgressIndicator(
@@ -1154,13 +1052,8 @@ class _HealthcareProfileTab extends StatelessWidget {
     final user = Provider.of<AuthProvider>(context).currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(
-        leading: const DashboardToolbarLeading(),
-        title: const Text('Profile Settings'),
-        actions: const [DashboardToolbarTrailing()],
-      ),
+    return DashboardTabScaffold(
+      title: 'Profile Settings',
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
