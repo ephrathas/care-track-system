@@ -613,7 +613,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                               ),
                               Switch(
                                 value: isPresent,
-                                activeThumbColor: const Color(0xFF7ED321),
+                                activeColor: const Color(0xFF7ED321),
                                 activeTrackColor: const Color(0xFF7ED321).withOpacity(0.2),
                                 onChanged: (value) {
                                   setState(() {
@@ -733,7 +733,7 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
                   const Text('Subject', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedSubject,
+                    value: _selectedSubject,
                     dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                     decoration: InputDecoration(
                       filled: true,

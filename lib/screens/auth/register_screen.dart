@@ -184,7 +184,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hint: 'Enter your full name',
                             prefixIcon: Icons.person_outline_rounded,
                             validator: (val) {
-                              if (val == null  val.trim().isEmpty) {
+                              if (val == null || val.trim().isEmpty) {
                                 return 'Please enter your name';
                               }
                               return null;
@@ -199,10 +199,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: (val) {
-                              if (val == null  val.trim().isEmpty) {
+                              if (val == null || val.trim().isEmpty) {
                                 return 'Please enter your email';
                               }
-                              if (!val.contains('@')  !val.contains('.')) {
+                              if (!val.contains('@') || !val.contains('.')) {
                                 return 'Please enter a valid email address';
                               }
                               return null;
@@ -226,7 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                             validator: (val) {
-                              if (val == null  val.trim().isEmpty) {
+                              if (val == null || val.trim().isEmpty) {
                                 return 'Please enter a password';
                               }
                               if (val.length < 6) {

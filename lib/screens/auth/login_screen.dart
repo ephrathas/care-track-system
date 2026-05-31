@@ -134,10 +134,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: (val) {
-                              if (val == null  val.trim().isEmpty) {
+                              if (val == null || val.trim().isEmpty) {
                                 return 'Please enter your email';
                               }
-                              if (!val.contains('@')  !val.contains('.')) {
+                              if (!val.contains('@') || !val.contains('.')) {
                                 return 'Please enter a valid email address';
                               }
                               return null;
