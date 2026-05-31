@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/child_model.dart';
 import '../models/health_appointment_model.dart';
+import '../models/marketplace_order_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -81,5 +82,19 @@ class DatabaseService {
         .add(orderData)
         .timeout(const Duration(seconds: 10));
     return doc.id;
+  }
+
+  Stream<List<MarketplaceOrder>> getMarketplaceOrdersForParent(String parentId) {
+    return _db
+        .collection('marketplace_orders')
+        .where('parentId', isEqualTo: parentId)
+        .snapshots()
+        .map((snapshot) {
+          final orders = snapshot.docs
+              .map((doc) => MarketplaceOrder.fromMap(doc.data(), doc.id))
+              .toList();
+          orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return orders;
+        });
   }
 }

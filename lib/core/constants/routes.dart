@@ -5,6 +5,8 @@ import 'package:child_and_student_care_and_tracking_app/screens/parent/child_tim
 import 'package:child_and_student_care_and_tracking_app/screens/parent/parent_dashboard.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/cart_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/checkout_screen.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/parent/my_orders_screen.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/parent/order_detail_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/product_detail_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/reports_screen.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +33,8 @@ class AppRoutes {
   static const String productDetail = '/product_detail';
   static const String cart = '/cart';
   static const String checkout = '/checkout';
+  static const String myOrders = '/my_orders';
+  static const String orderDetail = '/order_detail';
 
   // 🗺️ The Unified Map of Routes
   static Map<String, WidgetBuilder> get routes => {
@@ -56,6 +60,8 @@ class AppRoutes {
         },
         cart: (context) => const CartScreen(),
         checkout: (context) => const CheckoutScreen(),
+        myOrders: (context) => const MyOrdersScreen(),
+        orderDetail: (context) => const OrderDetailScreen(),
       };
 
   // Helper function for clean navigation

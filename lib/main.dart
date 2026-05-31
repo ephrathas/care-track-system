@@ -4,6 +4,7 @@ import 'package:child_and_student_care_and_tracking_app/providers/auth_provider.
 import 'package:child_and_student_care_and_tracking_app/providers/cart_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/child_gamification_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/healthcare_provider.dart';
+import 'package:child_and_student_care_and_tracking_app/providers/marketplace_orders_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/parent_preferences_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/child_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -28,6 +29,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => HealthcareProvider()),
         ChangeNotifierProvider(create: (_) => ParentPreferencesProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => MarketplaceOrdersProvider()),
       ],
       child: const MyApp(),
     ),

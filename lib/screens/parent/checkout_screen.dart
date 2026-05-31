@@ -62,20 +62,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         createdAt: DateTime.now(),
       );
 
-      await DatabaseService().placeMarketplaceOrder(order.toMap());
+      final orderId = await DatabaseService().placeMarketplaceOrder(order.toMap());
+      final placedOrder = MarketplaceOrder(
+        id: orderId,
+        parentId: order.parentId,
+        parentName: order.parentName,
+        email: order.email,
+        phone: order.phone,
+        deliveryAddress: order.deliveryAddress,
+        items: order.items,
+        subtotal: order.subtotal,
+        createdAt: order.createdAt,
+        status: order.status,
+      );
       await cart.clear();
 
       if (!mounted) return;
       Navigator.of(context).popUntil(
         (route) => route.isFirst || route.settings.name == AppRoutes.parentHome,
       );
+      AppRoutes.push(context, AppRoutes.orderDetail, arguments: placedOrder);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Order placed! We will confirm delivery details by email.'),
+          content: const Text('Order placed! Track delivery in My Orders.'),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppTheme.softGreen,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(16),
+          action: SnackBarAction(
+            label: 'View',
+            textColor: Colors.white,
+            onPressed: () => AppRoutes.push(context, AppRoutes.orderDetail, arguments: placedOrder),
+          ),
         ),
       );
     } catch (e) {

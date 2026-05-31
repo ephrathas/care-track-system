@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
+import '../../providers/marketplace_orders_provider.dart';
 import '../../providers/parent_preferences_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
@@ -498,29 +499,54 @@ class _AlertsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alerts = [
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final orders = context.watch<MarketplaceOrdersProvider>().orders;
+
+    final staticAlerts = [
       (
         'Attendance marked present',
         'Emma checked in at 8:12 AM',
         Icons.check_circle_rounded,
-        AppTheme.softGreen
+        AppTheme.softGreen,
+        null as String?,
       ),
       (
         'Homework reminder',
         'Math worksheet due tomorrow',
         Icons.menu_book_rounded,
-        AppTheme.primaryBlue
+        AppTheme.primaryBlue,
+        null,
       ),
       (
         'Health notice',
         'Annual checkup scheduled next week',
         Icons.medical_information_rounded,
-        const Color(0xFFE2894A)
+        const Color(0xFFE2894A),
+        null,
       ),
     ];
 
+    final orderAlerts = orders.take(5).map((order) {
+      return (
+        'Order #${order.shortId} • ${order.statusLabel}',
+        '${order.itemCount} items • \$${order.subtotal.toStringAsFixed(2)}',
+        Icons.local_shipping_rounded,
+        order.statusColor(context),
+        order.id,
+      );
+    });
+
+    final alerts = [...orderAlerts, ...staticAlerts];
+
     return DashboardTabScaffold(
       title: 'Notifications',
+      trailingActions: [
+        IconButton(
+          tooltip: 'My Orders',
+          onPressed: () => AppRoutes.push(context, AppRoutes.myOrders),
+          icon: const Icon(Icons.receipt_long_rounded, color: AppTheme.primaryBlue),
+        ),
+      ],
       body: ListView.separated(
         padding: const EdgeInsets.all(20),
         itemCount: alerts.length,
@@ -530,12 +556,15 @@ class _AlertsTab extends StatelessWidget {
           return ListTile(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: AppTheme.inputBorder),
+              side: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
             ),
             leading: Icon(alert.$3, color: alert.$4),
             title: Text(alert.$1,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(alert.$2),
+            onTap: alert.$5 != null
+                ? () => AppRoutes.push(context, AppRoutes.orderDetail, arguments: alert.$5)
+                : null,
           );
         },
       ),
@@ -583,6 +612,8 @@ class _ProfileTab extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () async {
                   Provider.of<ChildProvider>(context, listen: false)
+                      .stopListening();
+                  Provider.of<MarketplaceOrdersProvider>(context, listen: false)
                       .stopListening();
                   await Provider.of<AuthProvider>(context, listen: false)
                       .logout();
