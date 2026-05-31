@@ -129,7 +129,6 @@ class _HealthcareHomeTab extends StatelessWidget {
                       padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
                       child: Text(
                         'Today\'s Hospital Appointments',
-<<<<<<< HEAD
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
                       ),
                     ),
@@ -218,145 +217,12 @@ class _HealthcareHomeTab extends StatelessWidget {
                         childCount: todayVisits.length,
                       ),
                     ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 10),
-                child: Text(
-                  'Urgent Clinical Alerts',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
-=======
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.2),
-                      ),
-                    ),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
-                  ),
-                  if (todayVisits.isEmpty)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                        child: Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppTheme.darkSurface : Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                                color: isDark
-                                    ? Colors.grey.shade800
-                                    : AppTheme.inputBorder),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.event_available_rounded,
-                                  color: isDark
-                                      ? Colors.grey[400]
-                                      : AppTheme.textSecondary),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'No visits scheduled for today. Schedule one from the Pediatric Directory.',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? Colors.grey[400]
-                                        : AppTheme.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final visit = todayVisits[index];
-                          final accent = _appointmentAccents[
-                              index % _appointmentAccents.length];
-                          final icon = _appointmentIcons[
-                              index % _appointmentIcons.length];
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppTheme.darkSurface
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                    color: isDark
-                                        ? Colors.grey.shade800
-                                        : AppTheme.inputBorder),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: accent.withOpacity(0.12),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Icon(icon, color: accent, size: 24),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          visit.childName,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '${visit.title} • ${visit.timeLabel}',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: isDark
-                                                ? Colors.grey[400]
-                                                : AppTheme.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        childCount: todayVisits.length,
-                      ),
-                    ),
                   const SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(20, 16, 20, 10),
                       child: Text(
                         'Urgent Clinical Alerts',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.2),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
                       ),
                     ),
                   ),
@@ -368,8 +234,7 @@ class _HealthcareHomeTab extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.redAccent.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                              color: Colors.redAccent.withOpacity(0.3)),
+                          border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                         ),
                         child: const Row(
                           children: [
@@ -484,30 +349,10 @@ class _HealthcareHomeTab extends StatelessWidget {
     );
   }
 
-<<<<<<< HEAD
   Widget _buildClinicStats(bool isDark, {required int patientCount, required int vaccineCount}) {
     final stats = [
       ('Patients', '$patientCount Active', 'Registered in KidCare', const Color(0xFFE2894A), Icons.groups_rounded),
       ('Vaccines', '$vaccineCount On Record', 'Across all patients', const Color(0xFF4A90E2), Icons.vaccines_rounded),
-=======
-  Widget _buildClinicStats(bool isDark,
-      {required int patientCount, required int vaccineCount}) {
-    final stats = [
-      (
-        'Patients',
-        '$patientCount Active',
-        'Registered in KidCare',
-        const Color(0xFFE2894A),
-        Icons.groups_rounded
-      ),
-      (
-        'Vaccines',
-        '$vaccineCount On Record',
-        'Across all patients',
-        const Color(0xFF4A90E2),
-        Icons.vaccines_rounded
-      ),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
     ];
 
     return Padding(
@@ -609,12 +454,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
       ),
       builder: (sheetContext) {
         return Padding(
-<<<<<<< HEAD
           padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(sheetContext).viewInsets.bottom + 24),
-=======
-          padding: EdgeInsets.fromLTRB(
-              24, 24, 24, MediaQuery.of(sheetContext).viewInsets.bottom + 24),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -679,26 +519,12 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                     final w = double.tryParse(_weightController.text);
                     if (h == null || w == null) {
                       ScaffoldMessenger.of(sheetContext).showSnackBar(
-<<<<<<< HEAD
                         const SnackBar(content: Text('Please enter valid height and weight values')),
                       );
                       return;
                     }
                     final success = await Provider.of<HealthcareProvider>(sheetContext, listen: false)
                         .updateGrowthMetrics(childId: patient.id, height: h, weight: w);
-=======
-                        const SnackBar(
-                            content: Text(
-                                'Please enter valid height and weight values')),
-                      );
-                      return;
-                    }
-                    final success = await Provider.of<HealthcareProvider>(
-                            sheetContext,
-                            listen: false)
-                        .updateGrowthMetrics(
-                            childId: patient.id, height: h, weight: w);
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                     if (!sheetContext.mounted) return;
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -709,16 +535,8 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                               : 'Could not save growth metrics. Please try again.',
                         ),
                         behavior: SnackBarBehavior.floating,
-<<<<<<< HEAD
                         backgroundColor: success ? const Color(0xFFE2894A) : Colors.redAccent,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-=======
-                        backgroundColor: success
-                            ? const Color(0xFFE2894A)
-                            : Colors.redAccent,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                         margin: const EdgeInsets.all(12),
                       ),
                     );
@@ -752,20 +570,10 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
-<<<<<<< HEAD
         final livePatient = _patientById(patient.id, Provider.of<HealthcareProvider>(sheetContext)) ?? patient;
 
         return Padding(
           padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(sheetContext).viewInsets.bottom + 24),
-=======
-        final livePatient = _patientById(
-                patient.id, Provider.of<HealthcareProvider>(sheetContext)) ??
-            patient;
-
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-              24, 24, 24, MediaQuery.of(sheetContext).viewInsets.bottom + 24),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -775,12 +583,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                 children: [
                   Text(
                     'Immunization Registry - ${livePatient.name}',
-<<<<<<< HEAD
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-=======
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(sheetContext),
@@ -795,12 +598,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
               ),
               const SizedBox(height: 8),
               if (livePatient.vaccinations.isEmpty)
-<<<<<<< HEAD
                 const Text('No vaccines registered yet.', style: TextStyle(fontSize: 12, color: Colors.grey))
-=======
-                const Text('No vaccines registered yet.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey))
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
               else
                 Wrap(
                   spacing: 8,
@@ -842,26 +640,12 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                     final vaxName = _vaccineController.text.trim();
                     if (vaxName.isEmpty) {
                       ScaffoldMessenger.of(sheetContext).showSnackBar(
-<<<<<<< HEAD
                         const SnackBar(content: Text('Please enter a vaccine description')),
                       );
                       return;
                     }
                     final success = await Provider.of<HealthcareProvider>(sheetContext, listen: false)
                         .addVaccine(childId: livePatient.id, vaccineName: vaxName);
-=======
-                        const SnackBar(
-                            content:
-                                Text('Please enter a vaccine description')),
-                      );
-                      return;
-                    }
-                    final success = await Provider.of<HealthcareProvider>(
-                            sheetContext,
-                            listen: false)
-                        .addVaccine(
-                            childId: livePatient.id, vaccineName: vaxName);
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                     if (!sheetContext.mounted) return;
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -881,16 +665,8 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                           ],
                         ),
                         behavior: SnackBarBehavior.floating,
-<<<<<<< HEAD
                         backgroundColor: success ? const Color(0xFF4A90E2) : Colors.redAccent,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-=======
-                        backgroundColor: success
-                            ? const Color(0xFF4A90E2)
-                            : Colors.redAccent,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                         margin: const EdgeInsets.all(12),
                       ),
                     );
@@ -901,149 +677,6 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Log Vaccine Inoculation',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.white)),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _openScheduleSheet(ChildModel patient) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    _visitTitleController.text = 'Pediatric Checkup';
-    final now = DateTime.now();
-    _scheduledVisitAt = DateTime(now.year, now.month, now.day, 9, 0);
-    _visitTimeController.text = DateFormat('hh:mm a').format(_scheduledVisitAt);
-
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-              24, 24, 24, MediaQuery.of(sheetContext).viewInsets.bottom + 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Schedule Visit - ${patient.name}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(sheetContext),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text('Visit Title',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _visitTitleController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: isDark
-                      ? AppTheme.darkBackground
-                      : const Color(0xFFF9FAFB),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text('Visit Time',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _visitTimeController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  suffixIcon: const Icon(Icons.access_time_rounded),
-                  filled: true,
-                  fillColor: isDark
-                      ? AppTheme.darkBackground
-                      : const Color(0xFFF9FAFB),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                onTap: () async {
-                  final picked = await showTimePicker(
-                    context: sheetContext,
-                    initialTime: TimeOfDay.fromDateTime(_scheduledVisitAt),
-                  );
-                  if (picked != null) {
-                    final today = DateTime.now();
-                    _scheduledVisitAt = DateTime(
-                      today.year,
-                      today.month,
-                      today.day,
-                      picked.hour,
-                      picked.minute,
-                    );
-                    _visitTimeController.text =
-                        DateFormat('hh:mm a').format(_scheduledVisitAt);
-                  }
-                },
-              ),
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final title = _visitTitleController.text.trim();
-                    if (title.isEmpty) {
-                      ScaffoldMessenger.of(sheetContext).showSnackBar(
-                        const SnackBar(
-                            content: Text('Please enter a visit title')),
-                      );
-                      return;
-                    }
-                    final success = await Provider.of<HealthcareProvider>(
-                            sheetContext,
-                            listen: false)
-                        .scheduleAppointment(
-                      childId: patient.id,
-                      childName: patient.name,
-                      title: title,
-                      scheduledAt: _scheduledVisitAt,
-                    );
-                    if (!sheetContext.mounted) return;
-                    Navigator.pop(sheetContext);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          success
-                              ? 'Visit scheduled for ${patient.name}!'
-                              : 'Could not schedule visit. Please try again.',
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: success
-                            ? const Color(0xFFE2894A)
-                            : Colors.redAccent,
-                        margin: const EdgeInsets.all(12),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE2894A),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Confirm Visit',
                       style: TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
@@ -1189,12 +822,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
         leading: const DashboardToolbarLeading(),
-<<<<<<< HEAD
         title: const Text('Pediatric Directory', style: TextStyle(fontWeight: FontWeight.bold)),
-=======
-        title: const Text('Pediatric Directory',
-            style: TextStyle(fontWeight: FontWeight.bold)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
         centerTitle: false,
         actions: const [DashboardToolbarTrailing()],
       ),
@@ -1213,35 +841,16 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                       onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
                         hintText: 'Search patients by name...',
-<<<<<<< HEAD
                         prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary),
-=======
-                        prefixIcon: const Icon(Icons.search_rounded,
-                            color: AppTheme.textSecondary),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                         filled: true,
                         fillColor: isDark ? AppTheme.darkSurface : Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-<<<<<<< HEAD
                           borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-=======
-                          borderSide: BorderSide(
-                              color: isDark
-                                  ? Colors.grey.shade800
-                                  : AppTheme.inputBorder),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                              color: isDark
-                                  ? Colors.grey.shade800
-                                  : AppTheme.inputBorder),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                         ),
                       ),
                     ),
@@ -1255,28 +864,14 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.folder_shared_outlined,
-<<<<<<< HEAD
                                       size: 48, color: isDark ? Colors.grey[600] : AppTheme.textSecondary),
-=======
-                                      size: 48,
-                                      color: isDark
-                                          ? Colors.grey[600]
-                                          : AppTheme.textSecondary),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                   const SizedBox(height: 12),
                                   Text(
                                     _searchQuery.isEmpty
                                         ? 'No patients registered yet.\nWhen parents add children, they appear here.'
                                         : 'No patients match your search.',
                                     textAlign: TextAlign.center,
-<<<<<<< HEAD
                                     style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
-=======
-                                    style: TextStyle(
-                                        color: isDark
-                                            ? Colors.grey[400]
-                                            : AppTheme.textSecondary),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                   ),
                                 ],
                               ),
@@ -1286,31 +881,15 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                             physics: const BouncingScrollPhysics(),
                             itemCount: list.length,
-<<<<<<< HEAD
                             separatorBuilder: (_, __) => const SizedBox(height: 12),
-=======
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 12),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                             itemBuilder: (context, index) {
                               final p = list[index];
                               return Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-<<<<<<< HEAD
                                   color: isDark ? AppTheme.darkSurface : Colors.white,
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-=======
-                                  color: isDark
-                                      ? AppTheme.darkSurface
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                      color: isDark
-                                          ? Colors.grey.shade800
-                                          : AppTheme.inputBorder),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1319,26 +898,12 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                       children: [
                                         CircleAvatar(
                                           radius: 20,
-<<<<<<< HEAD
                                           backgroundColor: const Color(0xFFE2894A).withOpacity(0.12),
                                           backgroundImage:
                                               p.imageUrl.isNotEmpty ? NetworkImage(p.imageUrl) : null,
                                           child: p.imageUrl.isEmpty
                                               ? Text(
                                                   p.name.isNotEmpty ? p.name[0].toUpperCase() : 'C',
-=======
-                                          backgroundColor:
-                                              const Color(0xFFE2894A)
-                                                  .withOpacity(0.12),
-                                          backgroundImage: p.imageUrl.isNotEmpty
-                                              ? NetworkImage(p.imageUrl)
-                                              : null,
-                                          child: p.imageUrl.isEmpty
-                                              ? Text(
-                                                  p.name.isNotEmpty
-                                                      ? p.name[0].toUpperCase()
-                                                      : 'C',
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                                   style: const TextStyle(
                                                     color: Color(0xFFE2894A),
                                                     fontWeight: FontWeight.bold,
@@ -1349,34 +914,17 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                         const SizedBox(width: 14),
                                         Expanded(
                                           child: Column(
-<<<<<<< HEAD
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 p.name,
                                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-=======
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                p.name,
-                                                style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                               ),
                                               Text(
                                                 'ID: ${p.id.substring(0, 8)}… • ${p.age} years old',
                                                 style: TextStyle(
                                                   fontSize: 11,
-<<<<<<< HEAD
                                                   color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
-=======
-                                                  color: isDark
-                                                      ? Colors.grey[400]
-                                                      : AppTheme.textSecondary,
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                                 ),
                                               ),
                                             ],
@@ -1388,7 +936,6 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                     const Divider(height: 1),
                                     const SizedBox(height: 12),
                                     Row(
-<<<<<<< HEAD
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Column(
@@ -1407,72 +954,19 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                                 style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
                                             Text(p.weightLabel,
                                                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-=======
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('Latest Height',
-                                                style: TextStyle(
-                                                    fontSize: 10,
-                                                    color: AppTheme
-                                                        .textSecondary)),
-                                            Text(p.heightLabel,
-                                                style: const TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                          ],
-                                        ),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('Latest Weight',
-                                                style: TextStyle(
-                                                    fontSize: 10,
-                                                    color: AppTheme
-                                                        .textSecondary)),
-                                            Text(p.weightLabel,
-                                                style: const TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                           ],
                                         ),
                                         Flexible(
                                           child: Column(
-<<<<<<< HEAD
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               const Text('Last Checkup',
                                                   style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-=======
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const Text('Last Checkup',
-                                                  style: TextStyle(
-                                                      fontSize: 10,
-                                                      color: AppTheme
-                                                          .textSecondary)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                               Text(
                                                 p.checkupLabel,
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
-<<<<<<< HEAD
                                                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-=======
-                                                style: const TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight:
-                                                        FontWeight.bold),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                               ),
                                             ],
                                           ),
@@ -1484,7 +978,6 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                       children: [
                                         Expanded(
                                           child: OutlinedButton.icon(
-<<<<<<< HEAD
                                             onPressed: () => _openGrowthSheet(p),
                                             icon: const Icon(Icons.show_chart_rounded, size: 16),
                                             label: const Text('Growth',
@@ -1493,34 +986,12 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                               foregroundColor: const Color(0xFFE2894A),
                                               side: const BorderSide(color: Color(0xFFE2894A)),
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-=======
-                                            onPressed: () =>
-                                                _openGrowthSheet(p),
-                                            icon: const Icon(
-                                                Icons.show_chart_rounded,
-                                                size: 16),
-                                            label: const Text('Growth',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor:
-                                                  const Color(0xFFE2894A),
-                                              side: const BorderSide(
-                                                  color: Color(0xFFE2894A)),
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                             ),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: ElevatedButton.icon(
-<<<<<<< HEAD
                                             onPressed: () => _openVaccineSheet(p),
                                             icon: const Icon(Icons.vaccines_rounded, size: 16),
                                             label: const Text('Vaccines',
@@ -1529,33 +1000,12 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                               backgroundColor: const Color(0xFF4A90E2),
                                               foregroundColor: Colors.white,
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-=======
-                                            onPressed: () =>
-                                                _openVaccineSheet(p),
-                                            icon: const Icon(
-                                                Icons.vaccines_rounded,
-                                                size: 16),
-                                            label: const Text('Vaccines',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color(0xFF4A90E2),
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                             ),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: OutlinedButton.icon(
-<<<<<<< HEAD
                                             onPressed: () => _openScheduleSheet(p),
                                             icon: const Icon(Icons.event_rounded, size: 16),
                                             label: const Text('Visit',
@@ -1564,27 +1014,6 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                               foregroundColor: AppTheme.primaryBlue,
                                               side: const BorderSide(color: AppTheme.primaryBlue),
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-=======
-                                            onPressed: () =>
-                                                _openScheduleSheet(p),
-                                            icon: const Icon(
-                                                Icons.event_rounded,
-                                                size: 16),
-                                            label: const Text('Visit',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor:
-                                                  AppTheme.primaryBlue,
-                                              side: const BorderSide(
-                                                  color: AppTheme.primaryBlue),
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                             ),
                                           ),
                                         ),
@@ -1617,12 +1046,7 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
         leading: const DashboardToolbarLeading(),
-<<<<<<< HEAD
         title: const Text('Upcoming Clinic Visits', style: TextStyle(fontWeight: FontWeight.bold)),
-=======
-        title: const Text('Upcoming Clinic Visits',
-            style: TextStyle(fontWeight: FontWeight.bold)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
         centerTitle: false,
         actions: const [DashboardToolbarTrailing()],
       ),
@@ -1640,26 +1064,12 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.event_busy_rounded,
-<<<<<<< HEAD
                             size: 48, color: isDark ? Colors.grey[600] : AppTheme.textSecondary),
-=======
-                            size: 48,
-                            color: isDark
-                                ? Colors.grey[600]
-                                : AppTheme.textSecondary),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                         const SizedBox(height: 12),
                         Text(
                           'No clinic visits scheduled yet.\nUse the Visit button in Pediatric Directory.',
                           textAlign: TextAlign.center,
-<<<<<<< HEAD
                           style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
-=======
-                          style: TextStyle(
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : AppTheme.textSecondary),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                         ),
                       ],
                     ),
@@ -1672,26 +1082,13 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final visit = appointments[index];
-<<<<<<< HEAD
                     final statusColor = visit.status == 'Active' ? Colors.green : AppTheme.textSecondary;
-=======
-                    final statusColor = visit.status == 'Active'
-                        ? Colors.green
-                        : AppTheme.textSecondary;
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: isDark ? AppTheme.darkSurface : Colors.white,
                         borderRadius: BorderRadius.circular(18),
-<<<<<<< HEAD
                         border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-=======
-                        border: Border.all(
-                            color: isDark
-                                ? Colors.grey.shade800
-                                : AppTheme.inputBorder),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                       ),
                       child: Row(
                         children: [
@@ -1701,12 +1098,7 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                               color: const Color(0xFFE2894A).withOpacity(0.12),
                               borderRadius: BorderRadius.circular(14),
                             ),
-<<<<<<< HEAD
                             child: const Icon(Icons.event_note_rounded, color: Color(0xFFE2894A), size: 24),
-=======
-                            child: const Icon(Icons.event_note_rounded,
-                                color: Color(0xFFE2894A), size: 24),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -1714,7 +1106,6 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-<<<<<<< HEAD
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
@@ -1723,34 +1114,13 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-=======
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      visit.childName,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                       decoration: BoxDecoration(
                                         color: statusColor.withOpacity(0.12),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
                                         visit.status,
-<<<<<<< HEAD
                                         style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 9),
-=======
-                                        style: TextStyle(
-                                            color: statusColor,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 9),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                       ),
                                     ),
                                   ],
@@ -1760,13 +1130,7 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                                   '${visit.title} • ${DateFormat('MMM dd, yyyy').format(visit.scheduledAt)} • ${visit.timeLabel}',
                                   style: TextStyle(
                                     fontSize: 11,
-<<<<<<< HEAD
                                     color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
-=======
-                                    color: isDark
-                                        ? Colors.grey[400]
-                                        : AppTheme.textSecondary,
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
                                   ),
                                 ),
                               ],
@@ -1859,15 +1223,8 @@ class _HealthcareProfileTab extends StatelessWidget {
             height: 52,
             child: OutlinedButton.icon(
               onPressed: () async {
-<<<<<<< HEAD
                 Provider.of<HealthcareProvider>(context, listen: false).stopListening();
                 await Provider.of<AuthProvider>(context, listen: false).logout();
-=======
-                Provider.of<HealthcareProvider>(context, listen: false)
-                    .stopListening();
-                await Provider.of<AuthProvider>(context, listen: false)
-                    .logout();
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
               },
               icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
               label: const Text('Sign Out',

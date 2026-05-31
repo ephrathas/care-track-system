@@ -24,7 +24,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
       key: _scaffoldKey,
       drawer: KidCareDrawer(
         selectedNavIndex: _navIndex,
@@ -44,17 +43,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             _TeacherProfileTab(),
           ],
         ),
-=======
-      body: IndexedStack(
-        index: _navIndex,
-        children: const [
-          _TeacherHomeTab(),
-          _TeacherAttendanceTab(),
-          _TeacherHomeworkTab(),
-          _TeacherMessagesTab(),
-          _TeacherProfileTab(),
-        ],
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _navIndex,

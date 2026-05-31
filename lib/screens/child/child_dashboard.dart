@@ -696,13 +696,8 @@ class _ChildHomeworkTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
-<<<<<<< HEAD
         leading: const DashboardToolbarLeading(),
         title: const Text('My Homework Quests', style: TextStyle(fontWeight: FontWeight.bold)),
-=======
-        title: const Text('My Homework Quests',
-            style: TextStyle(fontWeight: FontWeight.bold)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
         centerTitle: false,
         actions: const [DashboardToolbarTrailing()],
       ),
@@ -894,13 +889,8 @@ class _ChildRewardsTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
-<<<<<<< HEAD
         leading: const DashboardToolbarLeading(),
         title: const Text('My Vault Badges', style: TextStyle(fontWeight: FontWeight.bold)),
-=======
-        title: const Text('My Vault Badges',
-            style: TextStyle(fontWeight: FontWeight.bold)),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
         centerTitle: false,
         actions: [
           Padding(

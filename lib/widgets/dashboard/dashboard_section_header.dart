@@ -42,14 +42,7 @@ class DashboardSectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-<<<<<<< HEAD
               style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: -0.3),
-=======
-              style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3),
->>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
             ),
           ),
           if (actionWidget != null) actionWidget,
