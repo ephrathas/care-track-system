@@ -74,4 +74,12 @@ class DatabaseService {
         .add(appointment.toMap())
         .timeout(const Duration(seconds: 10));
   }
+
+  Future<String> placeMarketplaceOrder(Map<String, dynamic> orderData) async {
+    final doc = await _db
+        .collection('marketplace_orders')
+        .add(orderData)
+        .timeout(const Duration(seconds: 10));
+    return doc.id;
+  }
 }

@@ -3,6 +3,8 @@ import 'package:child_and_student_care_and_tracking_app/screens/parent/add_child
 import 'package:child_and_student_care_and_tracking_app/screens/parent/billing_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/child_timeline_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/parent_dashboard.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/parent/cart_screen.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/parent/checkout_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/product_detail_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/reports_screen.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,8 @@ class AppRoutes {
   static const String billing = '/billing';
   static const String reports = '/reports';
   static const String productDetail = '/product_detail';
+  static const String cart = '/cart';
+  static const String checkout = '/checkout';
 
   // 🗺️ The Unified Map of Routes
   static Map<String, WidgetBuilder> get routes => {
@@ -50,6 +54,8 @@ class AppRoutes {
           }
           return ProductDetailScreen(product: args);
         },
+        cart: (context) => const CartScreen(),
+        checkout: (context) => const CheckoutScreen(),
       };
 
   // Helper function for clean navigation

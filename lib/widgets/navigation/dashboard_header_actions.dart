@@ -40,8 +40,13 @@ class DashboardHeaderActions extends StatelessWidget {
 /// Slim toolbar for neutral pages (shop, lists, profile tabs).
 class DashboardCompactToolbar extends StatelessWidget {
   final String? title;
+  final List<Widget>? trailingActions;
 
-  const DashboardCompactToolbar({super.key, this.title});
+  const DashboardCompactToolbar({
+    super.key,
+    this.title,
+    this.trailingActions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +79,12 @@ class DashboardCompactToolbar extends StatelessWidget {
             ),
           ] else
             const Spacer(),
+          if (trailingActions != null) ...[
+            for (final action in trailingActions!) ...[
+              action,
+              const SizedBox(width: 8),
+            ],
+          ],
           _NeutralHeaderButton(
             icon: Icons.auto_awesome_motion_rounded,
             tooltip: 'Quick panel',

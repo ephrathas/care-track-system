@@ -5,6 +5,7 @@ import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/product_model.dart';
 import '../../widgets/marketplace/product_image.dart';
+import '../../widgets/marketplace/cart_icon_button.dart';
 import '../../widgets/navigation/dashboard_header_actions.dart';
 
 class MarketplaceTab extends StatefulWidget {
@@ -53,7 +54,11 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const DashboardCompactToolbar(),
+                  DashboardCompactToolbar(
+                    trailingActions: [
+                      MarketplaceCartIconButton(isDark: isDark),
+                    ],
+                  ),
                   _buildHeader(context, isDark),
                 ],
               ),
