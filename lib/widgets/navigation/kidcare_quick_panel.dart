@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/role_styles.dart';
 import '../../core/constants/user_role.dart';
+import '../../core/constants/app_branding.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
@@ -71,7 +72,7 @@ class KidCareQuickPanel extends StatelessWidget {
               const Spacer(),
               Center(
                 child: Text(
-                  'KidCare v1.0 • Safe & Family-first',
+                  '${AppBranding.name} v1.0 • Safe & Family-first',
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? Colors.grey[600] : Colors.grey,
@@ -123,7 +124,7 @@ class KidCareQuickPanel extends StatelessWidget {
           _QuickCard(
             icon: Icons.groups_rounded,
             title: '${healthcare.activePatientCount} Patients',
-            subtitle: 'Registered in KidCare',
+            subtitle: 'Registered in ${AppBranding.name}',
             accent: accent,
             isDark: isDark,
           ),
@@ -181,7 +182,7 @@ class KidCareQuickPanel extends StatelessWidget {
           _QuickCard(
             icon: Icons.dashboard_rounded,
             title: 'Dashboard',
-            subtitle: 'Your KidCare hub',
+            subtitle: 'Your ${AppBranding.name} hub',
             accent: accent,
             isDark: isDark,
           ),

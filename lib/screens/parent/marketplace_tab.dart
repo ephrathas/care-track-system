@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/app_branding.dart';
 import '../../core/constants/marketplace_assets.dart';
 import '../../core/constants/marketplace_catalog.dart';
 import '../../core/constants/marketplace_recommendations.dart';
@@ -108,7 +109,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'KidCare Shop',
+            AppBranding.shopName,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.4,

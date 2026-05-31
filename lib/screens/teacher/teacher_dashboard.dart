@@ -8,6 +8,7 @@ import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
+import '../../widgets/settings/appearance_setting.dart';
 import '../../widgets/messaging/messages_inbox.dart';
 import '../../widgets/teacher/grade_entry_sheet.dart';
 
@@ -937,6 +938,8 @@ class _TeacherProfileTab extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          const AppearanceSetting(),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,

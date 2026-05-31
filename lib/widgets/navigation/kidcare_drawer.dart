@@ -79,7 +79,7 @@ class KidCareDrawer extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      KidCareLogo(iconSize: 20, fontSize: 16, color: Colors.white),
+                      KidCareLogo(iconSize: 20, fontSize: 14, color: Colors.white, compact: true),
                       Spacer(),
                     ],
                   ),

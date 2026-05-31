@@ -1,5 +1,7 @@
+import 'package:child_and_student_care_and_tracking_app/core/constants/app_branding.dart';
 import 'package:child_and_student_care_and_tracking_app/core/theme/app_theme.dart';
 import 'package:child_and_student_care_and_tracking_app/firebase_options.dart';
+import 'package:child_and_student_care_and_tracking_app/providers/app_theme_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/auth_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/cart_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/child_gamification_provider.dart';
@@ -24,6 +26,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AppThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ChildProvider()),
         ChangeNotifierProvider(create: (_) => ChildGamificationProvider()),
@@ -43,12 +46,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<AppThemeProvider>();
+
     return MaterialApp(
-      title: 'KidCare',
+      title: AppBranding.name,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themeProvider.themeMode,
       initialRoute: AppRoutes.roleSelection,
       onGenerateRoute: AuthNavigation.routeFor,
     );

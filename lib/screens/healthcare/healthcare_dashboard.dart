@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../core/constants/app_branding.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
@@ -10,6 +11,7 @@ import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
+import '../../widgets/settings/appearance_setting.dart';
 
 class HealthcareDashboard extends StatefulWidget {
   const HealthcareDashboard({super.key});
@@ -263,7 +265,7 @@ class _HealthcareHomeTab extends StatelessWidget {
 
   Widget _buildClinicStats(bool isDark, {required int patientCount, required int vaccineCount}) {
     final stats = [
-      ('Patients', '$patientCount Active', 'Registered in KidCare', const Color(0xFFE2894A), Icons.groups_rounded),
+      ('Patients', '$patientCount Active', 'Registered in ${AppBranding.name}', const Color(0xFFE2894A), Icons.groups_rounded),
       ('Vaccines', '$vaccineCount On Record', 'Across all patients', const Color(0xFF4A90E2), Icons.vaccines_rounded),
     ];
 
@@ -1110,6 +1112,8 @@ class _HealthcareProfileTab extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          const AppearanceSetting(),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,

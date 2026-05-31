@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_branding.dart';
 import '../../core/constants/marketplace_catalog.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
@@ -75,7 +76,7 @@ class _EmptyCart extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Browse the KidCare Shop and add books, uniforms, or supplies.',
+              'Browse the ${AppBranding.shopName} and add books, uniforms, or supplies.',
               textAlign: TextAlign.center,
               style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
             ),

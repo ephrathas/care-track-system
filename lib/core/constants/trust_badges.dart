@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_branding.dart';
+
 /// Trust & safety copy shown on the welcome screen.
 class TrustBadgeInfo {
   final String label;
@@ -27,7 +29,7 @@ class TrustBadges {
       accent: Color(0xFF4A90E2),
       summary: 'Your family data stays protected.',
       detail:
-          'KidCare uses secure sign-in, encrypted connections, and private accounts '
+          '${AppBranding.name} uses secure sign-in, encrypted connections, and private accounts '
           'so only the right people—parents, teachers, and care providers you trust—'
           'can see a child\'s information.',
     ),
@@ -38,7 +40,7 @@ class TrustBadges {
       summary: 'Built for sensitive health information.',
       detail:
           'HIPAA is a U.S. law that sets strict rules for protecting patient health '
-          'records. KidCare is designed with healthcare privacy in mind: vaccination '
+          'records. ${AppBranding.name} is designed with healthcare privacy in mind: vaccination '
           'records, visit notes, and growth data are shared only with authorized roles.',
     ),
     TrustBadgeInfo(
@@ -47,7 +49,7 @@ class TrustBadges {
       accent: Color(0xFF9013FE),
       summary: 'Works beautifully on any screen size.',
       detail:
-          'Whether you\'re on a phone, tablet, or desktop, KidCare adapts its layout '
+          'Whether you\'re on a phone, tablet, or desktop, ${AppBranding.name} adapts its layout '
           'so menus, dashboards, and the shop stay easy to read and tap.',
     ),
     TrustBadgeInfo(
@@ -56,7 +58,7 @@ class TrustBadges {
       accent: Color(0xFFE2894A),
       summary: 'Trusted by families and educators.',
       detail:
-          'KidCare brings child care, school updates, health tracking, and shopping '
+          '${AppBranding.name} brings child care, school updates, health tracking, and shopping '
           'into one friendly experience—recognized by families and schools for clarity '
           'and ease of use.',
     ),

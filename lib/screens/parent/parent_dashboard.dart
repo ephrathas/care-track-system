@@ -18,6 +18,7 @@ import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/parent/add_child_action_button.dart';
 import '../../widgets/parent/add_child_display_setting.dart';
+import '../../widgets/settings/appearance_setting.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import 'marketplace_tab.dart';
 
@@ -637,6 +638,8 @@ class _ProfileTab extends StatelessWidget {
             Center(child: Chip(label: Text(user?.role ?? 'Parent'))),
             const SizedBox(height: 24),
             const AddChildDisplaySetting(),
+            const SizedBox(height: 16),
+            const AppearanceSetting(),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,

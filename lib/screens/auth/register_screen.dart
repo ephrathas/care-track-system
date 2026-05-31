@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/app_branding.dart';
 import '../../core/constants/routes.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/constants/user_role.dart';
@@ -170,7 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Join KidCare to track progress, manage classrooms, and stay connected.',
+                            'Join ${AppBranding.name} to track progress, manage classrooms, and stay connected.',
                             style: TextStyle(
                               color: isDark ? Colors.grey[400] : Colors.grey[600],
                               fontSize: 14,

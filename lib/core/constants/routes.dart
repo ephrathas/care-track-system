@@ -8,6 +8,7 @@ import 'package:child_and_student_care_and_tracking_app/screens/parent/checkout_
 import 'package:child_and_student_care_and_tracking_app/screens/parent/my_orders_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/order_detail_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/parent_messages_screen.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/parent/product_detail_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/shared/chat_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/reports_screen.dart';
 import 'package:flutter/material.dart';

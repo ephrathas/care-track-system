@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../core/constants/app_branding.dart';
+
 class MarketplaceOrder {
   final String? id;
   final String parentId;
@@ -73,8 +75,8 @@ class MarketplaceOrder {
     }
   }
 
-  static const trackingSteps = [
-    ('pending', 'Order placed', 'We received your KidCare Shop order'),
+  static List<(String, String, String)> get trackingSteps => [
+    ('pending', 'Order placed', 'We received your ${AppBranding.shopName} order'),
     ('confirmed', 'Confirmed', 'Items are being prepared for delivery'),
     ('shipped', 'Shipped', 'Your package is on the way'),
     ('delivered', 'Delivered', 'Order arrived at your address'),

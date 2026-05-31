@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_branding.dart';
 import '../../core/constants/role_options.dart';
 import '../../core/layout/app_breakpoints.dart';
 import '../../core/navigation/auth_navigation.dart';
@@ -149,7 +150,7 @@ class _NarrowLayout extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Center(child: KidCareLogo()),
+        const Center(child: KidCareLogo(showTagline: true)),
         const SizedBox(height: 16),
         WelcomeHeroCarousel(isDark: isDark, height: 210),
         const SizedBox(height: 20),
@@ -172,7 +173,7 @@ class _WideLayout extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Center(child: KidCareLogo()),
+        const Center(child: KidCareLogo(showTagline: true)),
         const SizedBox(height: 24),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,7 +220,7 @@ class _WelcomeMainCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome to KidCare',
+            AppBranding.welcomeHeadline(),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.5,
@@ -227,9 +228,8 @@ class _WelcomeMainCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'The modern way for parents, teachers, children, and healthcare '
-            'professionals to stay connected—track progress, manage health, '
-            'and shop essentials together.',
+            'Track children and students across school, health, and home—'
+            'one management hub for parents, teachers, clinics, and families.',
             style: TextStyle(
               color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
               height: 1.55,

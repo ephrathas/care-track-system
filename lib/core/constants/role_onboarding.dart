@@ -78,7 +78,7 @@ class RoleOnboarding {
             imageAsset: AuthAssets.featureSecure,
           ),
           OnboardingSlide(
-            title: 'KidCare Marketplace',
+            title: 'Family Shop',
             description:
                 'Shop books, uniforms, and health essentials with recommendations tailored to your child.',
             icon: Icons.storefront_rounded,

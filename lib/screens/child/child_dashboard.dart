@@ -8,6 +8,7 @@ import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
+import '../../widgets/settings/appearance_setting.dart';
 
 class ChildDashboard extends StatefulWidget {
   const ChildDashboard({super.key});
@@ -1003,6 +1004,8 @@ class _ChildProfileTab extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          const AppearanceSetting(),
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,

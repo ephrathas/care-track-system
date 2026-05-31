@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_branding.dart';
 import '../../core/theme/app_theme.dart';
 import 'dashboard_shell_scope.dart';
 
@@ -18,7 +19,7 @@ class DashboardHeaderActions extends StatelessWidget {
         ),
         const Spacer(),
         Text(
-          'KidCare',
+          AppBranding.headerLabel.toUpperCase(),
           style: TextStyle(
             color: Colors.white.withOpacity(0.55),
             fontSize: 11,

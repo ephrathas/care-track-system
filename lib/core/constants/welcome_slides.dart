@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_branding.dart';
 import 'auth_assets.dart';
 import 'marketplace_assets.dart';
 
@@ -27,8 +28,8 @@ class WelcomeSlides {
 
   static const List<WelcomeSlide> all = [
     WelcomeSlide(
-      headline: 'Care • Learning • Shop',
-      caption: 'One trusted home for your family\'s daily journey',
+      headline: 'Track • Manage • Connect',
+      caption: 'Child & student tracking and management in one hub',
       assetPath: AuthAssets.welcomeHero,
       accent: Color(0xFF4A90E2),
       icon: Icons.favorite_rounded,
@@ -62,7 +63,7 @@ class WelcomeSlides {
       icon: Icons.medical_services_rounded,
     ),
     WelcomeSlide(
-      headline: 'KidCare Shop essentials',
+      headline: '${AppBranding.shopName} essentials',
       caption: 'Books, uniforms, and supplies curated for school success',
       assetPath: MarketplaceAssets.promoBackToSchool,
       networkUrl: MarketplaceAssets.urlPromoBackToSchool,
