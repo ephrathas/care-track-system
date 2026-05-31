@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/child_model.dart';
+import '../models/health_appointment_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -44,5 +45,33 @@ class DatabaseService {
         .map((snapshot) => snapshot.docs
             .map((doc) => ChildModel.fromMap(doc.data(), doc.id))
             .toList());
+  }
+
+  // 🏥 All registered children (healthcare directory)
+  Stream<List<ChildModel>> getAllChildren() {
+    return _db.collection('children').snapshots().map((snapshot) {
+      final children = snapshot.docs
+          .map((doc) => ChildModel.fromMap(doc.data(), doc.id))
+          .toList();
+      children.sort((a, b) => a.name.compareTo(b.name));
+      return children;
+    });
+  }
+
+  Stream<List<HealthAppointment>> getHealthAppointments() {
+    return _db
+        .collection('health_appointments')
+        .orderBy('scheduledAt')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => HealthAppointment.fromMap(doc.data(), doc.id))
+            .toList());
+  }
+
+  Future<void> addHealthAppointment(HealthAppointment appointment) async {
+    await _db
+        .collection('health_appointments')
+        .add(appointment.toMap())
+        .timeout(const Duration(seconds: 10));
   }
 }

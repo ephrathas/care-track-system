@@ -4,6 +4,7 @@ import '../../core/constants/user_role.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
+import '../../providers/healthcare_provider.dart';
 import '../child/child_dashboard.dart';
 import '../healthcare/healthcare_dashboard.dart';
 import '../parent/parent_dashboard.dart';
@@ -49,6 +50,10 @@ class AuthWrapper extends StatelessWidget {
             }
 
             if (role == UserRole.healthcare) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Provider.of<HealthcareProvider>(context, listen: false)
+                    .startListening();
+              });
               return const HealthcareDashboard();
             }
 

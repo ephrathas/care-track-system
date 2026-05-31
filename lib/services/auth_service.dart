@@ -69,6 +69,30 @@ class AuthService {
     }
   }
 
+  Future<UserModel?> ensureUserProfile({
+    required String uid,
+    required String email,
+    String fullName = 'KidCare User',
+    String role = 'Parent',
+  }) async {
+    try {
+      final existing = await getUserData(uid);
+      if (existing != null) return existing;
+
+      final profile = UserModel(
+        uid: uid,
+        email: email,
+        fullName: fullName,
+        role: role,
+      );
+      await _db.collection('users').doc(uid).set(profile.toMap()).timeout(const Duration(seconds: 10));
+      return profile;
+    } catch (e) {
+      print('Ensure user profile error: $e');
+      return null;
+    }
+  }
+
   Future<void> updateProfilePic(String uid, String profilePicUrl) async {
     await _db.collection('users').doc(uid).update({'profilePic': profilePicUrl}).timeout(const Duration(seconds: 10));
   }

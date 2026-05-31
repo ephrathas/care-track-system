@@ -5,6 +5,9 @@ class ChildModel {
   final String parentId;
   final String imageUrl;
   final List<String> vaccinations;
+  final double? latestHeight;
+  final double? latestWeight;
+  final String lastCheckup;
 
   ChildModel({
     required this.id,
@@ -13,7 +16,18 @@ class ChildModel {
     required this.parentId,
     required this.imageUrl,
     this.vaccinations = const [],
+    this.latestHeight,
+    this.latestWeight,
+    this.lastCheckup = '',
   });
+
+  String get heightLabel =>
+      latestHeight != null ? '${latestHeight!.toStringAsFixed(1)} cm' : 'Not recorded';
+
+  String get weightLabel =>
+      latestWeight != null ? '${latestWeight!.toStringAsFixed(1)} kg' : 'Not recorded';
+
+  String get checkupLabel => lastCheckup.isNotEmpty ? lastCheckup : 'Not recorded';
 
   // Convert Firebase Document to Flutter Object
   factory ChildModel.fromMap(Map<String, dynamic> map, String documentId) {
@@ -24,6 +38,9 @@ class ChildModel {
       parentId: map['parentId'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
       vaccinations: List<String>.from(map['vaccinations'] ?? []),
+      latestHeight: (map['latestHeight'] as num?)?.toDouble(),
+      latestWeight: (map['latestWeight'] as num?)?.toDouble(),
+      lastCheckup: map['lastCheckup'] ?? '',
     );
   }
 
@@ -35,6 +52,9 @@ class ChildModel {
       'parentId': parentId,
       'imageUrl': imageUrl,
       'vaccinations': vaccinations,
+      if (latestHeight != null) 'latestHeight': latestHeight,
+      if (latestWeight != null) 'latestWeight': latestWeight,
+      if (lastCheckup.isNotEmpty) 'lastCheckup': lastCheckup,
     };
   }
 }

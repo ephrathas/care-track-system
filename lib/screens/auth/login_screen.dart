@@ -55,12 +55,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final success = await authProvider.login(
       _emailController.text.trim(),
-      _passwordController.text.trim(),
+      _passwordController.text,
     );
 
     if (success) {
       if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.roleSelection, (_) => false);
       }
     } else {
       _showErrorSnackbar(authProvider.errorMessage ?? 'Invalid credentials. Please try again.');

@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/navigation/dashboard_header_actions.dart';
+import '../../widgets/navigation/dashboard_shell_scope.dart';
+import '../../widgets/navigation/kidcare_drawer.dart';
+import '../../widgets/navigation/kidcare_quick_panel.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/teacher/grade_entry_sheet.dart';
 
@@ -15,19 +19,30 @@ class TeacherDashboard extends StatefulWidget {
 
 class _TeacherDashboardState extends State<TeacherDashboard> {
   int _navIndex = 0;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _navIndex,
-        children: [
-          const _TeacherHomeTab(),
-          const _TeacherAttendanceTab(),
-          const _TeacherHomeworkTab(),
-          const _TeacherMessagesTab(),
-          const _TeacherProfileTab(),
-        ],
+      key: _scaffoldKey,
+      drawer: KidCareDrawer(
+        selectedNavIndex: _navIndex,
+        onTabSelected: (index) => setState(() => _navIndex = index),
+      ),
+      endDrawer: const KidCareQuickPanel(),
+      body: DashboardShellScope(
+        openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+        openEndDrawer: () => _scaffoldKey.currentState?.openEndDrawer(),
+        child: IndexedStack(
+          index: _navIndex,
+          children: const [
+            _TeacherHomeTab(),
+            _TeacherAttendanceTab(),
+            _TeacherHomeworkTab(),
+            _TeacherMessagesTab(),
+            _TeacherProfileTab(),
+          ],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _navIndex,
@@ -183,6 +198,8 @@ class _TeacherHomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const DashboardHeaderActions(),
+            const SizedBox(height: 18),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -459,9 +476,11 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
         title: const Text('Attendance Registry', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
         elevation: 0,
+        actions: const [DashboardToolbarTrailing()],
       ),
       body: SafeArea(
         child: Column(
@@ -821,8 +840,10 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
         title: const Text('Homework & Tasks', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
+        actions: const [DashboardToolbarTrailing()],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddAssignmentSheet,
@@ -1060,8 +1081,10 @@ class _TeacherMessagesTabState extends State<_TeacherMessagesTab> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
         title: const Text('Inbox Communication', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
+        actions: const [DashboardToolbarTrailing()],
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(20),
@@ -1151,7 +1174,11 @@ class _TeacherProfileTab extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(title: const Text('Profile Settings')),
+      appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
+        title: const Text('Profile Settings'),
+        actions: const [DashboardToolbarTrailing()],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

@@ -2,6 +2,8 @@ import 'package:child_and_student_care_and_tracking_app/core/theme/app_theme.dar
 import 'package:child_and_student_care_and_tracking_app/firebase_options.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/auth_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/child_gamification_provider.dart';
+import 'package:child_and_student_care_and_tracking_app/providers/healthcare_provider.dart';
+import 'package:child_and_student_care_and_tracking_app/providers/parent_preferences_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/child_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +24,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ChildProvider()),
         ChangeNotifierProvider(create: (_) => ChildGamificationProvider()),
+        ChangeNotifierProvider(create: (_) => HealthcareProvider()),
+        ChangeNotifierProvider(create: (_) => ParentPreferencesProvider()),
       ],
       child: const MyApp(),
     ),

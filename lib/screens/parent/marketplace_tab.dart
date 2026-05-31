@@ -5,6 +5,7 @@ import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/product_model.dart';
 import '../../widgets/marketplace/product_image.dart';
+import '../../widgets/navigation/dashboard_header_actions.dart';
 
 class MarketplaceTab extends StatefulWidget {
   const MarketplaceTab({super.key});
@@ -48,7 +49,15 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context, isDark)),
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const DashboardCompactToolbar(),
+                  _buildHeader(context, isDark),
+                ],
+              ),
+            ),
             SliverToBoxAdapter(child: _buildPromoBanner(isDark)),
             SliverToBoxAdapter(child: _buildCategoryRow(isDark)),
             if (products.isEmpty)

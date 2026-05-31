@@ -1,6 +1,8 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../core/auth/auth_error_messages.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
@@ -55,25 +57,35 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final normalizedEmail = email.trim().toLowerCase();
+
     try {
-      User? user = await _authService.signIn(email, password);
+      User? user = await _authService.signIn(normalizedEmail, password);
       if (user != null) {
         _currentUser = await _authService.getUserData(user.uid);
+        if (_currentUser == null) {
+          _currentUser = await _authService.ensureUserProfile(
+            uid: user.uid,
+            email: user.email ?? normalizedEmail,
+          );
+        }
+        if (_currentUser == null) {
+          throw FirebaseAuthException(
+            code: 'profile-not-found',
+            message: AuthErrorMessages.fromCode('profile-not-found'),
+          );
+        }
         _isLoading = false;
         notifyListeners();
         return true;
       }
       throw FirebaseAuthException(
         code: 'user-not-found',
-        message: 'Could not log in. User profile was not found.',
+        message: AuthErrorMessages.fromCode('user-not-found'),
       );
     } catch (e) {
       _isLoading = false;
-      if (e is FirebaseAuthException) {
-        _errorMessage = e.message ?? "Authentication failed";
-      } else {
-        _errorMessage = e.toString();
-      }
+      _errorMessage = AuthErrorMessages.fromException(e);
       notifyListeners();
       return false;
     }
@@ -90,10 +102,20 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final normalizedEmail = email.trim().toLowerCase();
+
     try {
-      User? user = await _authService.signUp(email, password, name, role);
+      User? user = await _authService.signUp(normalizedEmail, password, name.trim(), role);
       if (user != null) {
         _currentUser = await _authService.getUserData(user.uid);
+        if (_currentUser == null) {
+          _currentUser = UserModel(
+            uid: user.uid,
+            email: normalizedEmail,
+            fullName: name.trim(),
+            role: role,
+          );
+        }
         _isLoading = false;
         notifyListeners();
         return true;
@@ -104,11 +126,7 @@ class AuthProvider with ChangeNotifier {
       );
     } catch (e) {
       _isLoading = false;
-      if (e is FirebaseAuthException) {
-        _errorMessage = e.message ?? "Registration failed";
-      } else {
-        _errorMessage = e.toString();
-      }
+      _errorMessage = AuthErrorMessages.fromException(e);
       notifyListeners();
       return false;
     }

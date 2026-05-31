@@ -3,6 +3,10 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_gamification_provider.dart';
+import '../../widgets/navigation/dashboard_header_actions.dart';
+import '../../widgets/navigation/dashboard_shell_scope.dart';
+import '../../widgets/navigation/kidcare_drawer.dart';
+import '../../widgets/navigation/kidcare_quick_panel.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 
 class ChildDashboard extends StatefulWidget {
@@ -14,20 +18,31 @@ class ChildDashboard extends StatefulWidget {
 
 class _ChildDashboardState extends State<ChildDashboard> {
   int _navIndex = 0;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _goToTasks() => setState(() => _navIndex = 1);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _navIndex,
-        children: [
-          _ChildHomeTab(onOpenTasks: _goToTasks),
-          const _ChildHomeworkTab(),
-          const _ChildRewardsTab(),
-          const _ChildProfileTab(),
-        ],
+      key: _scaffoldKey,
+      drawer: KidCareDrawer(
+        selectedNavIndex: _navIndex,
+        onTabSelected: (index) => setState(() => _navIndex = index),
+      ),
+      endDrawer: const KidCareQuickPanel(),
+      body: DashboardShellScope(
+        openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+        openEndDrawer: () => _scaffoldKey.currentState?.openEndDrawer(),
+        child: IndexedStack(
+          index: _navIndex,
+          children: [
+            _ChildHomeTab(onOpenTasks: _goToTasks),
+            const _ChildHomeworkTab(),
+            const _ChildRewardsTab(),
+            const _ChildProfileTab(),
+          ],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _navIndex,
@@ -215,6 +230,8 @@ class _PlayfulHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const DashboardHeaderActions(),
+            const SizedBox(height: 16),
             Row(
               children: [
                 const UserProfileAvatar(radius: 26, editable: false, showGradientRing: false),
@@ -600,8 +617,10 @@ class _ChildHomeworkTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
         title: const Text('My Homework Quests', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
+        actions: const [DashboardToolbarTrailing()],
       ),
       body: list.every((q) => q.completed)
           ? Center(
@@ -756,11 +775,12 @@ class _ChildRewardsTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
         title: const Text('My Vault Badges', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 8),
             child: Center(
               child: Text(
                 '${game.unlockedBadgeCount}/${badges.length}',
@@ -768,6 +788,7 @@ class _ChildRewardsTab extends StatelessWidget {
               ),
             ),
           ),
+          const DashboardToolbarTrailing(),
         ],
       ),
       body: GridView.builder(
@@ -868,7 +889,11 @@ class _ChildProfileTab extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(title: const Text('My Profile')),
+      appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
+        title: const Text('My Profile'),
+        actions: const [DashboardToolbarTrailing()],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

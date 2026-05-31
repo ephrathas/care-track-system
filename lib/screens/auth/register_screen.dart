@@ -98,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final success = await authProvider.register(
       email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+      password: _passwordController.text,
       name: _nameController.text.trim(),
       role: _selectedRole,
     );
@@ -106,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success) {
       _showSuccessSnackbar('Welcome, ${_nameController.text.trim()}! Account created.');
       if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.roleSelection, (_) => false);
       }
     } else {
       _showErrorSnackbar(authProvider.errorMessage ?? 'Registration failed. Please try again.');
