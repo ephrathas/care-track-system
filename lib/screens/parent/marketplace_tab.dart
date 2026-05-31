@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/marketplace_assets.dart';
 import '../../core/constants/marketplace_catalog.dart';
+import '../../core/constants/marketplace_recommendations.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/product_model.dart';
+import '../../providers/child_provider.dart';
 import '../../widgets/marketplace/product_image.dart';
 import '../../widgets/marketplace/cart_icon_button.dart';
 import '../../widgets/navigation/dashboard_header_actions.dart';
@@ -64,6 +67,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
               ),
             ),
             SliverToBoxAdapter(child: _buildPromoBanner(isDark)),
+            SliverToBoxAdapter(child: _buildRecommendations(context, isDark)),
             SliverToBoxAdapter(child: _buildCategoryRow(isDark)),
             if (products.isEmpty)
               SliverFillRemaining(
@@ -138,6 +142,48 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRecommendations(BuildContext context, bool isDark) {
+    final children = context.watch<ChildProvider>().children;
+    final picks = MarketplaceRecommendations.forChildren(children);
+    final headline = MarketplaceRecommendations.headlineFor(children);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, size: 18, color: AppTheme.primaryBlue.withOpacity(0.9)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  headline,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 196,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: picks.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: 148,
+                child: _ProductCard(product: picks[index], isDark: isDark),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
