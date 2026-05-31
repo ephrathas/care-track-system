@@ -273,8 +273,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 TextFormField(
                   controller: _nameController,
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty)
+                    if (val == null || val.trim().isEmpty) {
                       return "Please enter child's name";
+                    }
                     return null;
                   },
                   decoration: InputDecoration(
@@ -293,11 +294,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   controller: _ageController,
                   keyboardType: TextInputType.number,
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty)
+                    if (val == null || val.trim().isEmpty) {
                       return "Please enter age";
+                    }
                     final age = int.tryParse(val.trim());
-                    if (age == null || age < 0)
+                    if (age == null || age < 0) {
                       return "Please enter a valid age";
+                    }
                     return null;
                   },
                   decoration: InputDecoration(

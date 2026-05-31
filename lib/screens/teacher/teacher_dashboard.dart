@@ -21,12 +21,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     return Scaffold(
       body: IndexedStack(
         index: _navIndex,
-        children: [
-          const _TeacherHomeTab(),
-          const _TeacherAttendanceTab(),
-          const _TeacherHomeworkTab(),
-          const _TeacherMessagesTab(),
-          const _TeacherProfileTab(),
+        children: const [
+          _TeacherHomeTab(),
+          _TeacherAttendanceTab(),
+          _TeacherHomeworkTab(),
+          _TeacherMessagesTab(),
+          _TeacherProfileTab(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -594,7 +594,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                               ),
                               Switch(
                                 value: isPresent,
-                                activeColor: const Color(0xFF7ED321),
+                                activeThumbColor: const Color(0xFF7ED321),
                                 activeTrackColor: const Color(0xFF7ED321).withOpacity(0.2),
                                 onChanged: (value) {
                                   setState(() {
@@ -714,7 +714,7 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
                   const Text('Subject', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: _selectedSubject,
+                    initialValue: _selectedSubject,
                     dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                     decoration: InputDecoration(
                       filled: true,
@@ -1090,7 +1090,7 @@ class _TeacherMessagesTabState extends State<_TeacherMessagesTab> {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
-                    child: Icon(Icons.person_rounded, color: AppTheme.primaryBlue),
+                    child: const Icon(Icons.person_rounded, color: AppTheme.primaryBlue),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
