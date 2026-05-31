@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/add_child_display_mode.dart';
 import '../../core/constants/parent_demo_data.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
+import '../../providers/parent_preferences_provider.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
 import '../../widgets/dashboard/dashboard_stat_card.dart';
+import '../../widgets/navigation/dashboard_header_actions.dart';
+import '../../widgets/navigation/dashboard_shell_scope.dart';
+import '../../widgets/navigation/kidcare_drawer.dart';
+import '../../widgets/navigation/kidcare_quick_panel.dart';
+import '../../widgets/parent/add_child_action_button.dart';
+import '../../widgets/parent/add_child_display_setting.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import 'marketplace_tab.dart';
 
@@ -20,6 +28,7 @@ class ParentDashboard extends StatefulWidget {
 
 class _ParentDashboardState extends State<ParentDashboard> {
   int _navIndex = 0;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   String _greeting() {
     final hour = DateTime.now().hour;
@@ -31,14 +40,24 @@ class _ParentDashboardState extends State<ParentDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _navIndex,
-        children: [
-          _ParentHomeTab(greeting: _greeting()),
-          const MarketplaceTab(),
-          const _AlertsTab(),
-          const _ProfileTab(),
-        ],
+      key: _scaffoldKey,
+      drawer: KidCareDrawer(
+        selectedNavIndex: _navIndex,
+        onTabSelected: (index) => setState(() => _navIndex = index),
+      ),
+      endDrawer: const KidCareQuickPanel(),
+      body: DashboardShellScope(
+        openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+        openEndDrawer: () => _scaffoldKey.currentState?.openEndDrawer(),
+        child: IndexedStack(
+          index: _navIndex,
+          children: [
+            _ParentHomeTab(greeting: _greeting()),
+            const MarketplaceTab(),
+            const _AlertsTab(),
+            const _ProfileTab(),
+          ],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _navIndex,
@@ -75,19 +94,16 @@ class _ParentHomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final childProvider = Provider.of<ChildProvider>(context);
+    final parentPrefs = Provider.of<ParentPreferencesProvider>(context);
     final user = authProvider.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasChildren = childProvider.children.isNotEmpty;
+    final showInlineAdd = hasChildren && parentPrefs.addChildDisplayMode == AddChildDisplayMode.inline;
+    final showFloatingAdd = hasChildren && parentPrefs.addChildDisplayMode == AddChildDisplayMode.floating;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, AppRoutes.addChildScreen),
-        backgroundColor: AppTheme.primaryBlue,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Child',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      floatingActionButton: showFloatingAdd ? const AddChildFloatingButton() : null,
       body: SafeArea(
         child: childProvider.isLoading
             ? const Center(
@@ -106,10 +122,14 @@ class _ParentHomeTab extends StatelessWidget {
                           childProvider.children.length)),
                   SliverToBoxAdapter(child: _buildQuickStats(context)),
                   SliverToBoxAdapter(child: _buildQuickActions(context)),
-                  const SliverToBoxAdapter(
-                      child: DashboardSectionHeader(title: 'My Children')),
+                  SliverToBoxAdapter(
+                    child: DashboardSectionHeader(
+                      title: 'My Children',
+                      trailing: showInlineAdd ? const AddChildActionButton(compact: true) : null,
+                    ),
+                  ),
                   if (childProvider.children.isEmpty)
-                    SliverToBoxAdapter(child: _buildEmptyChildrenState(isDark))
+                    SliverToBoxAdapter(child: _buildEmptyChildrenState(context, isDark))
                   else
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
@@ -130,7 +150,7 @@ class _ParentHomeTab extends StatelessWidget {
                     ),
                   SliverToBoxAdapter(
                       child: _buildInsightCards(context, isDark)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                  SliverToBoxAdapter(child: SizedBox(height: showFloatingAdd ? 88 : 24)),
                 ],
               ),
       ),
@@ -161,6 +181,8 @@ class _ParentHomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const DashboardHeaderActions(),
+            const SizedBox(height: 18),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -297,7 +319,7 @@ class _ParentHomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyChildrenState(bool isDark) {
+  Widget _buildEmptyChildrenState(BuildContext context, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
       child: Column(
@@ -322,6 +344,20 @@ class _ParentHomeTab extends StatelessWidget {
                 color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
                 height: 1.45),
           ),
+          const SizedBox(height: 20),
+          const AddChildActionButton(),
+          if (Provider.of<ParentPreferencesProvider>(context).addChildDisplayMode == AddChildDisplayMode.hidden)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                'Tip: You can also add children anytime from the side menu.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.grey[500] : AppTheme.textSecondary,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -565,7 +601,12 @@ class _AlertsTab extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications'), centerTitle: false),
+      appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
+        title: const Text('Notifications'),
+        centerTitle: false,
+        actions: const [DashboardToolbarTrailing()],
+      ),
       body: ListView.separated(
         padding: const EdgeInsets.all(20),
         itemCount: alerts.length,
@@ -596,7 +637,11 @@ class _ProfileTab extends StatelessWidget {
     final user = Provider.of<AuthProvider>(context).currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
+        title: const Text('Profile'),
+        actions: const [DashboardToolbarTrailing()],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -621,7 +666,9 @@ class _ProfileTab extends StatelessWidget {
                 style: const TextStyle(color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
             Center(child: Chip(label: Text(user?.role ?? 'Parent'))),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
+            const AddChildDisplaySetting(),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(

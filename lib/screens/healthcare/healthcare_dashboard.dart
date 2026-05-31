@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/child_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/healthcare_provider.dart';
+import '../../widgets/navigation/dashboard_header_actions.dart';
+import '../../widgets/navigation/dashboard_shell_scope.dart';
+import '../../widgets/navigation/kidcare_drawer.dart';
+import '../../widgets/navigation/kidcare_quick_panel.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 
 class HealthcareDashboard extends StatefulWidget {
@@ -14,18 +20,29 @@ class HealthcareDashboard extends StatefulWidget {
 
 class _HealthcareDashboardState extends State<HealthcareDashboard> {
   int _navIndex = 0;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _navIndex,
-        children: const [
-          _HealthcareHomeTab(),
-          _HealthcarePatientsTab(),
-          _HealthcareAppointmentsTab(),
-          _HealthcareProfileTab(),
-        ],
+      key: _scaffoldKey,
+      drawer: KidCareDrawer(
+        selectedNavIndex: _navIndex,
+        onTabSelected: (index) => setState(() => _navIndex = index),
+      ),
+      endDrawer: const KidCareQuickPanel(),
+      body: DashboardShellScope(
+        openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+        openEndDrawer: () => _scaffoldKey.currentState?.openEndDrawer(),
+        child: IndexedStack(
+          index: _navIndex,
+          children: const [
+            _HealthcareHomeTab(),
+            _HealthcarePatientsTab(),
+            _HealthcareAppointmentsTab(),
+            _HealthcareProfileTab(),
+          ],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _navIndex,
@@ -57,201 +74,227 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
   }
 }
 
-// ==================== PATIENTS DATABASE ====================
-class _Patient {
-  final String id;
-  final String name;
-  final int age;
-  final double latestHeight; // in cm
-  final double latestWeight; // in kg
-  final List<String> vaccines;
-  final String lastCheckup;
-
-  _Patient({
-    required this.id,
-    required this.name,
-    required this.age,
-    required this.latestHeight,
-    required this.latestWeight,
-    required this.vaccines,
-    required this.lastCheckup,
-  });
-}
-
-class _HealthcareData {
-  static List<_Patient> patients = [
-    _Patient(
-      id: 'P001',
-      name: 'Emma Watson',
-      age: 9,
-      latestHeight: 132.5,
-      latestWeight: 28.4,
-      vaccines: ['Polio (IPV) - Dose 3', 'MMR - Dose 1', 'Hepatitis B'],
-      lastCheckup: 'April 14, 2026',
-    ),
-    _Patient(
-      id: 'P002',
-      name: 'Liam Neeson',
-      age: 8,
-      latestHeight: 126.0,
-      latestWeight: 24.8,
-      vaccines: ['Polio (IPV) - Dose 2', 'MMR - Dose 1'],
-      lastCheckup: 'May 02, 2026',
-    ),
-    _Patient(
-      id: 'P003',
-      name: 'Olivia Rodrigo',
-      age: 9,
-      latestHeight: 135.2,
-      latestWeight: 30.1,
-      vaccines: ['Polio (IPV) - Dose 3', 'MMR - Dose 2', 'Hepatitis B', 'DTaP - Dose 4'],
-      lastCheckup: 'May 20, 2026',
-    ),
-    _Patient(
-      id: 'P004',
-      name: 'Noah Centineo',
-      age: 9,
-      latestHeight: 131.0,
-      latestWeight: 27.5,
-      vaccines: ['Polio (IPV) - Dose 3', 'Hepatitis B'],
-      lastCheckup: 'May 10, 2026',
-    ),
-  ];
-}
-
 // ==================== HOME TAB ====================
 class _HealthcareHomeTab extends StatelessWidget {
   const _HealthcareHomeTab();
 
+  static const _appointmentAccents = [
+    Color(0xFFE2894A),
+    Color(0xFF4A90E2),
+    Color(0xFF7ED321),
+  ];
+
+  static const _appointmentIcons = [
+    Icons.favorite_rounded,
+    Icons.vaccines_rounded,
+    Icons.remove_red_eye_rounded,
+  ];
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final healthcare = Provider.of<HealthcareProvider>(context);
     final user = authProvider.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final todayVisits = healthcare.todayAppointments;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: _buildWelcomeHeader(context, user?.fullName ?? 'Healthcare Professional', isDark),
-            ),
-            SliverToBoxAdapter(
-              child: _buildClinicStats(isDark),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
-                child: Text(
-                  'Today\'s Hospital Appointments',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
+        child: healthcare.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE2894A)),
                 ),
-              ),
-            ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final list = [
-                    ('09:00 AM', 'Emma Watson', 'Annual Pediatric Checkup', Icons.favorite_rounded, const Color(0xFFE2894A)),
-                    ('10:30 AM', 'Noah Centineo', 'Flu Vaccine Shot', Icons.vaccines_rounded, const Color(0xFF4A90E2)),
-                    ('02:00 PM', 'Olivia Rodrigo', 'Vision & Hearing Test', Icons.remove_red_eye_rounded, const Color(0xFF7ED321)),
-                  ];
-                  final item = list[index];
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppTheme.darkSurface : Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: item.$5.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Icon(item.$4, color: item.$5, size: 24),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.$2,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${item.$3} • ${item.$1}',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+              )
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _buildWelcomeHeader(
+                      context,
+                      user?.fullName ?? 'Healthcare Professional',
+                      isDark,
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildClinicStats(
+                      isDark,
+                      patientCount: healthcare.activePatientCount,
+                      vaccineCount: healthcare.totalVaccineRecords,
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
+                      child: Text(
+                        'Today\'s Hospital Appointments',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.2),
                       ),
                     ),
-                  );
-                },
-                childCount: 3,
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 10),
-                child: Text(
-                  'Urgent Clinical Alerts',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                   ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.report_problem_rounded, color: Colors.redAccent, size: 28),
-                      SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Vaccine Supply Alert',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.redAccent),
+                  if (todayVisits.isEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                        child: Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppTheme.darkSurface : Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                                color: isDark
+                                    ? Colors.grey.shade800
+                                    : AppTheme.inputBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.event_available_rounded,
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : AppTheme.textSecondary),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'No visits scheduled for today. Schedule one from the Pediatric Directory.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final visit = todayVisits[index];
+                          final accent = _appointmentAccents[
+                              index % _appointmentAccents.length];
+                          final icon = _appointmentIcons[
+                              index % _appointmentIcons.length];
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppTheme.darkSurface
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                    color: isDark
+                                        ? Colors.grey.shade800
+                                        : AppTheme.inputBorder),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: accent.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: Icon(icon, color: accent, size: 24),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          visit.childName,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${visit.title} • ${visit.timeLabel}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: isDark
+                                                ? Colors.grey[400]
+                                                : AppTheme.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Measles/MMR booster doses are running low in Room 4.',
-                              style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                          );
+                        },
+                        childCount: todayVisits.length,
+                      ),
+                    ),
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 16, 20, 10),
+                      child: Text(
+                        'Urgent Clinical Alerts',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.2),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                              color: Colors.redAccent.withOpacity(0.3)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.report_problem_rounded,
+                                color: Colors.redAccent, size: 28),
+                            SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Vaccine Supply Alert',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: Colors.redAccent),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Measles/MMR booster doses are running low in Room 4.',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -280,6 +323,8 @@ class _HealthcareHomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const DashboardHeaderActions(),
+            const SizedBox(height: 18),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -289,17 +334,24 @@ class _HealthcareHomeTab extends StatelessWidget {
                     children: [
                       const Text(
                         'Healthcare Center',
-                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Hello, $name',
-                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 ),
-                const UserProfileAvatar(radius: 28, editable: false, showGradientRing: true),
+                const UserProfileAvatar(
+                    radius: 28, editable: false, showGradientRing: true),
               ],
             ),
             const SizedBox(height: 12),
@@ -311,7 +363,10 @@ class _HealthcareHomeTab extends StatelessWidget {
               ),
               child: const Text(
                 'Metro Pediatrics Clinic • Room 402',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12),
               ),
             ),
           ],
@@ -320,10 +375,23 @@ class _HealthcareHomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildClinicStats(bool isDark) {
+  Widget _buildClinicStats(bool isDark,
+      {required int patientCount, required int vaccineCount}) {
     final stats = [
-      ('Patients', '14 Active', 'Under your watch', const Color(0xFFE2894A), Icons.groups_rounded),
-      ('Vaccines', '8 Administered', 'This week total', const Color(0xFF4A90E2), Icons.vaccines_rounded),
+      (
+        'Patients',
+        '$patientCount Active',
+        'Registered in KidCare',
+        const Color(0xFFE2894A),
+        Icons.groups_rounded
+      ),
+      (
+        'Vaccines',
+        '$vaccineCount On Record',
+        'Across all patients',
+        const Color(0xFF4A90E2),
+        Icons.vaccines_rounded
+      ),
     ];
 
     return Padding(
@@ -340,7 +408,9 @@ class _HealthcareHomeTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+                border: Border.all(
+                    color:
+                        isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,11 +419,15 @@ class _HealthcareHomeTab extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     s.$2,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   Text(
                     s.$3,
-                    style: TextStyle(fontSize: 10, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                    style: TextStyle(
+                        fontSize: 10,
+                        color:
+                            isDark ? Colors.grey[400] : AppTheme.textSecondary),
                   ),
                 ],
               ),
@@ -378,18 +452,37 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   final _vaccineController = TextEditingController();
+  final _visitTitleController = TextEditingController();
+  final _visitTimeController = TextEditingController();
+  DateTime _scheduledVisitAt = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+    9,
+    0,
+  );
 
-  List<_Patient> get _filteredPatients {
-    if (_searchQuery.trim().isEmpty) return _HealthcareData.patients;
-    return _HealthcareData.patients
-        .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-        .toList();
+  @override
+  void dispose() {
+    _heightController.dispose();
+    _weightController.dispose();
+    _vaccineController.dispose();
+    _visitTitleController.dispose();
+    _visitTimeController.dispose();
+    super.dispose();
   }
 
-  void _openGrowthSheet(_Patient patient) {
+  ChildModel? _patientById(String id, HealthcareProvider healthcare) {
+    for (final patient in healthcare.patients) {
+      if (patient.id == id) return patient;
+    }
+    return null;
+  }
+
+  void _openGrowthSheet(ChildModel patient) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    _heightController.text = patient.latestHeight.toString();
-    _weightController.text = patient.latestWeight.toString();
+    _heightController.text = patient.latestHeight?.toString() ?? '';
+    _weightController.text = patient.latestWeight?.toString() ?? '';
 
     showModalBottomSheet(
       context: context,
@@ -398,9 +491,10 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return Padding(
-          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+              24, 24, 24, MediaQuery.of(sheetContext).viewInsets.bottom + 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,38 +504,49 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                 children: [
                   Text(
                     'Growth Tracker - ${patient.name}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.pop(sheetContext),
                     icon: const Icon(Icons.close_rounded),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              const Text('Patient Height (cm)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Patient Height (cm)',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               TextField(
                 controller: _heightController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   hintText: 'e.g. 132.5',
                   filled: true,
-                  fillColor: isDark ? AppTheme.darkBackground : const Color(0xFFF9FAFB),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  fillColor: isDark
+                      ? AppTheme.darkBackground
+                      : const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Patient Weight (kg)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Patient Weight (kg)',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               TextField(
                 controller: _weightController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   hintText: 'e.g. 28.4',
                   filled: true,
-                  fillColor: isDark ? AppTheme.darkBackground : const Color(0xFFF9FAFB),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  fillColor: isDark
+                      ? AppTheme.darkBackground
+                      : const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 28),
@@ -449,45 +554,49 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final h = double.tryParse(_heightController.text);
                     final w = double.tryParse(_weightController.text);
                     if (h == null || w == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter valid height and weight values')),
+                      ScaffoldMessenger.of(sheetContext).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Please enter valid height and weight values')),
                       );
                       return;
                     }
-                    setState(() {
-                      // Update growth logs in memory
-                      final idx = _HealthcareData.patients.indexWhere((p) => p.id == patient.id);
-                      if (idx != -1) {
-                        _HealthcareData.patients[idx] = _Patient(
-                          id: patient.id,
-                          name: patient.name,
-                          age: patient.age,
-                          latestHeight: h,
-                          latestWeight: w,
-                          vaccines: patient.vaccines,
-                          lastCheckup: DateFormat('MMMM dd, yyyy').format(DateTime.now()),
-                        );
-                      }
-                    });
-                    Navigator.pop(context);
+                    final success = await Provider.of<HealthcareProvider>(
+                            sheetContext,
+                            listen: false)
+                        .updateGrowthMetrics(
+                            childId: patient.id, height: h, weight: w);
+                    if (!sheetContext.mounted) return;
+                    Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Updated growth metrics for ${patient.name}!'),
+                        content: Text(
+                          success
+                              ? 'Updated growth metrics for ${patient.name}!'
+                              : 'Could not save growth metrics. Please try again.',
+                        ),
                         behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: success
+                            ? const Color(0xFFE2894A)
+                            : Colors.redAccent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                         margin: const EdgeInsets.all(12),
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE2894A),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Update Growth Logs', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: const Text('Update Growth Logs',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
             ],
@@ -497,7 +606,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
     );
   }
 
-  void _openVaccineSheet(_Patient patient) {
+  void _openVaccineSheet(ChildModel patient) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     _vaccineController.clear();
 
@@ -508,9 +617,14 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
+        final livePatient = _patientById(
+                patient.id, Provider.of<HealthcareProvider>(sheetContext)) ??
+            patient;
+
         return Padding(
-          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+              24, 24, 24, MediaQuery.of(sheetContext).viewInsets.bottom + 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -519,11 +633,12 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Immunization Registry - ${patient.name}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    'Immunization Registry - ${livePatient.name}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.pop(sheetContext),
                     icon: const Icon(Icons.close_rounded),
                   ),
                 ],
@@ -534,31 +649,39 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               const SizedBox(height: 8),
-              if (patient.vaccines.isEmpty)
-                const Text('No vaccines registered yet.', style: TextStyle(fontSize: 12, color: Colors.grey))
+              if (livePatient.vaccinations.isEmpty)
+                const Text('No vaccines registered yet.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey))
               else
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: patient.vaccines.map((vax) {
+                  children: livePatient.vaccinations.map((vax) {
                     return Chip(
-                      label: Text(vax, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                      backgroundColor: const Color(0xFF4A90E2).withOpacity(0.12),
+                      label: Text(vax,
+                          style: const TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.bold)),
+                      backgroundColor:
+                          const Color(0xFF4A90E2).withOpacity(0.12),
                       side: BorderSide.none,
                       padding: EdgeInsets.zero,
                     );
                   }).toList(),
                 ),
               const SizedBox(height: 20),
-              const Text('Administer New Vaccine', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Administer New Vaccine',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               TextField(
                 controller: _vaccineController,
                 decoration: InputDecoration(
                   hintText: 'e.g. Polio (IPV) - Booster 1',
                   filled: true,
-                  fillColor: isDark ? AppTheme.darkBackground : const Color(0xFFF9FAFB),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  fillColor: isDark
+                      ? AppTheme.darkBackground
+                      : const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 28),
@@ -566,51 +689,200 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final vaxName = _vaccineController.text.trim();
                     if (vaxName.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a vaccine description')),
+                      ScaffoldMessenger.of(sheetContext).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text('Please enter a vaccine description')),
                       );
                       return;
                     }
-                    setState(() {
-                      final idx = _HealthcareData.patients.indexWhere((p) => p.id == patient.id);
-                      if (idx != -1) {
-                        final updatedList = List<String>.from(patient.vaccines)..add(vaxName);
-                        _HealthcareData.patients[idx] = _Patient(
-                          id: patient.id,
-                          name: patient.name,
-                          age: patient.age,
-                          latestHeight: patient.latestHeight,
-                          latestWeight: patient.latestWeight,
-                          vaccines: updatedList,
-                          lastCheckup: patient.lastCheckup,
-                        );
-                      }
-                    });
-                    Navigator.pop(context);
+                    final success = await Provider.of<HealthcareProvider>(
+                            sheetContext,
+                            listen: false)
+                        .addVaccine(
+                            childId: livePatient.id, vaccineName: vaxName);
+                    if (!sheetContext.mounted) return;
+                    Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Row(
                           children: [
-                            const Icon(Icons.vaccines_rounded, color: Colors.white),
+                            const Icon(Icons.vaccines_rounded,
+                                color: Colors.white),
                             const SizedBox(width: 10),
-                            Expanded(child: Text('Administered $vaxName successfully!')),
+                            Expanded(
+                              child: Text(
+                                success
+                                    ? 'Administered $vaxName successfully!'
+                                    : 'Could not log vaccine. Please try again.',
+                              ),
+                            ),
                           ],
                         ),
                         behavior: SnackBarBehavior.floating,
-                        backgroundColor: const Color(0xFF4A90E2),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: success
+                            ? const Color(0xFF4A90E2)
+                            : Colors.redAccent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                         margin: const EdgeInsets.all(12),
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4A90E2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Log Vaccine Inoculation', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: const Text('Log Vaccine Inoculation',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openScheduleSheet(ChildModel patient) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    _visitTitleController.text = 'Pediatric Checkup';
+    final now = DateTime.now();
+    _scheduledVisitAt = DateTime(now.year, now.month, now.day, 9, 0);
+    _visitTimeController.text = DateFormat('hh:mm a').format(_scheduledVisitAt);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+              24, 24, 24, MediaQuery.of(sheetContext).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Schedule Visit - ${patient.name}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(sheetContext),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text('Visit Title',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _visitTitleController,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: isDark
+                      ? AppTheme.darkBackground
+                      : const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Visit Time',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _visitTimeController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  suffixIcon: const Icon(Icons.access_time_rounded),
+                  filled: true,
+                  fillColor: isDark
+                      ? AppTheme.darkBackground
+                      : const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                onTap: () async {
+                  final picked = await showTimePicker(
+                    context: sheetContext,
+                    initialTime: TimeOfDay.fromDateTime(_scheduledVisitAt),
+                  );
+                  if (picked != null) {
+                    final today = DateTime.now();
+                    _scheduledVisitAt = DateTime(
+                      today.year,
+                      today.month,
+                      today.day,
+                      picked.hour,
+                      picked.minute,
+                    );
+                    _visitTimeController.text =
+                        DateFormat('hh:mm a').format(_scheduledVisitAt);
+                  }
+                },
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final title = _visitTitleController.text.trim();
+                    if (title.isEmpty) {
+                      ScaffoldMessenger.of(sheetContext).showSnackBar(
+                        const SnackBar(
+                            content: Text('Please enter a visit title')),
+                      );
+                      return;
+                    }
+                    final success = await Provider.of<HealthcareProvider>(
+                            sheetContext,
+                            listen: false)
+                        .scheduleAppointment(
+                      childId: patient.id,
+                      childName: patient.name,
+                      title: title,
+                      scheduledAt: _scheduledVisitAt,
+                    );
+                    if (!sheetContext.mounted) return;
+                    Navigator.pop(sheetContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Visit scheduled for ${patient.name}!'
+                              : 'Could not schedule visit. Please try again.',
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: success
+                            ? const Color(0xFFE2894A)
+                            : Colors.redAccent,
+                        margin: const EdgeInsets.all(12),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE2894A),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Confirm Visit',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
             ],
@@ -623,160 +895,302 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final list = _filteredPatients;
+    final healthcare = Provider.of<HealthcareProvider>(context);
+    final list = healthcare.searchPatients(_searchQuery);
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
-        title: const Text('Pediatric Directory', style: TextStyle(fontWeight: FontWeight.bold)),
+        leading: const DashboardToolbarLeading(),
+        title: const Text('Pediatric Directory',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
+        actions: const [DashboardToolbarTrailing()],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: TextField(
-                onChanged: (val) => setState(() => _searchQuery = val),
-                decoration: InputDecoration(
-                  hintText: 'Search patients by name...',
-                  prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary),
-                  filled: true,
-                  fillColor: isDark ? AppTheme.darkSurface : Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-                  ),
+        child: healthcare.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE2894A)),
                 ),
-              ),
-            ),
-            Expanded(
-              child: list.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No patients found.',
-                        style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+              )
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: TextField(
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: 'Search patients by name...',
+                        prefixIcon: const Icon(Icons.search_rounded,
+                            color: AppTheme.textSecondary),
+                        filled: true,
+                        fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.grey.shade800
+                                  : AppTheme.inputBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.grey.shade800
+                                  : AppTheme.inputBorder),
+                        ),
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final p = list[index];
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppTheme.darkSurface : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                    ),
+                  ),
+                  Expanded(
+                    child: list.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: const Color(0xFFE2894A).withOpacity(0.12),
-                                    child: Text(
-                                      p.name[0],
-                                      style: const TextStyle(color: Color(0xFFE2894A), fontWeight: FontWeight.bold),
-                                    ),
+                                  Icon(Icons.folder_shared_outlined,
+                                      size: 48,
+                                      color: isDark
+                                          ? Colors.grey[600]
+                                          : AppTheme.textSecondary),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _searchQuery.isEmpty
+                                        ? 'No patients registered yet.\nWhen parents add children, they appear here.'
+                                        : 'No patients match your search.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: isDark
+                                            ? Colors.grey[400]
+                                            : AppTheme.textSecondary),
                                   ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                ],
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: list.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final p = list[index];
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppTheme.darkSurface
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: isDark
+                                          ? Colors.grey.shade800
+                                          : AppTheme.inputBorder),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
                                       children: [
-                                        Text(
-                                          p.name,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                        CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor:
+                                              const Color(0xFFE2894A)
+                                                  .withOpacity(0.12),
+                                          backgroundImage: p.imageUrl.isNotEmpty
+                                              ? NetworkImage(p.imageUrl)
+                                              : null,
+                                          child: p.imageUrl.isEmpty
+                                              ? Text(
+                                                  p.name.isNotEmpty
+                                                      ? p.name[0].toUpperCase()
+                                                      : 'C',
+                                                  style: const TextStyle(
+                                                    color: Color(0xFFE2894A),
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                )
+                                              : null,
                                         ),
-                                        Text(
-                                          'Patient ID: ${p.id} • ${p.age} years old',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                p.name,
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14),
+                                              ),
+                                              Text(
+                                                'ID: ${p.id.substring(0, 8)}… • ${p.age} years old',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: isDark
+                                                      ? Colors.grey[400]
+                                                      : AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              const Divider(height: 1),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('Latest Height', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                                      Text('${p.latestHeight} cm', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('Latest Weight', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                                      Text('${p.latestWeight} kg', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('Last Checkup', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                                      Text(p.lastCheckup, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: () => _openGrowthSheet(p),
-                                      icon: const Icon(Icons.show_chart_rounded, size: 16),
-                                      label: const Text('Track Growth', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: const Color(0xFFE2894A),
-                                        side: const BorderSide(color: Color(0xFFE2894A)),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      ),
+                                    const SizedBox(height: 12),
+                                    const Divider(height: 1),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('Latest Height',
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: AppTheme
+                                                        .textSecondary)),
+                                            Text(p.heightLabel,
+                                                style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          ],
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('Latest Weight',
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: AppTheme
+                                                        .textSecondary)),
+                                            Text(p.weightLabel,
+                                                style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          ],
+                                        ),
+                                        Flexible(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text('Last Checkup',
+                                                  style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: AppTheme
+                                                          .textSecondary)),
+                                              Text(
+                                                p.checkupLabel,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: () => _openVaccineSheet(p),
-                                      icon: const Icon(Icons.vaccines_rounded, size: 16),
-                                      label: const Text('Vaccinations', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF4A90E2),
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            onPressed: () =>
+                                                _openGrowthSheet(p),
+                                            icon: const Icon(
+                                                Icons.show_chart_rounded,
+                                                size: 16),
+                                            label: const Text('Growth',
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor:
+                                                  const Color(0xFFE2894A),
+                                              side: const BorderSide(
+                                                  color: Color(0xFFE2894A)),
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10)),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            onPressed: () =>
+                                                _openVaccineSheet(p),
+                                            icon: const Icon(
+                                                Icons.vaccines_rounded,
+                                                size: 16),
+                                            label: const Text('Vaccines',
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  const Color(0xFF4A90E2),
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10)),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            onPressed: () =>
+                                                _openScheduleSheet(p),
+                                            icon: const Icon(
+                                                Icons.event_rounded,
+                                                size: 16),
+                                            label: const Text('Visit',
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor:
+                                                  AppTheme.primaryBlue,
+                                              side: const BorderSide(
+                                                  color: AppTheme.primaryBlue),
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10)),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -789,85 +1203,130 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final appointments = [
-      ('09:00 AM', 'Emma Watson', 'Annual Pediatric Checkup', 'Active', Colors.green),
-      ('10:30 AM', 'Noah Centineo', 'Flu Vaccine Shot', 'Active', Colors.green),
-      ('02:00 PM', 'Olivia Rodrigo', 'Vision & Hearing Test', 'Active', Colors.green),
-      ('03:30 PM', 'Lucas Hedges', 'General Pediatric Consult', 'Active', Colors.green),
-    ];
+    final healthcare = Provider.of<HealthcareProvider>(context);
+    final appointments = healthcare.upcomingAppointments;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
-        title: const Text('Upcoming Clinic Visits', style: TextStyle(fontWeight: FontWeight.bold)),
+        leading: const DashboardToolbarLeading(),
+        title: const Text('Upcoming Clinic Visits',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
+        actions: const [DashboardToolbarTrailing()],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(20),
-        physics: const BouncingScrollPhysics(),
-        itemCount: appointments.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final visit = appointments[index];
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? AppTheme.darkSurface : Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE2894A).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(14),
+      body: healthcare.isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE2894A)),
+              ),
+            )
+          : appointments.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.event_busy_rounded,
+                            size: 48,
+                            color: isDark
+                                ? Colors.grey[600]
+                                : AppTheme.textSecondary),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No clinic visits scheduled yet.\nUse the Visit button in Pediatric Directory.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: const Icon(Icons.event_note_rounded, color: Color(0xFFE2894A), size: 24),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(20),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: appointments.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final visit = appointments[index];
+                    final statusColor = visit.status == 'Active'
+                        ? Colors.green
+                        : AppTheme.textSecondary;
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppTheme.darkSurface : Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                            color: isDark
+                                ? Colors.grey.shade800
+                                : AppTheme.inputBorder),
+                      ),
+                      child: Row(
                         children: [
-                          Text(
-                            visit.$2,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: visit.$5.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(6),
+                              color: const Color(0xFFE2894A).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            child: Text(
-                              visit.$4,
-                              style: TextStyle(color: visit.$5, fontWeight: FontWeight.bold, fontSize: 9),
+                            child: const Icon(Icons.event_note_rounded,
+                                color: Color(0xFFE2894A), size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      visit.childName,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: statusColor.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        visit.status,
+                                        style: TextStyle(
+                                            color: statusColor,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 9),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${visit.title} • ${DateFormat('MMM dd, yyyy').format(visit.scheduledAt)} • ${visit.timeLabel}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${visit.$3} • ${visit.$1}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 }
@@ -883,7 +1342,11 @@ class _HealthcareProfileTab extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
-      appBar: AppBar(title: const Text('Profile Settings')),
+      appBar: AppBar(
+        leading: const DashboardToolbarLeading(),
+        title: const Text('Profile Settings'),
+        actions: const [DashboardToolbarTrailing()],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -893,7 +1356,8 @@ class _HealthcareProfileTab extends StatelessWidget {
           Text(
             'Tap your photo to update',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
+            style: TextStyle(
+                fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -923,15 +1387,19 @@ class _HealthcareProfileTab extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+              border: Border.all(
+                  color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
             ),
             child: const Column(
               children: [
-                _ProfileStatRow(label: 'Assigned Clinic', value: 'Metro Pediatrics Clinic'),
+                _ProfileStatRow(
+                    label: 'Assigned Clinic', value: 'Metro Pediatrics Clinic'),
                 Divider(),
-                _ProfileStatRow(label: 'License Registry', value: 'MD-9283-49A'),
+                _ProfileStatRow(
+                    label: 'License Registry', value: 'MD-9283-49A'),
                 Divider(),
-                _ProfileStatRow(label: 'Room Registry', value: 'Clinic Room 402'),
+                _ProfileStatRow(
+                    label: 'Room Registry', value: 'Clinic Room 402'),
               ],
             ),
           ),
@@ -941,13 +1409,19 @@ class _HealthcareProfileTab extends StatelessWidget {
             height: 52,
             child: OutlinedButton.icon(
               onPressed: () async {
-                await Provider.of<AuthProvider>(context, listen: false).logout();
+                Provider.of<HealthcareProvider>(context, listen: false)
+                    .stopListening();
+                await Provider.of<AuthProvider>(context, listen: false)
+                    .logout();
               },
               icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-              label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+              label: const Text('Sign Out',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.redAccent)),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.redAccent),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
               ),
             ),
           ),
@@ -971,8 +1445,12 @@ class _ProfileStatRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
         ],
       ),
     );
