@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/config/school_config.dart';
+import '../core/domain/domain_enums.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -15,8 +17,20 @@ class AuthService {
       User? user = result.user;
 
       if (user != null) {
-        UserModel newUser =
-            UserModel(uid: user.uid, email: email, fullName: name, role: role);
+        final schoolDoc = await _db
+            .collection(FirestoreCollections.schools)
+            .doc(SchoolConfig.defaultSchoolId)
+            .get();
+        final schoolId =
+            schoolDoc.exists ? SchoolConfig.defaultSchoolId : null;
+
+        UserModel newUser = UserModel(
+          uid: user.uid,
+          email: email,
+          fullName: name,
+          role: role,
+          schoolId: schoolId,
+        );
 
         // ⏱️ Add a timeout. If Firestore is slow, it won't hang the app.
         await _db

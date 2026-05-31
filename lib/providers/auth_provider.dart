@@ -175,6 +175,13 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<void> refreshUserProfile() async {
+    final uid = _firebaseAuth.currentUser?.uid;
+    if (uid == null) return;
+    _currentUser = await _authService.getUserData(uid);
+    notifyListeners();
+  }
+
   // 🚪 Sign Out Action
   Future<void> logout() async {
     _isLoading = true;

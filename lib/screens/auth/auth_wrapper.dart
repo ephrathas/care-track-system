@@ -7,6 +7,9 @@ import '../../providers/child_provider.dart';
 import '../../providers/healthcare_provider.dart';
 import '../../providers/marketplace_orders_provider.dart';
 import '../../providers/messaging_provider.dart';
+import '../../providers/school_admin_provider.dart';
+import '../admin/admin_dashboard.dart';
+import '../admin/admin_setup_gate.dart';
 import '../child/child_dashboard.dart';
 import '../healthcare/healthcare_dashboard.dart';
 import '../parent/parent_dashboard.dart';
@@ -30,59 +33,93 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        if (authProvider.isAuthenticated) {
-          final user = authProvider.currentUser;
-          if (user != null) {
-            final role = UserRole.fromLabel(user.role);
-
-            if (role == UserRole.parent) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Provider.of<ChildProvider>(context, listen: false)
-                    .startListeningToChildren(user.uid);
-                Provider.of<MarketplaceOrdersProvider>(context, listen: false)
-                    .startListening(user.uid);
-                Provider.of<MessagingProvider>(context, listen: false)
-                    .startListeningForParent(user.uid);
-              });
-              return const ParentDashboard();
-            }
-
-            if (role == UserRole.teacher) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Provider.of<MessagingProvider>(context, listen: false)
-                    .startListeningForTeacher(user.uid);
-              });
-              return const TeacherDashboard();
-            }
-
-            if (role == UserRole.child) {
-              return const ChildDashboard();
-            }
-
-            if (role == UserRole.healthcare) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Provider.of<HealthcareProvider>(context, listen: false)
-                    .startListening();
-              });
-              return const HealthcareDashboard();
-            }
-
-            if (role == UserRole.admin) {
-              return const _RolePlaceholderDashboard(
-                title: 'Admin Dashboard',
-                message: 'School setup tools are coming in the next update.',
-              );
-            }
-
-            return const _RolePlaceholderDashboard(
-              title: 'Dashboard',
-              message: 'This role dashboard is under construction.',
-            );
-          }
+        if (authProvider.isAuthenticated && authProvider.currentUser != null) {
+          return const _AuthenticatedRouter();
         }
 
         return const WelcomeScreen();
       },
+    );
+  }
+}
+
+class _AuthenticatedRouter extends StatefulWidget {
+  const _AuthenticatedRouter();
+
+  @override
+  State<_AuthenticatedRouter> createState() => _AuthenticatedRouterState();
+}
+
+class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<SchoolAdminProvider>().startListening();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final schoolAdmin = context.watch<SchoolAdminProvider>();
+    final user = auth.currentUser!;
+
+    if (schoolAdmin.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (schoolAdmin.bootstrapNeeded && schoolAdmin.canClaimAdmin) {
+      return const FirstAdminSetupScreen();
+    }
+
+    if (schoolAdmin.bootstrapNeeded) {
+      return const SchoolNotReadyScreen();
+    }
+
+    final role = UserRole.fromLabel(user.role);
+
+    if (role == UserRole.admin) {
+      return const AdminDashboard();
+    }
+
+    if (role == UserRole.parent) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Provider.of<ChildProvider>(context, listen: false)
+            .startListeningToChildren(user.uid);
+        Provider.of<MarketplaceOrdersProvider>(context, listen: false)
+            .startListening(user.uid);
+        Provider.of<MessagingProvider>(context, listen: false)
+            .startListeningForParent(user.uid);
+      });
+      return const ParentDashboard();
+    }
+
+    if (role == UserRole.teacher) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Provider.of<MessagingProvider>(context, listen: false)
+            .startListeningForTeacher(user.uid);
+      });
+      return const TeacherDashboard();
+    }
+
+    if (role == UserRole.child) {
+      return const ChildDashboard();
+    }
+
+    if (role == UserRole.healthcare) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Provider.of<HealthcareProvider>(context, listen: false).startListening();
+      });
+      return const HealthcareDashboard();
+    }
+
+    return const _RolePlaceholderDashboard(
+      title: 'Dashboard',
+      message: 'This role dashboard is under construction.',
     );
   }
 }

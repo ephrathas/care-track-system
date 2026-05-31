@@ -27,9 +27,9 @@ Firebase (Firestore, Auth, Storage)
 | Phase | Status |
 |-------|--------|
 | 1 Architecture audit | ✅ Complete |
-| 2 Entity & schema design | ✅ Complete (this commit) |
-| 3 Auth, admin bootstrap, repository impl | 🔜 Next |
-| 4 Parent module (real workflows) | Pending |
+| 2 Entity & schema design | ✅ Complete |
+| 3 Admin bootstrap & Firestore repos | ✅ Complete (this commit) |
+| 4 Parent module (real workflows) | 🔜 Next |
 | 5–12 | See audit roadmap |
 
 ## Key code locations (Phase 2)
