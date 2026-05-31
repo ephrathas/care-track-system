@@ -67,6 +67,13 @@ class AuthWrapper extends StatelessWidget {
               return const HealthcareDashboard();
             }
 
+            if (role == UserRole.admin) {
+              return const _RolePlaceholderDashboard(
+                title: 'Admin Dashboard',
+                message: 'School setup tools are coming in the next update.',
+              );
+            }
+
             return const _RolePlaceholderDashboard(
               title: 'Dashboard',
               message: 'This role dashboard is under construction.',

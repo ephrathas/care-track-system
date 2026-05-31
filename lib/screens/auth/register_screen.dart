@@ -28,7 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isInit = true;
   bool _roleLocked = false;
 
-  List<String> get _roles => UserRole.labels;
+  List<String> get _roles => UserRole.registerableLabels;
 
   @override
   void didChangeDependencies() {
