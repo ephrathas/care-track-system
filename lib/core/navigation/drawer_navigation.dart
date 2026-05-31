@@ -46,6 +46,12 @@ class DrawerNavigation {
           KidCareDrawerItem(label: 'Alerts', icon: Icons.notifications_rounded, tabIndex: 2),
           KidCareDrawerItem(label: 'Profile', icon: Icons.person_rounded, tabIndex: 3, isDividerAfter: true),
           KidCareDrawerItem(
+            label: 'School Messages',
+            icon: Icons.chat_rounded,
+            action: KidCareDrawerAction.route,
+            route: AppRoutes.messages,
+          ),
+          KidCareDrawerItem(
             label: 'My Orders',
             icon: Icons.local_shipping_rounded,
             action: KidCareDrawerAction.route,

@@ -9,6 +9,7 @@ import '../../models/child_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/marketplace_orders_provider.dart';
+import '../../providers/messaging_provider.dart';
 import '../../providers/parent_preferences_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
@@ -501,6 +502,18 @@ class _AlertsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final orders = context.watch<MarketplaceOrdersProvider>().orders;
+    final messageThreads = context.watch<MessagingProvider>().threads;
+    final userId = context.watch<AuthProvider>().currentUser?.uid ?? '';
+
+    final messageAlerts = messageThreads.take(5).map((thread) {
+      return (
+        'Message from ${thread.otherPartyName(userId)}',
+        thread.lastMessage,
+        Icons.chat_bubble_rounded,
+        AppTheme.primaryBlue,
+        'thread:${thread.id}',
+      );
+    });
 
     final staticAlerts = [
       (
@@ -536,11 +549,16 @@ class _AlertsTab extends StatelessWidget {
       );
     });
 
-    final alerts = [...orderAlerts, ...staticAlerts];
+    final alerts = [...messageAlerts, ...orderAlerts, ...staticAlerts];
 
     return DashboardTabScaffold(
       title: 'Notifications',
       trailingActions: [
+        IconButton(
+          tooltip: 'School Messages',
+          onPressed: () => AppRoutes.push(context, AppRoutes.messages),
+          icon: const Icon(Icons.chat_rounded, color: AppTheme.primaryBlue),
+        ),
         IconButton(
           tooltip: 'My Orders',
           onPressed: () => AppRoutes.push(context, AppRoutes.myOrders),
@@ -563,7 +581,20 @@ class _AlertsTab extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(alert.$2),
             onTap: alert.$5 != null
-                ? () => AppRoutes.push(context, AppRoutes.orderDetail, arguments: alert.$5)
+                ? () {
+                    final target = alert.$5!;
+                    if (target.startsWith('thread:')) {
+                      final threadId = target.substring(7);
+                      for (final thread in messageThreads) {
+                        if (thread.id == threadId) {
+                          AppRoutes.push(context, AppRoutes.chat, arguments: thread);
+                          return;
+                        }
+                      }
+                    } else {
+                      AppRoutes.push(context, AppRoutes.orderDetail, arguments: target);
+                    }
+                  }
                 : null,
           );
         },
@@ -614,6 +645,8 @@ class _ProfileTab extends StatelessWidget {
                   Provider.of<ChildProvider>(context, listen: false)
                       .stopListening();
                   Provider.of<MarketplaceOrdersProvider>(context, listen: false)
+                      .stopListening();
+                  Provider.of<MessagingProvider>(context, listen: false)
                       .stopListening();
                   await Provider.of<AuthProvider>(context, listen: false)
                       .logout();

@@ -7,7 +7,8 @@ import 'package:child_and_student_care_and_tracking_app/screens/parent/cart_scre
 import 'package:child_and_student_care_and_tracking_app/screens/parent/checkout_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/my_orders_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/order_detail_screen.dart';
-import 'package:child_and_student_care_and_tracking_app/screens/parent/product_detail_screen.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/parent/parent_messages_screen.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/shared/chat_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/reports_screen.dart';
 import 'package:flutter/material.dart';
 import '../../screens/auth/auth_wrapper.dart';
@@ -35,6 +36,8 @@ class AppRoutes {
   static const String checkout = '/checkout';
   static const String myOrders = '/my_orders';
   static const String orderDetail = '/order_detail';
+  static const String messages = '/messages';
+  static const String chat = '/chat';
 
   // 🗺️ The Unified Map of Routes
   static Map<String, WidgetBuilder> get routes => {
@@ -62,6 +65,10 @@ class AppRoutes {
         checkout: (context) => const CheckoutScreen(),
         myOrders: (context) => const MyOrdersScreen(),
         orderDetail: (context) => const OrderDetailScreen(),
+        messages: (context) => const ParentMessagesScreen(),
+        chat: (context) {
+          return const ChatScreen();
+        },
       };
 
   // Helper function for clean navigation

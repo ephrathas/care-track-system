@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/chat_message_model.dart';
 import '../models/child_model.dart';
 import '../models/health_appointment_model.dart';
 import '../models/marketplace_order_model.dart';
+import '../models/message_thread_model.dart';
+import '../models/user_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -96,5 +99,107 @@ class DatabaseService {
           orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return orders;
         });
+  }
+
+  Future<UserModel?> getFirstUserByRole(String role) async {
+    final snapshot = await _db
+        .collection('users')
+        .where('role', isEqualTo: role)
+        .limit(1)
+        .get()
+        .timeout(const Duration(seconds: 10));
+
+    if (snapshot.docs.isEmpty) return null;
+    final doc = snapshot.docs.first;
+    final data = Map<String, dynamic>.from(doc.data());
+    data['uid'] = doc.id;
+    return UserModel.fromMap(data);
+  }
+
+  Stream<List<MessageThread>> getMessageThreadsForParent(String parentId) {
+    return _db
+        .collection('message_threads')
+        .where('parentId', isEqualTo: parentId)
+        .snapshots()
+        .map(_mapThreadsSorted);
+  }
+
+  Stream<List<MessageThread>> getMessageThreadsForTeacher(String teacherId) {
+    return _db
+        .collection('message_threads')
+        .where('teacherId', isEqualTo: teacherId)
+        .snapshots()
+        .map(_mapThreadsSorted);
+  }
+
+  List<MessageThread> _mapThreadsSorted(QuerySnapshot<Map<String, dynamic>> snapshot) {
+    final threads = snapshot.docs
+        .map((doc) => MessageThread.fromMap(doc.data(), doc.id))
+        .toList();
+    threads.sort((a, b) => b.lastMessageAt.compareTo(a.lastMessageAt));
+    return threads;
+  }
+
+  Stream<List<ChatMessage>> getChatMessages(String threadId) {
+    return _db
+        .collection('messages')
+        .where('threadId', isEqualTo: threadId)
+        .snapshots()
+        .map((snapshot) {
+          final messages = snapshot.docs
+              .map((doc) => ChatMessage.fromMap(doc.data(), doc.id))
+              .toList();
+          messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          return messages;
+        });
+  }
+
+  Future<String> createMessageThread(MessageThread thread) async {
+    final doc = await _db
+        .collection('message_threads')
+        .add(thread.toMap())
+        .timeout(const Duration(seconds: 10));
+    return doc.id;
+  }
+
+  Future<MessageThread?> findThreadForParent(String parentId) async {
+    final snapshot = await _db
+        .collection('message_threads')
+        .where('parentId', isEqualTo: parentId)
+        .limit(1)
+        .get()
+        .timeout(const Duration(seconds: 10));
+    if (snapshot.docs.isEmpty) return null;
+    final doc = snapshot.docs.first;
+    return MessageThread.fromMap(doc.data(), doc.id);
+  }
+
+  Future<void> sendChatMessage({
+    required String threadId,
+    required ChatMessage message,
+    required bool senderIsParent,
+  }) async {
+    final batch = _db.batch();
+    final messageRef = _db.collection('messages').doc();
+    batch.set(messageRef, message.toMap());
+
+    final threadRef = _db.collection('message_threads').doc(threadId);
+    batch.update(threadRef, {
+      'lastMessage': message.text,
+      'lastMessageAt': message.createdAt.toIso8601String(),
+      'unreadByParent': !senderIsParent,
+      'unreadByTeacher': senderIsParent,
+    });
+
+    await batch.commit().timeout(const Duration(seconds: 10));
+  }
+
+  Future<void> markThreadRead({
+    required String threadId,
+    required bool forParent,
+  }) async {
+    await _db.collection('message_threads').doc(threadId).update({
+      if (forParent) 'unreadByParent': false else 'unreadByTeacher': false,
+    }).timeout(const Duration(seconds: 10));
   }
 }

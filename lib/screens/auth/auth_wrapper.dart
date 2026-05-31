@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/healthcare_provider.dart';
 import '../../providers/marketplace_orders_provider.dart';
+import '../../providers/messaging_provider.dart';
 import '../child/child_dashboard.dart';
 import '../healthcare/healthcare_dashboard.dart';
 import '../parent/parent_dashboard.dart';
@@ -40,11 +41,17 @@ class AuthWrapper extends StatelessWidget {
                     .startListeningToChildren(user.uid);
                 Provider.of<MarketplaceOrdersProvider>(context, listen: false)
                     .startListening(user.uid);
+                Provider.of<MessagingProvider>(context, listen: false)
+                    .startListeningForParent(user.uid);
               });
               return const ParentDashboard();
             }
 
             if (role == UserRole.teacher) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Provider.of<MessagingProvider>(context, listen: false)
+                    .startListeningForTeacher(user.uid);
+              });
               return const TeacherDashboard();
             }
 
