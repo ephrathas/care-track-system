@@ -98,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final success = await authProvider.register(
       email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+      password: _passwordController.text,
       name: _nameController.text.trim(),
       role: _selectedRole,
     );
@@ -106,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success) {
       _showSuccessSnackbar('Welcome, ${_nameController.text.trim()}! Account created.');
       if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.roleSelection, (_) => false);
       }
     } else {
       _showErrorSnackbar(authProvider.errorMessage ?? 'Registration failed. Please try again.');
@@ -118,7 +118,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final authProvider = Provider.of<AuthProvider>(context);
     final roleAccent = RoleStyles.forRole(_selectedRole)['accent'] as Color;
-
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -179,14 +178,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           const SizedBox(height: 28),
-
                           AuthTextField(
                             controller: _nameController,
                             label: 'Full Name',
                             hint: 'Enter your full name',
                             prefixIcon: Icons.person_outline_rounded,
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
+                              if (val == null  val.trim().isEmpty) {
                                 return 'Please enter your name';
                               }
                               return null;
@@ -201,10 +199,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
+                              if (val == null  val.trim().isEmpty) {
                                 return 'Please enter your email';
                               }
-                              if (!val.contains('@') || !val.contains('.')) {
+                              if (!val.contains('@')  !val.contains('.')) {
                                 return 'Please enter a valid email address';
                               }
                               return null;
@@ -228,7 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
+                              if (val == null  val.trim().isEmpty) {
                                 return 'Please enter a password';
                               }
                               if (val.length < 6) {
@@ -238,7 +236,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             },
                           ),
                           const SizedBox(height: 20),
-
                           Text(
                             'Assigned Role',
                             style: TextStyle(
@@ -274,7 +271,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             )
                           else
                             DropdownButtonFormField<String>(
-                              initialValue: _selectedRole,
+                              value: _selectedRole,
                               decoration: InputDecoration(
                                 prefixIcon: Icon(
                                   RoleStyles.forRole(_selectedRole)['icon'] as IconData,
@@ -288,6 +285,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: BorderSide(
+                                    
                                     color: isDark ? Colors.grey[700]! : const Color(0xFFE5E7EB),
                                   ),
                                 ),
@@ -308,7 +306,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onChanged: (val) => setState(() => _selectedRole = val!),
                             ),
                           const SizedBox(height: 32),
-
                           AuthPrimaryButton(
                             label: 'Create Account',
                             backgroundColor: roleAccent,
