@@ -20,11 +20,11 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
     return Scaffold(
       body: IndexedStack(
         index: _navIndex,
-        children: [
-          const _HealthcareHomeTab(),
-          const _HealthcarePatientsTab(),
-          const _HealthcareAppointmentsTab(),
-          const _HealthcareProfileTab(),
+        children: const [
+          _HealthcareHomeTab(),
+          _HealthcarePatientsTab(),
+          _HealthcareAppointmentsTab(),
+          _HealthcareProfileTab(),
         ],
       ),
       bottomNavigationBar: NavigationBar(

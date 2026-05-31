@@ -137,7 +137,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              ProductImage(
+              const ProductImage(
                 assetPath: MarketplaceAssets.promoBackToSchool,
                 networkUrl: MarketplaceAssets.urlPromoBackToSchool,
                 fit: BoxFit.cover,
