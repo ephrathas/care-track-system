@@ -110,18 +110,26 @@ class _ChildHomeTab extends StatelessWidget {
                   children: [
                     const Text(
                       'My Active Quests',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.2),
                     ),
                     if (game.pendingQuestCount > 0)
                       TextButton(
                         onPressed: onOpenTasks,
-                        child: const Text('View all', style: TextStyle(fontWeight: FontWeight.w600)),
+                        child: const Text('View all',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
                       ),
                   ],
                 ),
               ),
             ),
-            SliverToBoxAdapter(child: _QuestStats(rank: game.rankTitle, pending: game.pendingQuestCount, isDark: isDark)),
+            SliverToBoxAdapter(
+                child: _QuestStats(
+                    rank: game.rankTitle,
+                    pending: game.pendingQuestCount,
+                    isDark: isDark)),
             if (game.pendingQuestCount > 0)
               SliverToBoxAdapter(
                 child: Padding(
@@ -141,11 +149,15 @@ class _ChildHomeTab extends StatelessWidget {
                   children: [
                     const Text(
                       'Today\'s Journey',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.2),
                     ),
                     if (game.currentScheduleItem != null)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFF7ED321).withOpacity(0.15),
                           borderRadius: BorderRadius.circular(12),
@@ -234,7 +246,8 @@ class _PlayfulHeader extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                const UserProfileAvatar(radius: 26, editable: false, showGradientRing: false),
+                const UserProfileAvatar(
+                    radius: 26, editable: false, showGradientRing: false),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -242,30 +255,41 @@ class _PlayfulHeader extends StatelessWidget {
                     children: [
                       Text(
                         'Level $level Explorer',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold),
                       ),
                       Text(
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 18),
+                      const Icon(Icons.emoji_events_rounded,
+                          color: Colors.amber, size: 18),
                       const SizedBox(width: 6),
                       Text(
                         '$badgeCount Badges',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11),
                       ),
                     ],
                   ),
@@ -278,11 +302,17 @@ class _PlayfulHeader extends StatelessWidget {
               children: [
                 Text(
                   'My Progress (XP)',
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600),
                 ),
                 Text(
                   '$xp / ${ChildGamificationProvider.xpPerLevel} XP',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -315,7 +345,8 @@ class _QuestStats extends StatelessWidget {
   final int pending;
   final bool isDark;
 
-  const _QuestStats({required this.rank, required this.pending, required this.isDark});
+  const _QuestStats(
+      {required this.rank, required this.pending, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -329,18 +360,24 @@ class _QuestStats extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+                border: Border.all(
+                    color:
+                        isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
               ),
               child: Column(
                 children: [
-                  const Text('Pending Quests', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  const Text('Pending Quests',
+                      style: TextStyle(
+                          fontSize: 11, color: AppTheme.textSecondary)),
                   const SizedBox(height: 6),
                   Text(
                     '$pending',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: pending > 0 ? const Color(0xFF9013FE) : const Color(0xFF7ED321),
+                      color: pending > 0
+                          ? const Color(0xFF9013FE)
+                          : const Color(0xFF7ED321),
                     ),
                   ),
                 ],
@@ -354,11 +391,15 @@ class _QuestStats extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isDark ? AppTheme.darkSurface : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+                border: Border.all(
+                    color:
+                        isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
               ),
               child: Column(
                 children: [
-                  const Text('Level Rank', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  const Text('Level Rank',
+                      style: TextStyle(
+                          fontSize: 11, color: AppTheme.textSecondary)),
                   const SizedBox(height: 6),
                   Text(
                     rank,
@@ -386,7 +427,8 @@ class _NextQuestCard extends StatelessWidget {
   final VoidCallback onTap;
   final bool isDark;
 
-  const _NextQuestCard({required this.quest, required this.onTap, required this.isDark});
+  const _NextQuestCard(
+      {required this.quest, required this.onTap, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -411,13 +453,22 @@ class _NextQuestCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Up next', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-                      Text(quest.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      const Text('Up next',
+                          style: TextStyle(
+                              fontSize: 10, color: AppTheme.textSecondary)),
+                      Text(quest.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
                   ),
                 ),
-                Text('+${quest.xp} XP', style: TextStyle(color: quest.color, fontWeight: FontWeight.bold, fontSize: 11)),
+                Text('+${quest.xp} XP',
+                    style: TextStyle(
+                        color: quest.color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11)),
               ],
             ),
           ),
@@ -454,7 +505,12 @@ class _ScheduleCard extends StatelessWidget {
           width: isCurrent ? 2 : 1,
         ),
         boxShadow: isCurrent
-            ? [BoxShadow(color: item.color.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))]
+            ? [
+                BoxShadow(
+                    color: item.color.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4))
+              ]
             : null,
       ),
       child: Row(
@@ -486,12 +542,17 @@ class _ScheduleCard extends StatelessWidget {
                     ),
                     if (isNext)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: item.color.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text('Up next', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: item.color)),
+                        child: Text('Up next',
+                            style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: item.color)),
                       ),
                   ],
                 ),
@@ -533,7 +594,8 @@ class _ChildHomeworkTab extends StatelessWidget {
             Expanded(
               child: Text(
                 'Quest completed! Earned +${quest.xp} XP!',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
           ],
@@ -560,16 +622,22 @@ class _ChildHomeworkTab extends StatelessWidget {
         backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Center(
-          child: Text('🎉 LEVEL UP! 🎉', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, fontSize: 22)),
+          child: Text('🎉 LEVEL UP! 🎉',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                  fontSize: 22)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🌟 AMAZING WORK! 🌟', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text('🌟 AMAZING WORK! 🌟',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
             Text('You reached Level $level!', textAlign: TextAlign.center),
             const SizedBox(height: 20),
-            const Icon(Icons.workspace_premium_rounded, size: 72, color: Colors.amber),
+            const Icon(Icons.workspace_premium_rounded,
+                size: 72, color: Colors.amber),
           ],
         ),
         actionsAlignment: MainAxisAlignment.center,
@@ -578,9 +646,12 @@ class _ChildHomeworkTab extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text('Awesome!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: const Text('Awesome!',
+                style: TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -592,17 +663,25 @@ class _ChildHomeworkTab extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('New Badge Unlocked!', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('New Badge Unlocked!',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.emoji_events_rounded, size: 64, color: Colors.amber),
+            const Icon(Icons.emoji_events_rounded,
+                size: 64, color: Colors.amber),
             const SizedBox(height: 12),
-            Text(badgeTitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(badgeTitle,
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Collect!')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Collect!')),
         ],
       ),
     );
@@ -617,8 +696,13 @@ class _ChildHomeworkTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
+<<<<<<< HEAD
         leading: const DashboardToolbarLeading(),
         title: const Text('My Homework Quests', style: TextStyle(fontWeight: FontWeight.bold)),
+=======
+        title: const Text('My Homework Quests',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+>>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
         centerTitle: false,
         actions: const [DashboardToolbarTrailing()],
       ),
@@ -629,14 +713,20 @@ class _ChildHomeworkTab extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.celebration_rounded, size: 64, color: Color(0xFF7ED321)),
+                    const Icon(Icons.celebration_rounded,
+                        size: 64, color: Color(0xFF7ED321)),
                     const SizedBox(height: 16),
-                    const Text('All quests complete!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    const Text('All quests complete!',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18)),
                     const SizedBox(height: 8),
                     Text(
                       'You earned ${game.unlockedBadgeCount} badges. Check your vault!',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                      style: TextStyle(
+                          color: isDark
+                              ? Colors.grey[400]
+                              : AppTheme.textSecondary),
                     ),
                   ],
                 ),
@@ -649,7 +739,10 @@ class _ChildHomeworkTab extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final task = list[index];
-                return _QuestTile(task: task, isDark: isDark, onClaim: () => _completeTask(context, task));
+                return _QuestTile(
+                    task: task,
+                    isDark: isDark,
+                    onClaim: () => _completeTask(context, task));
               },
             ),
     );
@@ -661,7 +754,8 @@ class _QuestTile extends StatefulWidget {
   final bool isDark;
   final VoidCallback onClaim;
 
-  const _QuestTile({required this.task, required this.isDark, required this.onClaim});
+  const _QuestTile(
+      {required this.task, required this.isDark, required this.onClaim});
 
   @override
   State<_QuestTile> createState() => _QuestTileState();
@@ -697,14 +791,18 @@ class _QuestTileState extends State<_QuestTile> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: accent.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       task.subject,
-                      style: TextStyle(color: accent, fontWeight: FontWeight.bold, fontSize: 10),
+                      style: TextStyle(
+                          color: accent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -714,21 +812,36 @@ class _QuestTileState extends State<_QuestTile> {
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       decoration: completed ? TextDecoration.lineThrough : null,
-                      color: completed ? Colors.grey : (widget.isDark ? Colors.white : AppTheme.textPrimary),
+                      color: completed
+                          ? Colors.grey
+                          : (widget.isDark
+                              ? Colors.white
+                              : AppTheme.textPrimary),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.calendar_month_rounded, size: 12,
-                          color: widget.isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                      Icon(Icons.calendar_month_rounded,
+                          size: 12,
+                          color: widget.isDark
+                              ? Colors.grey[400]
+                              : AppTheme.textSecondary),
                       const SizedBox(width: 4),
                       Text(task.dueDate,
-                          style: TextStyle(fontSize: 10, color: widget.isDark ? Colors.grey[400] : AppTheme.textSecondary)),
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: widget.isDark
+                                  ? Colors.grey[400]
+                                  : AppTheme.textSecondary)),
                       const SizedBox(width: 14),
-                      const Icon(Icons.bolt_rounded, size: 12, color: Colors.amber),
+                      const Icon(Icons.bolt_rounded,
+                          size: 12, color: Colors.amber),
                       Text('+${task.xp} XP',
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.amber)),
+                          style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber)),
                     ],
                   ),
                 ],
@@ -749,10 +862,16 @@ class _QuestTileState extends State<_QuestTile> {
                   onPressed: widget.onClaim,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                   ),
-                  child: const Text('Claim', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  child: const Text('Claim',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12)),
                 ),
               ),
           ],
@@ -775,8 +894,13 @@ class _ChildRewardsTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
+<<<<<<< HEAD
         leading: const DashboardToolbarLeading(),
         title: const Text('My Vault Badges', style: TextStyle(fontWeight: FontWeight.bold)),
+=======
+        title: const Text('My Vault Badges',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+>>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
         centerTitle: false,
         actions: [
           Padding(
@@ -784,7 +908,8 @@ class _ChildRewardsTab extends StatelessWidget {
             child: Center(
               child: Text(
                 '${game.unlockedBadgeCount}/${badges.length}',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.amber),
               ),
             ),
           ),
@@ -829,10 +954,17 @@ class _BadgeCard extends StatelessWidget {
           color: isDark ? AppTheme.darkSurface : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: unlocked ? accent.withOpacity(0.3) : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+            color: unlocked
+                ? accent.withOpacity(0.3)
+                : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
           ),
           boxShadow: unlocked
-              ? [BoxShadow(color: accent.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4))]
+              ? [
+                  BoxShadow(
+                      color: accent.withOpacity(0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4))
+                ]
               : null,
         ),
         child: Column(
@@ -841,10 +973,13 @@ class _BadgeCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: unlocked ? accent.withOpacity(0.12) : Colors.grey.withOpacity(0.1),
+                color: unlocked
+                    ? accent.withOpacity(0.12)
+                    : Colors.grey.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(badge.icon, color: unlocked ? accent : Colors.grey, size: 32),
+              child: Icon(badge.icon,
+                  color: unlocked ? accent : Colors.grey, size: 32),
             ),
             const SizedBox(height: 10),
             Text(
@@ -855,7 +990,9 @@ class _BadgeCard extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
-                color: unlocked ? (isDark ? Colors.white : AppTheme.textPrimary) : Colors.grey,
+                color: unlocked
+                    ? (isDark ? Colors.white : AppTheme.textPrimary)
+                    : Colors.grey,
               ),
             ),
             const SizedBox(height: 4),
@@ -864,11 +1001,14 @@ class _BadgeCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 9, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+              style: TextStyle(
+                  fontSize: 9,
+                  color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
             ),
             if (!unlocked) ...[
               const SizedBox(height: 6),
-              const Icon(Icons.lock_outline_rounded, size: 14, color: Colors.grey),
+              const Icon(Icons.lock_outline_rounded,
+                  size: 14, color: Colors.grey),
             ],
           ],
         ),
@@ -903,7 +1043,8 @@ class _ChildProfileTab extends StatelessWidget {
           Text(
             'Tap your photo to update',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
+            style: TextStyle(
+                fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -919,7 +1060,8 @@ class _ChildProfileTab extends StatelessWidget {
           const SizedBox(height: 14),
           Center(
             child: Chip(
-              label: Text(user?.role ?? 'Child', style: const TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(user?.role ?? 'Child',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               backgroundColor: const Color(0xFF9013FE).withOpacity(0.12),
               side: BorderSide.none,
             ),
@@ -930,7 +1072,8 @@ class _ChildProfileTab extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark ? AppTheme.darkSurface : Colors.white,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+              border: Border.all(
+                  color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
             ),
             child: Column(
               children: [
@@ -938,9 +1081,11 @@ class _ChildProfileTab extends StatelessWidget {
                 const Divider(),
                 _ProfileStatRow(label: 'Total XP', value: '${game.currentXp}'),
                 const Divider(),
-                _ProfileStatRow(label: 'Badges', value: '${game.unlockedBadgeCount}'),
+                _ProfileStatRow(
+                    label: 'Badges', value: '${game.unlockedBadgeCount}'),
                 const Divider(),
-                const _ProfileStatRow(label: 'Assigned Class', value: 'Grade 3-A'),
+                const _ProfileStatRow(
+                    label: 'Assigned Class', value: 'Grade 3-A'),
               ],
             ),
           ),
@@ -950,13 +1095,17 @@ class _ChildProfileTab extends StatelessWidget {
             height: 52,
             child: OutlinedButton.icon(
               onPressed: () async {
-                await Provider.of<AuthProvider>(context, listen: false).logout();
+                await Provider.of<AuthProvider>(context, listen: false)
+                    .logout();
               },
               icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-              label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+              label: const Text('Sign Out',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.redAccent)),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.redAccent),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
               ),
             ),
           ),
@@ -979,8 +1128,12 @@ class _ProfileStatRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
         ],
       ),
     );

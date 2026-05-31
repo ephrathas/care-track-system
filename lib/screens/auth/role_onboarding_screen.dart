@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/auth_assets.dart';
 import '../../core/constants/role_onboarding.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/constants/user_role.dart';
@@ -86,7 +85,8 @@ class _RoleOnboardingScreenState extends State<RoleOnboardingScreen> {
                         child: Icon(
                           Icons.arrow_back_ios_new_rounded,
                           size: 18,
-                          color: isDark ? Colors.white : const Color(0xFF374151),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF374151),
                         ),
                       ),
                     ),
@@ -94,11 +94,14 @@ class _RoleOnboardingScreenState extends State<RoleOnboardingScreen> {
                     const KidCareLogo(iconSize: 20, fontSize: 18),
                     const Spacer(),
                     TextButton(
-                      onPressed: () => AuthNavigation.openRegister(context, _role),
+                      onPressed: () =>
+                          AuthNavigation.openRegister(context, _role),
                       child: Text(
                         'Skip',
                         style: TextStyle(
-                          color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                          color: isDark
+                              ? Colors.grey[400]
+                              : AppTheme.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -123,13 +126,16 @@ class _RoleOnboardingScreenState extends State<RoleOnboardingScreen> {
                   },
                 ),
               ),
-              _PageDots(count: _slides.length, index: _pageIndex, accent: _accent),
+              _PageDots(
+                  count: _slides.length, index: _pageIndex, accent: _accent),
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
                 child: AuthPrimaryButton(
                   label: isLast ? 'Create Account' : 'Continue',
                   backgroundColor: _accent,
-                  icon: isLast ? Icons.person_add_rounded : Icons.arrow_forward_rounded,
+                  icon: isLast
+                      ? Icons.person_add_rounded
+                      : Icons.arrow_forward_rounded,
                   onPressed: _next,
                 ),
               ),
@@ -141,7 +147,8 @@ class _RoleOnboardingScreenState extends State<RoleOnboardingScreen> {
                     text: TextSpan(
                       text: 'Already have an account? ',
                       style: TextStyle(
-                        color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                        color:
+                            isDark ? Colors.grey[400] : AppTheme.textSecondary,
                       ),
                       children: const [
                         TextSpan(
@@ -208,7 +215,9 @@ class _OnboardingPage extends StatelessWidget {
             const SizedBox(height: 20),
           ],
           AuthIllustration.hero(
-            assetPath: showWelcome ? RoleOnboarding.heroAssetFor(role) : slide.imageAsset,
+            assetPath: showWelcome
+                ? RoleOnboarding.heroAssetFor(role)
+                : slide.imageAsset,
             height: showWelcome ? 200 : 180,
           ),
           const SizedBox(height: 28),

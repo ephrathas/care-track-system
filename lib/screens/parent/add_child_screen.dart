@@ -17,10 +17,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
-  
+
   // Image Selector States
   final ImagePicker _picker = ImagePicker();
-  XFile? _pickedFile;
   Uint8List? _imageBytes;
 
   // Curated Immunization checklist items
@@ -52,13 +51,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
       if (selected != null) {
         final bytes = await selected.readAsBytes();
         setState(() {
-          _pickedFile = selected;
           _imageBytes = bytes;
         });
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to pick image: $e"), backgroundColor: Colors.redAccent),
+        SnackBar(
+            content: Text("Failed to pick image: $e"),
+            backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -70,7 +70,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
           children: [
             const Icon(Icons.error_outline_rounded, color: Colors.white),
             const SizedBox(width: 12),
-            Expanded(child: Text(message, style: const TextStyle(fontWeight: FontWeight.w500))),
+            Expanded(
+                child: Text(message,
+                    style: const TextStyle(fontWeight: FontWeight.w500))),
           ],
         ),
         backgroundColor: Colors.redAccent,
@@ -88,7 +90,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
           children: [
             const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
             const SizedBox(width: 12),
-            Expanded(child: Text(message, style: const TextStyle(fontWeight: FontWeight.w500))),
+            Expanded(
+                child: Text(message,
+                    style: const TextStyle(fontWeight: FontWeight.w500))),
           ],
         ),
         backgroundColor: AppTheme.softGreen,
@@ -135,7 +139,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
         Navigator.pop(context);
       }
     } else {
-      _showErrorSnackbar(childProvider.errorMessage ?? "Failed to save profile. Try again.");
+      _showErrorSnackbar(
+          childProvider.errorMessage ?? "Failed to save profile. Try again.");
     }
   }
 
@@ -150,7 +155,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : Colors.black87),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: isDark ? Colors.white : Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -188,8 +194,12 @@ class _AddChildScreenState extends State<AddChildScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                      color: AppTheme.primaryBlue.withOpacity(0.3), width: 3),
-                                  color: isDark ? AppTheme.darkSurface : Colors.white,
+                                      color:
+                                          AppTheme.primaryBlue.withOpacity(0.3),
+                                      width: 3),
+                                  color: isDark
+                                      ? AppTheme.darkSurface
+                                      : Colors.white,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.05),
@@ -201,11 +211,16 @@ class _AddChildScreenState extends State<AddChildScreen> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(55),
                                   child: _imageBytes != null
-                                      ? Image.memory(_imageBytes!, fit: BoxFit.cover, width: 110, height: 110)
+                                      ? Image.memory(_imageBytes!,
+                                          fit: BoxFit.cover,
+                                          width: 110,
+                                          height: 110)
                                       : Icon(
                                           Icons.child_care_rounded,
                                           size: 56,
-                                          color: isDark ? Colors.white24 : Colors.grey[300],
+                                          color: isDark
+                                              ? Colors.white24
+                                              : Colors.grey[300],
                                         ),
                                 ),
                               ),
@@ -234,9 +249,12 @@ class _AddChildScreenState extends State<AddChildScreen> {
                         onTap: _selectPhoto,
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           child: Text(
-                            _imageBytes != null ? 'Change Photo' : 'Upload Child Photo',
+                            _imageBytes != null
+                                ? 'Change Photo'
+                                : 'Upload Child Photo',
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -255,13 +273,16 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 TextFormField(
                   controller: _nameController,
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return "Please enter child's name";
+                    if (val == null || val.trim().isEmpty) {
+                      return "Please enter child's name";
+                    }
                     return null;
                   },
                   decoration: InputDecoration(
                     labelText: "Child's Full Name",
                     prefixIcon: const Icon(Icons.badge_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     filled: true,
                     fillColor: isDark ? AppTheme.darkSurface : Colors.white,
                   ),
@@ -273,15 +294,20 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   controller: _ageController,
                   keyboardType: TextInputType.number,
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return "Please enter age";
+                    if (val == null || val.trim().isEmpty) {
+                      return "Please enter age";
+                    }
                     final age = int.tryParse(val.trim());
-                    if (age == null || age < 0) return "Please enter a valid age";
+                    if (age == null || age < 0) {
+                      return "Please enter a valid age";
+                    }
                     return null;
                   },
                   decoration: InputDecoration(
                     labelText: "Age (in Years)",
                     prefixIcon: const Icon(Icons.cake_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     filled: true,
                     fillColor: isDark ? AppTheme.darkSurface : Colors.white,
                   ),
@@ -312,7 +338,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   decoration: BoxDecoration(
                     color: isDark ? AppTheme.darkSurface : Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? Colors.transparent : Colors.grey[200]!),
+                    border: Border.all(
+                        color: isDark ? Colors.transparent : Colors.grey[200]!),
                   ),
                   child: ListView.separated(
                     shrinkWrap: true,
@@ -328,7 +355,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                         value: item['checked'],
                         title: Text(
                           item['name'],
-                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                              fontSize: 13.5, fontWeight: FontWeight.w500),
                         ),
                         activeColor: AppTheme.primaryBlue,
                         checkColor: Colors.white,
@@ -350,17 +378,22 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: childProvider.isLoading ? null : _submitChildForm,
+                    onPressed:
+                        childProvider.isLoading ? null : _submitChildForm,
                     style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
                     ),
                     child: childProvider.isLoading
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2.5),
                           )
-                        : const Text("Save Child Profile", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        : const Text("Save Child Profile",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 12),

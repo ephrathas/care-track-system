@@ -24,6 +24,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       key: _scaffoldKey,
       drawer: KidCareDrawer(
         selectedNavIndex: _navIndex,
@@ -43,6 +44,17 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             _TeacherProfileTab(),
           ],
         ),
+=======
+      body: IndexedStack(
+        index: _navIndex,
+        children: const [
+          _TeacherHomeTab(),
+          _TeacherAttendanceTab(),
+          _TeacherHomeworkTab(),
+          _TeacherMessagesTab(),
+          _TeacherProfileTab(),
+        ],
+>>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _navIndex,
@@ -613,7 +625,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                               ),
                               Switch(
                                 value: isPresent,
-                                activeColor: const Color(0xFF7ED321),
+                                activeThumbColor: const Color(0xFF7ED321),
                                 activeTrackColor: const Color(0xFF7ED321).withOpacity(0.2),
                                 onChanged: (value) {
                                   setState(() {
@@ -733,7 +745,7 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
                   const Text('Subject', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: _selectedSubject,
+                    initialValue: _selectedSubject,
                     dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                     decoration: InputDecoration(
                       filled: true,
@@ -1113,7 +1125,7 @@ class _TeacherMessagesTabState extends State<_TeacherMessagesTab> {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
-                    child: Icon(Icons.person_rounded, color: AppTheme.primaryBlue),
+                    child: const Icon(Icons.person_rounded, color: AppTheme.primaryBlue),
                   ),
                   const SizedBox(width: 14),
                   Expanded(

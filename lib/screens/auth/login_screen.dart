@@ -71,7 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final authProvider = Provider.of<AuthProvider>(context);
-
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -135,17 +134,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
+                              if (val == null  val.trim().isEmpty) {
                                 return 'Please enter your email';
                               }
-                              if (!val.contains('@') || !val.contains('.')) {
+                              if (!val.contains('@')  !val.contains('.')) {
                                 return 'Please enter a valid email address';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: 20),
-
                           AuthTextField(
                             controller: _passwordController,
                             label: 'Password',
@@ -224,7 +222,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

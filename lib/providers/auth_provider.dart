@@ -3,6 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../core/auth/auth_error_messages.dart';
+<<<<<<< HEAD
+=======
+
+>>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
@@ -63,12 +67,19 @@ class AuthProvider with ChangeNotifier {
       User? user = await _authService.signIn(normalizedEmail, password);
       if (user != null) {
         _currentUser = await _authService.getUserData(user.uid);
+<<<<<<< HEAD
         if (_currentUser == null) {
           _currentUser = await _authService.ensureUserProfile(
             uid: user.uid,
             email: user.email ?? normalizedEmail,
           );
         }
+=======
+        _currentUser ??= await _authService.ensureUserProfile(
+            uid: user.uid,
+            email: user.email ?? normalizedEmail,
+          );
+>>>>>>> a82b3823ac6c9b3d962e8fbb89617fc8b0a38632
         if (_currentUser == null) {
           throw FirebaseAuthException(
             code: 'profile-not-found',
