@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../core/auth/auth_error_messages.dart';
 import '../models/user_model.dart';
-import '../core/utils/profile_image_utils.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 
@@ -169,9 +168,8 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final compressed = await compressProfilePhotoBytes(imageBytes);
       final imageUrl = await _storageService
-          .uploadUserPhotoFromBytes(_currentUser!.uid, compressed)
+          .uploadUserPhotoFromBytes(_currentUser!.uid, imageBytes)
           .timeout(const Duration(seconds: 30));
       await _authService.updateProfilePic(_currentUser!.uid, imageUrl);
       _currentUser = _currentUser!.copyWith(profilePic: imageUrl);
