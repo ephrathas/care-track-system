@@ -8,6 +8,9 @@ class ClassSubjectModel {
   final String subjectId;
   final String teacherId;
   final bool isActive;
+  final String? catalogTeacherName;
+  final String? catalogTeacherEmail;
+  final String? catalogSubjectIcon;
 
   const ClassSubjectModel({
     required this.id,
@@ -16,6 +19,9 @@ class ClassSubjectModel {
     required this.subjectId,
     required this.teacherId,
     this.isActive = true,
+    this.catalogTeacherName,
+    this.catalogTeacherEmail,
+    this.catalogSubjectIcon,
   });
 
   factory ClassSubjectModel.fromMap(Map<String, dynamic> map, String id) {
@@ -26,6 +32,9 @@ class ClassSubjectModel {
       subjectId: map['subjectId'] as String? ?? '',
       teacherId: map['teacherId'] as String? ?? '',
       isActive: map['isActive'] as bool? ?? true,
+      catalogTeacherName: map['catalogTeacherName'] as String?,
+      catalogTeacherEmail: map['catalogTeacherEmail'] as String?,
+      catalogSubjectIcon: map['catalogSubjectIcon'] as String?,
     );
   }
 
@@ -35,6 +44,9 @@ class ClassSubjectModel {
         'subjectId': subjectId,
         'teacherId': teacherId,
         'isActive': isActive,
+        if (catalogTeacherName != null) 'catalogTeacherName': catalogTeacherName,
+        if (catalogTeacherEmail != null) 'catalogTeacherEmail': catalogTeacherEmail,
+        if (catalogSubjectIcon != null) 'catalogSubjectIcon': catalogSubjectIcon,
       };
 }
 
@@ -43,10 +55,16 @@ class AssignedTeacherView {
   final SubjectModel subject;
   final String teacherId;
   final String teacherName;
+  final String? teacherEmail;
+  final String? subjectIconKey;
+  final bool isLinked;
 
   const AssignedTeacherView({
     required this.subject,
     required this.teacherId,
     required this.teacherName,
+    this.teacherEmail,
+    this.subjectIconKey,
+    this.isLinked = false,
   });
 }

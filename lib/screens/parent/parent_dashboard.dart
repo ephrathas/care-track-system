@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/add_child_display_mode.dart';
-import '../../core/constants/parent_demo_data.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/class_room_model.dart';
+import '../../models/grade_level_model.dart';
 import '../../models/child_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/marketplace_orders_provider.dart';
 import '../../providers/messaging_provider.dart';
 import '../../providers/parent_preferences_provider.dart';
+import '../../providers/school_admin_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
 import '../../widgets/dashboard/dashboard_stat_card.dart';
@@ -150,35 +152,49 @@ class _ParentHomeTab extends StatelessWidget {
   }
 
   Widget _buildQuickStats(BuildContext context) {
+    final childProvider = context.watch<ChildProvider>();
+    final messageProvider = context.watch<MessagingProvider>();
+    final orderProvider = context.watch<MarketplaceOrdersProvider>();
+    final unreadMessages = messageProvider.threads.where((t) => t.unreadByParent).length;
+    final healthEnabled = childProvider.children.where((c) => c.healthModuleEnabled).length;
+
     return SizedBox(
       height: 128,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
-          const DashboardStatCard(
+          DashboardStatCard(
             icon: Icons.school_rounded,
-            label: 'Attendance',
-            value: '96%',
-            subtitle: 'This week',
+            label: 'Children',
+            value: '${childProvider.children.length}',
+            subtitle: 'Profiles added',
             accent: AppTheme.primaryBlue,
           ),
           const SizedBox(width: 12),
-          const DashboardStatCard(
+          DashboardStatCard(
+            icon: Icons.chat_rounded,
+            label: 'Messages',
+            value: '$unreadMessages',
+            subtitle: 'Unread',
+            accent: const Color(0xFF9013FE),
+          ),
+          const SizedBox(width: 12),
+          DashboardStatCard(
             icon: Icons.favorite_rounded,
             label: 'Health',
-            value: 'Good',
-            subtitle: 'All checkups current',
+            value: '$healthEnabled',
+            subtitle: 'Profiles enabled',
             accent: AppTheme.softGreen,
           ),
           const SizedBox(width: 12),
           GestureDetector(
             onTap: () => Navigator.pushNamed(context, AppRoutes.billing),
-            child: const DashboardStatCard(
+            child: DashboardStatCard(
               icon: Icons.receipt_long_rounded,
               label: 'Billing',
-              value: '\$120',
-              subtitle: 'Due in 5 days',
+              value: '${orderProvider.orders.length}',
+              subtitle: 'Order records',
               accent: Color(0xFFE2894A),
             ),
           ),
@@ -286,6 +302,12 @@ class _ParentHomeTab extends StatelessWidget {
   }
 
   Widget _buildInsightCards(BuildContext context, bool isDark) {
+    final childProvider = context.watch<ChildProvider>();
+    final hasEnrolledChildren = childProvider.children
+        .where((c) => c.gradeLevelId != null && c.classRoomId != null)
+        .isNotEmpty;
+    final healthEnabled = childProvider.children.where((c) => c.healthModuleEnabled).length;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Column(
@@ -293,8 +315,9 @@ class _ParentHomeTab extends StatelessWidget {
           _InsightPanel(
             isDark: isDark,
             title: 'Academic Progress',
-            subtitle:
-                'Math improved 12% this month. Reading homework due Friday.',
+            subtitle: hasEnrolledChildren
+                ? 'Children are enrolled in class. Grades will appear once teachers publish assessments.'
+                : 'No class enrollment yet. Add grade and class to see teacher-assigned subjects.',
             icon: Icons.auto_graph_rounded,
             color: AppTheme.primaryBlue,
             onTap: () => Navigator.pushNamed(context, AppRoutes.reports),
@@ -303,8 +326,9 @@ class _ParentHomeTab extends StatelessWidget {
           _InsightPanel(
             isDark: isDark,
             title: 'Health Updates',
-            subtitle:
-                'Flu vaccination scheduled for May 28. No new alerts today.',
+            subtitle: healthEnabled > 0
+                ? '$healthEnabled child profile(s) have health module enabled.'
+                : 'Health tracking is optional. Enable it later from healthcare setup.',
             icon: Icons.health_and_safety_rounded,
             color: AppTheme.softGreen,
           ),
@@ -313,10 +337,10 @@ class _ParentHomeTab extends StatelessWidget {
             isDark: isDark,
             title: 'Billing & Payments',
             subtitle:
-                'Tuition invoice #1042 is ready. Pay securely in one tap.',
+                'Billing module is not active yet. Order history remains available from the shop.',
             icon: Icons.payments_rounded,
             color: const Color(0xFFE2894A),
-            actionLabel: 'View invoice',
+            actionLabel: 'Open billing screen',
             onTap: () => Navigator.pushNamed(context, AppRoutes.billing),
           ),
         ],
@@ -334,6 +358,10 @@ class _ChildProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vaxCount = child.vaccinations.length;
+    final admin = context.watch<SchoolAdminProvider>();
+    final gradeName = _resolveGradeName(admin.grades, child.gradeLevelId);
+    final className = _resolveClassName(admin.classes, child.classRoomId);
+    final enrollmentLabel = [gradeName, className].whereType<String>().join(' • ');
 
     return Material(
       color: isDark ? AppTheme.darkSurface : Colors.white,
@@ -380,7 +408,9 @@ class _ChildProfileCard extends StatelessWidget {
                               fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 4),
                       Text(
-                        '${child.age} years old • ${ParentDemoData.gradeForAge(child.age)}',
+                        enrollmentLabel.isEmpty
+                            ? '${child.age} years old • Class not assigned'
+                            : '${child.age} years old • $enrollmentLabel',
                         style: TextStyle(
                             fontSize: 12,
                             color:
@@ -516,30 +546,6 @@ class _AlertsTab extends StatelessWidget {
       );
     });
 
-    final staticAlerts = [
-      (
-        'Attendance marked present',
-        'Emma checked in at 8:12 AM',
-        Icons.check_circle_rounded,
-        AppTheme.softGreen,
-        null as String?,
-      ),
-      (
-        'Homework reminder',
-        'Math worksheet due tomorrow',
-        Icons.menu_book_rounded,
-        AppTheme.primaryBlue,
-        null,
-      ),
-      (
-        'Health notice',
-        'Annual checkup scheduled next week',
-        Icons.medical_information_rounded,
-        const Color(0xFFE2894A),
-        null,
-      ),
-    ];
-
     final orderAlerts = orders.take(5).map((order) {
       return (
         'Order #${order.shortId} • ${order.statusLabel}',
@@ -550,7 +556,7 @@ class _AlertsTab extends StatelessWidget {
       );
     });
 
-    final alerts = [...messageAlerts, ...orderAlerts, ...staticAlerts];
+    final alerts = [...messageAlerts, ...orderAlerts];
 
     return DashboardTabScaffold(
       title: 'Notifications',
@@ -566,7 +572,21 @@ class _AlertsTab extends StatelessWidget {
           icon: const Icon(Icons.receipt_long_rounded, color: AppTheme.primaryBlue),
         ),
       ],
-      body: ListView.separated(
+      body: alerts.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Text(
+                  'No notifications yet.\nNew messages and order updates will appear here.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            )
+          : ListView.separated(
         padding: const EdgeInsets.all(20),
         itemCount: alerts.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -602,6 +622,22 @@ class _AlertsTab extends StatelessWidget {
       ),
     );
   }
+}
+
+String? _resolveGradeName(List<GradeLevelModel> grades, String? gradeId) {
+  if (gradeId == null) return null;
+  for (final grade in grades) {
+    if (grade.id == gradeId) return grade.name;
+  }
+  return gradeId;
+}
+
+String? _resolveClassName(List<ClassRoomModel> classes, String? classId) {
+  if (classId == null) return null;
+  for (final c in classes) {
+    if (c.id == classId) return c.name;
+  }
+  return classId;
 }
 
 class _ProfileTab extends StatelessWidget {

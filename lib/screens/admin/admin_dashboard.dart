@@ -128,14 +128,45 @@ class _OverviewTab extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        _CheckItem(done: admin.grades.isNotEmpty, label: 'Add grade levels'),
-        _CheckItem(done: admin.classes.isNotEmpty, label: 'Create class sections'),
-        _CheckItem(done: admin.subjects.isNotEmpty, label: 'Add subjects'),
+        if (admin.grades.isEmpty)
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryBlue),
+              title: const Text('Load Grades 1–5 catalog'),
+              subtitle: const Text(
+                'Seeds grades, subjects, and default teacher assignments. You can still edit everything in the tabs below.',
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () async {
+                final ok = await admin.seedDefaultCatalog();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ok
+                          ? 'Catalog loaded successfully.'
+                          : (admin.error ?? 'Catalog could not be loaded.'),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        if (admin.grades.isEmpty) const SizedBox(height: 12),
+        _CheckItem(
+          done: admin.grades.isNotEmpty,
+          label: 'Grades 1–5 (catalog or manual)',
+        ),
+        _CheckItem(done: admin.classes.isNotEmpty, label: 'Class sections'),
+        _CheckItem(done: admin.subjects.isNotEmpty, label: 'Subjects'),
         _CheckItem(
           done: admin.teachers.isNotEmpty,
-          label: 'Teachers register & get linked (set schoolId on signup — Phase 4)',
+          label: 'Teachers registered & linked to school',
         ),
-        _CheckItem(done: false, label: 'Assign teachers to classes (Teachers tab)'),
+        _CheckItem(
+          done: admin.teachers.isNotEmpty,
+          label: 'Link Firebase teachers to catalog slots (Teachers tab)',
+        ),
         const SizedBox(height: 16),
         Text(
           '${AppBranding.name} — one school per app deployment.',

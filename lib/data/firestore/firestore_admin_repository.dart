@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/config/school_config.dart';
 import '../../core/domain/domain_enums.dart';
 import '../../models/school_model.dart';
+import '../../services/academic_catalog_seed_service.dart';
 import '../repositories/user_repository.dart';
 import 'firestore_helpers.dart';
 import 'firestore_user_repository.dart';
@@ -60,6 +61,7 @@ class FirestoreAdminRepository implements AdminRepository {
       SetOptions(merge: true),
     );
     await batch.commit();
+    await AcademicCatalogSeedService(db: _db).seedSchoolCatalogIfEmpty(schoolId: schoolId);
   }
 
   /// First registered user can become Admin when no school is set up yet.

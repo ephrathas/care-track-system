@@ -1,8 +1,17 @@
+import '../core/domain/domain_enums.dart';
+
 class ChildModel {
   final String id;
   final String name;
   final int age;
   final String parentId;
+  final String schoolId;
+  final String? gradeLevelId;
+  final String? classRoomId;
+  final DateTime? dateOfBirth;
+  final Gender? gender;
+  final String accountMode;
+  final bool healthModuleEnabled;
   final String imageUrl;
   final List<String> vaccinations;
   final double? latestHeight;
@@ -14,6 +23,13 @@ class ChildModel {
     required this.name,
     required this.age,
     required this.parentId,
+    this.schoolId = '',
+    this.gradeLevelId,
+    this.classRoomId,
+    this.dateOfBirth,
+    this.gender,
+    this.accountMode = 'parent_managed',
+    this.healthModuleEnabled = false,
     required this.imageUrl,
     this.vaccinations = const [],
     this.latestHeight,
@@ -36,6 +52,15 @@ class ChildModel {
       name: map['name'] ?? '',
       age: map['age'] ?? 0,
       parentId: map['parentId'] ?? '',
+      schoolId: map['schoolId'] ?? '',
+      gradeLevelId: map['gradeLevelId'],
+      classRoomId: map['classRoomId'],
+      dateOfBirth: map['dateOfBirth'] is String
+          ? DateTime.tryParse(map['dateOfBirth'])
+          : (map['dateOfBirth'] is DateTime ? map['dateOfBirth'] : null),
+      gender: Gender.fromId(map['gender'] as String?),
+      accountMode: map['accountMode'] ?? 'parent_managed',
+      healthModuleEnabled: map['healthModuleEnabled'] == true,
       imageUrl: map['imageUrl'] ?? '',
       vaccinations: List<String>.from(map['vaccinations'] ?? []),
       latestHeight: (map['latestHeight'] as num?)?.toDouble(),
@@ -50,6 +75,13 @@ class ChildModel {
       'name': name,
       'age': age,
       'parentId': parentId,
+      if (schoolId.isNotEmpty) 'schoolId': schoolId,
+      if (gradeLevelId != null) 'gradeLevelId': gradeLevelId,
+      if (classRoomId != null) 'classRoomId': classRoomId,
+      if (dateOfBirth != null) 'dateOfBirth': dateOfBirth!.toIso8601String(),
+      if (gender != null) 'gender': gender!.id,
+      'accountMode': accountMode,
+      'healthModuleEnabled': healthModuleEnabled,
       'imageUrl': imageUrl,
       'vaccinations': vaccinations,
       if (latestHeight != null) 'latestHeight': latestHeight,

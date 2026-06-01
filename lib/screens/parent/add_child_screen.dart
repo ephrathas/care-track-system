@@ -1,10 +1,16 @@
 import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
+import '../../core/academic/academic_resolver.dart';
+import '../../core/config/school_config.dart';
+import '../../core/domain/domain_enums.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/grade_level_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
+import '../../providers/school_admin_provider.dart';
+import '../../widgets/parent/grade_teacher_preview.dart';
 
 class AddChildScreen extends StatefulWidget {
   const AddChildScreen({super.key});
@@ -16,13 +22,21 @@ class AddChildScreen extends StatefulWidget {
 class _AddChildScreenState extends State<AddChildScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  DateTime? _dob;
+  Gender? _gender;
+  String? _selectedGradeId;
+  String? _resolvedClassId;
   final _ageController = TextEditingController();
+  final _resolver = AcademicResolver();
+  GradeEnrollmentPreview? _gradePreview;
+  bool _loadingPreview = false;
+  bool _vaccinesExpanded = false;
 
   // Image Selector States
   final ImagePicker _picker = ImagePicker();
   Uint8List? _imageBytes;
 
-  // Curated Immunization checklist items
+  // Optional health info (not required in onboarding)
   final List<Map<String, dynamic>> _vaccinesList = [
     {'name': 'BCG (Tuberculosis)', 'checked': false},
     {'name': 'HepB (Hepatitis B)', 'checked': false},
@@ -36,6 +50,57 @@ class _AddChildScreenState extends State<AddChildScreen> {
     _nameController.dispose();
     _ageController.dispose();
     super.dispose();
+  }
+
+  int? _calculateAge(DateTime? dob) {
+    if (dob == null) return null;
+    final now = DateTime.now();
+    var years = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      years--;
+    }
+    return years;
+  }
+
+  Future<void> _pickDob() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dob ?? DateTime(now.year - 7),
+      firstDate: DateTime(1995),
+      lastDate: now,
+    );
+    if (picked == null) return;
+    setState(() {
+      _dob = picked;
+      final age = _calculateAge(picked);
+      if (age != null) _ageController.text = '$age';
+    });
+  }
+
+  Future<void> _onGradeSelected(String? gradeId) async {
+    setState(() {
+      _selectedGradeId = gradeId;
+      _resolvedClassId = null;
+      _gradePreview = null;
+    });
+    if (gradeId == null) return;
+
+    final schoolAdmin = Provider.of<SchoolAdminProvider>(context, listen: false);
+    final classRoom = _resolver.defaultClassForGrade(gradeId, schoolAdmin);
+    setState(() => _resolvedClassId = classRoom?.id);
+
+    setState(() => _loadingPreview = true);
+    final preview = await _resolver.previewForGrade(
+      gradeLevelId: gradeId,
+      admin: schoolAdmin,
+    );
+    if (!mounted) return;
+    setState(() {
+      _gradePreview = preview;
+      _resolvedClassId = preview?.classRoom?.id ?? _resolvedClassId;
+      _loadingPreview = false;
+    });
   }
 
   // Pick Image Action
@@ -125,10 +190,20 @@ class _AddChildScreenState extends State<AddChildScreen> {
         .toList();
 
     // Call provider
+    if (_selectedGradeId != null && (_resolvedClassId == null || _resolvedClassId!.isEmpty)) {
+      _showErrorSnackbar('No class section for this grade. Ask admin to seed the catalog.');
+      return;
+    }
+
     final success = await childProvider.addChild(
       name: name,
       age: age,
       parentId: parentId,
+      schoolId: SchoolConfig.defaultSchoolId,
+      gradeLevelId: _selectedGradeId,
+      classRoomId: _resolvedClassId,
+      dateOfBirth: _dob,
+      gender: _gender,
       imageBytes: _imageBytes,
       vaccinations: selectedVaccines,
     );
@@ -148,6 +223,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final childProvider = Provider.of<ChildProvider>(context);
+    final schoolAdmin = Provider.of<SchoolAdminProvider>(context);
+    final List<GradeLevelModel> grades = schoolAdmin.grades;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : Colors.grey[50],
@@ -160,7 +237,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Add Child Profile",
+          "Enroll Your Child",
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black87,
             fontWeight: FontWeight.bold,
@@ -289,6 +366,56 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                // Date of birth
+                InkWell(
+                  onTap: _pickDob,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: "Date of Birth",
+                      prefixIcon: const Icon(Icons.event_rounded),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      filled: true,
+                      fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                    ),
+                    child: Text(
+                      _dob == null
+                          ? 'Select date of birth'
+                          : '${_dob!.day}/${_dob!.month}/${_dob!.year}',
+                      style: TextStyle(
+                        color: _dob == null
+                            ? (isDark ? Colors.grey[400] : Colors.grey[600])
+                            : (isDark ? Colors.white : Colors.black87),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                DropdownButtonFormField<Gender>(
+                  value: _gender,
+                  items: Gender.values
+                      .map(
+                        (g) => DropdownMenuItem(
+                          value: g,
+                          child: Text(_genderLabel(g)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) => setState(() => _gender = value),
+                  validator: (_) => _gender == null ? 'Select gender' : null,
+                  decoration: InputDecoration(
+                    labelText: 'Gender',
+                    prefixIcon: const Icon(Icons.wc_rounded),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    filled: true,
+                    fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 // Age field
                 TextFormField(
                   controller: _ageController,
@@ -312,66 +439,105 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     fillColor: isDark ? AppTheme.darkSurface : Colors.white,
                   ),
                 ),
+                const SizedBox(height: 20),
+
+                // Grade level
+                DropdownButtonFormField<String>(
+                  value: _selectedGradeId,
+                  items: grades
+                      .map((g) => DropdownMenuItem(
+                            value: g.id,
+                            child: Text(g.name),
+                          ))
+                      .toList(),
+                  onChanged: grades.isEmpty ? null : _onGradeSelected,
+                  validator: (_) =>
+                      grades.isEmpty ? null : (_selectedGradeId == null ? 'Select grade level' : null),
+                  decoration: InputDecoration(
+                    labelText: "Grade Level",
+                    prefixIcon: const Icon(Icons.stacked_bar_chart_rounded),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    filled: true,
+                    fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                  ),
+                ),
+                if (grades.isEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'School setup not ready. Ask admin to load the Grades 1–5 catalog.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+
+                if (_selectedGradeId != null) ...[
+                  const SizedBox(height: 28),
+                  GradeTeacherPreviewPanel(
+                    preview: _gradePreview,
+                    isLoading: _loadingPreview,
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  initiallyExpanded: _vaccinesExpanded,
+                  onExpansionChanged: (v) => setState(() => _vaccinesExpanded = v),
+                  title: Text(
+                    'Immunizations (optional)',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  subtitle: const Text(
+                    'Tap to record vaccinations',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? AppTheme.darkSurface : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: isDark ? Colors.transparent : Colors.grey[200]!),
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _vaccinesList.length,
+                        separatorBuilder: (context, index) => Divider(
+                          height: 1,
+                          color: isDark ? Colors.white12 : Colors.grey[100],
+                        ),
+                        itemBuilder: (context, index) {
+                          final item = _vaccinesList[index];
+                          return CheckboxListTile(
+                            value: item['checked'],
+                            title: Text(
+                              item['name'],
+                              style: const TextStyle(
+                                  fontSize: 13.5, fontWeight: FontWeight.w500),
+                            ),
+                            activeColor: AppTheme.primaryBlue,
+                            checkColor: Colors.white,
+                            onChanged: (val) {
+                              setState(() {
+                                _vaccinesList[index]['checked'] = val;
+                              });
+                            },
+                            controlAffinity: ListTileControlAffinity.leading,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 32),
-
-                // 💉 Immunization checklist
-                Text(
-                  "Immunization / Vaccinations",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.3,
-                      ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "Select the standard vaccinations this child has already received:",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Vaccine list builder
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? AppTheme.darkSurface : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                        color: isDark ? Colors.transparent : Colors.grey[200]!),
-                  ),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _vaccinesList.length,
-                    separatorBuilder: (context, index) => Divider(
-                      height: 1,
-                      color: isDark ? Colors.white12 : Colors.grey[100],
-                    ),
-                    itemBuilder: (context, index) {
-                      final item = _vaccinesList[index];
-                      return CheckboxListTile(
-                        value: item['checked'],
-                        title: Text(
-                          item['name'],
-                          style: const TextStyle(
-                              fontSize: 13.5, fontWeight: FontWeight.w500),
-                        ),
-                        activeColor: AppTheme.primaryBlue,
-                        checkColor: Colors.white,
-                        onChanged: (val) {
-                          setState(() {
-                            _vaccinesList[index]['checked'] = val;
-                          });
-                        },
-                        controlAffinity: ListTileControlAffinity.leading,
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 40),
 
                 // Submit Action Button
                 SizedBox(
@@ -391,7 +557,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                             child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2.5),
                           )
-                        : const Text("Save Child Profile",
+                        : const Text("Enroll Child",
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
@@ -403,5 +569,18 @@ class _AddChildScreenState extends State<AddChildScreen> {
         ),
       ),
     );
+  }
+
+  String _genderLabel(Gender g) {
+    switch (g) {
+      case Gender.male:
+        return 'Male';
+      case Gender.female:
+        return 'Female';
+      case Gender.other:
+        return 'Other';
+      case Gender.preferNotToSay:
+        return 'Prefer not to say';
+    }
   }
 }

@@ -13,6 +13,7 @@ import '../models/grade_level_model.dart';
 import '../models/school_model.dart';
 import '../models/subject_model.dart';
 import '../models/user_model.dart';
+import '../services/academic_catalog_seed_service.dart';
 
 /// Admin school setup — grades, classes, subjects, teacher links.
 class SchoolAdminProvider with ChangeNotifier {
@@ -217,6 +218,26 @@ class SchoolAdminProvider with ChangeNotifier {
       error = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Seeds Grades 1–5 catalog into Firestore when no grades exist yet.
+  Future<bool> seedDefaultCatalog() async {
+    error = null;
+    notifyListeners();
+    try {
+      final seeded = await AcademicCatalogSeedService().seedSchoolCatalogIfEmpty(
+        schoolId: schoolId,
+      );
+      if (!seeded) {
+        error = 'Catalog already loaded. Use Grades/Classes tabs to edit.';
+      }
+      return seeded;
+    } catch (e) {
+      error = e.toString();
+      return false;
+    } finally {
+      notifyListeners();
     }
   }
 

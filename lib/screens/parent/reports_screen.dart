@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/constants/parent_demo_data.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
 import '../../providers/child_provider.dart';
-import '../../widgets/dashboard/simple_bar_chart.dart';
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
@@ -42,11 +40,10 @@ class ReportsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 ...children.map(
                   (child) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: _ChildReportCard(child: child, isDark: isDark),
                   ),
                 ),
-                _DownloadCard(isDark: isDark),
               ],
             ),
     );
@@ -85,7 +82,7 @@ class _SummaryBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tracking $childCount ${childCount == 1 ? 'child' : 'children'} • Attendance avg 96%',
+                  'Tracking $childCount ${childCount == 1 ? 'child' : 'children'} • reports unlock after assessments are published',
                   style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
                 ),
               ],
@@ -105,9 +102,6 @@ class _ChildReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grades = ParentDemoData.gradesFor(child);
-    final avg = grades.map((g) => g.score).reduce((a, b) => a + b) / grades.length;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -141,7 +135,9 @@ class _ChildReportCard extends StatelessWidget {
                   children: [
                     Text(child.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                     Text(
-                      '${ParentDemoData.gradeForAge(child.age)} • Avg ${avg.toStringAsFixed(0)}%',
+                      child.gradeLevelId != null
+                          ? 'Enrolled • waiting for teacher assessments'
+                          : 'Not enrolled in class yet',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
@@ -152,68 +148,14 @@ class _ChildReportCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          SimpleBarChart(
-            labels: grades.map((g) => g.subject).toList(),
-            values: grades.map((g) => g.score).toList(),
-            barColor: AppTheme.primaryBlue,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DownloadCard extends StatelessWidget {
-  final bool isDark;
-
-  const _DownloadCard({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: 12),
+          Text(
+            'No report data yet.\nTeachers need to publish assignments/assessments first.',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
             ),
-            child: const Icon(Icons.download_rounded, color: AppTheme.primaryBlue),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Download PDF Report', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(
-                  'Full academic & health summary for this month.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Report export coming soon — PDF generation in next update.'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            icon: const Icon(Icons.arrow_forward_rounded, color: AppTheme.primaryBlue),
           ),
         ],
       ),

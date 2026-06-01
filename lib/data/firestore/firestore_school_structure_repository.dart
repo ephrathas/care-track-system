@@ -169,16 +169,30 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
           .collection(FirestoreCollections.subjects)
           .doc(assignment.subjectId)
           .get();
-      final teacher = await _users.getUser(assignment.teacherId);
       if (!subjectDoc.exists) continue;
+
+      final linked = assignment.teacherId.isNotEmpty;
+      UserModel? teacher;
+      if (linked) {
+        teacher = await _users.getUser(assignment.teacherId);
+      }
+
+      final displayName = teacher?.fullName ??
+          assignment.catalogTeacherName ??
+          'Teacher pending';
+
       views.add(
         AssignedTeacherView(
           subject: SubjectModel.fromMap(subjectDoc.data()!, subjectDoc.id),
           teacherId: assignment.teacherId,
-          teacherName: teacher?.fullName ?? 'Teacher',
+          teacherName: displayName,
+          teacherEmail: teacher?.email ?? assignment.catalogTeacherEmail,
+          subjectIconKey: assignment.catalogSubjectIcon,
+          isLinked: linked && teacher != null,
         ),
       );
     }
+    views.sort((a, b) => a.subject.name.compareTo(b.subject.name));
     return views;
   }
 

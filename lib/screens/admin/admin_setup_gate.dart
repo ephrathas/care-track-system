@@ -18,6 +18,7 @@ class FirstAdminSetupScreen extends StatefulWidget {
 class _FirstAdminSetupScreenState extends State<FirstAdminSetupScreen> {
   final _nameController = TextEditingController();
   bool _busy = false;
+  bool _confirmAdmin = false;
 
   @override
   void dispose() {
@@ -80,7 +81,8 @@ class _FirstAdminSetupScreenState extends State<FirstAdminSetupScreen> {
               const SizedBox(height: 10),
               Text(
                 'Welcome to ${AppBranding.name}. You\'re the first user — '
-                'create your school profile to get started.',
+                'create your school profile to get started.\n\n'
+                'Important: this action will make your account the Admin account.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
@@ -98,8 +100,21 @@ class _FirstAdminSetupScreenState extends State<FirstAdminSetupScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              CheckboxListTile(
+                value: _confirmAdmin,
+                onChanged: _busy
+                    ? null
+                    : (value) => setState(() => _confirmAdmin = value == true),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text(
+                  'I understand this account will be set as Admin for school setup.',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(height: 10),
               FilledButton(
-                onPressed: _busy ? null : _submit,
+                onPressed: (_busy || !_confirmAdmin) ? null : _submit,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

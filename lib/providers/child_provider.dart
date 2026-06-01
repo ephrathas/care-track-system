@@ -3,13 +3,18 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../core/config/school_config.dart';
+import '../core/domain/domain_enums.dart';
+import '../data/firestore/firestore_student_repository.dart';
 import '../models/child_model.dart';
+import '../models/student_model.dart';
 import '../services/database_service.dart';
 import '../services/storage_service.dart';
 
 class ChildProvider with ChangeNotifier {
   final DatabaseService _dbService = DatabaseService();
   final StorageService _storageService = StorageService();
+  final FirestoreStudentRepository _students = FirestoreStudentRepository();
 
   List<ChildModel> _children = [];
   bool _isLoading = false;
@@ -89,9 +94,15 @@ class ChildProvider with ChangeNotifier {
     required String name,
     required int age,
     required String parentId,
+    String schoolId = SchoolConfig.defaultSchoolId,
+    String? gradeLevelId,
+    String? classRoomId,
+    DateTime? dateOfBirth,
+    Gender? gender,
     Uint8List? imageBytes,
     File? imageFile,
     List<String> vaccinations = const [],
+    bool createEnrollment = true,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -117,12 +128,42 @@ class ChildProvider with ChangeNotifier {
         name: name,
         age: age,
         parentId: parentId,
+        schoolId: schoolId,
+        gradeLevelId: gradeLevelId,
+        classRoomId: classRoomId,
+        dateOfBirth: dateOfBirth,
+        gender: gender,
         imageUrl: imageUrl,
         vaccinations: vaccinations,
       );
 
-      // 4. Save to Firestore using the generated ID (setChild)
       await _dbService.setChild(childId, child);
+
+      if (createEnrollment &&
+          gradeLevelId != null &&
+          classRoomId != null &&
+          gradeLevelId.isNotEmpty &&
+          classRoomId.isNotEmpty) {
+        final student = StudentModel(
+          id: childId,
+          schemaVersion: SchoolConfig.currentStudentSchemaVersion,
+          schoolId: schoolId,
+          parentId: parentId,
+          fullName: name,
+          dateOfBirth: dateOfBirth,
+          age: age,
+          gender: gender,
+          imageUrl: imageUrl,
+          vaccinations: vaccinations,
+          gradeLevelId: gradeLevelId,
+          classRoomId: classRoomId,
+        );
+        await _students.enrollStudent(
+          student: student,
+          classRoomId: classRoomId,
+          gradeLevelId: gradeLevelId,
+        );
+      }
 
       _isLoading = false;
       notifyListeners();

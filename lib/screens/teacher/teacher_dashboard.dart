@@ -11,6 +11,9 @@ import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/settings/appearance_setting.dart';
 import '../../widgets/messaging/messages_inbox.dart';
 import '../../widgets/teacher/grade_entry_sheet.dart';
+import '../../data/firestore/firestore_student_repository.dart';
+import '../../models/student_model.dart';
+import '../../widgets/common/education_empty_state.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -372,190 +375,242 @@ class _TeacherAttendanceTab extends StatefulWidget {
 }
 
 class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
-  final List<Map<String, dynamic>> _students = [
-    {'name': 'Emma Watson', 'present': true, 'age': 9, 'code': 'S101'},
-    {'name': 'Liam Neeson', 'present': true, 'age': 8, 'code': 'S102'},
-    {'name': 'Olivia Rodrigo', 'present': false, 'age': 9, 'code': 'S103'},
-    {'name': 'Noah Centineo', 'present': true, 'age': 9, 'code': 'S104'},
-    {'name': 'Sophia Loren', 'present': true, 'age': 8, 'code': 'S105'},
-    {'name': 'Jackson Pollock', 'present': true, 'age': 9, 'code': 'S106'},
-    {'name': 'Ava DuVernay', 'present': false, 'age': 8, 'code': 'S107'},
-    {'name': 'Lucas Hedges', 'present': true, 'age': 9, 'code': 'S108'},
-  ];
-
+  final _studentRepo = FirestoreStudentRepository();
+  final Map<String, bool> _presentByStudentId = {};
   String _searchQuery = '';
 
-  List<Map<String, dynamic>> get _filteredStudents {
-    if (_searchQuery.trim().isEmpty) return _students;
-    return _students
-        .where((s) => s['name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()))
+  List<StudentModel> _filter(List<StudentModel> students) {
+    if (_searchQuery.trim().isEmpty) return students;
+    final q = _searchQuery.toLowerCase();
+    return students
+        .where((s) => s.fullName.toLowerCase().contains(q))
         .toList();
   }
-
-  int get _presentCount => _students.where((s) => s['present'] == true).length;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final list = _filteredStudents;
+    final teacherId = context.watch<AuthProvider>().currentUser?.uid;
+
+    if (teacherId == null) {
+      return const DashboardTabScaffold(
+        title: 'Attendance Registry',
+        body: Center(child: Text('Please sign in again.')),
+      );
+    }
 
     return DashboardTabScaffold(
       title: 'Attendance Registry',
-      body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppTheme.darkSurface : Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Today\'s Ratio', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                              const SizedBox(height: 4),
-                              Text(
-                                '$_presentCount / ${_students.length} Present',
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      body: StreamBuilder<List<StudentModel>>(
+        stream: _studentRepo.watchStudentsForTeacher(teacherId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final roster = snapshot.data ?? [];
+          final list = _filter(roster);
+          final presentCount = list
+              .where((s) => _presentByStudentId[s.id] ?? true)
+              .length;
+          final rate = list.isEmpty
+              ? 0
+              : ((presentCount / list.length) * 100).round();
+
+          if (roster.isEmpty) {
+            return EducationEmptyState(
+              icon: Icons.groups_outlined,
+              title: 'No students on your roster yet',
+              message:
+                  'Students appear here after parents enroll a child in your grade and subject. Ask admin to link your teacher account to class assignments.',
+            );
+          }
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppTheme.darkSurface : Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                            color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Today\'s Ratio',
+                                    style: TextStyle(
+                                        fontSize: 12, color: AppTheme.textSecondary)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '$presentCount / ${list.length} Present',
+                                  style: const TextStyle(
+                                      fontSize: 20, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF7ED321).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '$rate% Rate',
+                              style: const TextStyle(
+                                color: Color(0xFF7ED321),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
                               ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF7ED321).withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${((_presentCount / _students.length) * 100).toInt()}% Rate',
-                            style: const TextStyle(
-                              color: Color(0xFF7ED321),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: 'Search students...',
+                        prefixIcon: const Icon(Icons.search_rounded,
+                            color: AppTheme.textSecondary),
+                        filled: true,
+                        fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                              color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    onChanged: (val) => setState(() => _searchQuery = val),
-                    decoration: InputDecoration(
-                      hintText: 'Search students...',
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary),
-                      filled: true,
-                      fillColor: isDark ? AppTheme.darkSurface : Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                              color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: list.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No students found.',
-                        style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final student = list[index];
-                        final isPresent = student['present'] as bool;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppTheme.darkSurface : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isPresent
-                                  ? const Color(0xFF7ED321).withOpacity(0.3)
-                                  : (isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+              Expanded(
+                child: list.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No students match your search.',
+                          style: TextStyle(
+                              color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: list.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final student = list[index];
+                          final isPresent = _presentByStudentId[student.id] ?? true;
+                          final age = student.displayAge;
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppTheme.darkSurface : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isPresent
+                                    ? const Color(0xFF7ED321).withOpacity(0.3)
+                                    : (isDark
+                                        ? Colors.grey.shade800
+                                        : AppTheme.inputBorder),
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 22,
-                                backgroundColor: isPresent
-                                    ? const Color(0xFF7ED321).withOpacity(0.12)
-                                    : Colors.redAccent.withOpacity(0.1),
-                                child: Text(
-                                  student['name'].toString()[0],
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: isPresent ? const Color(0xFF7ED321) : Colors.redAccent,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 22,
+                                  backgroundImage: student.imageUrl.isNotEmpty
+                                      ? NetworkImage(student.imageUrl)
+                                      : null,
+                                  backgroundColor: isPresent
+                                      ? const Color(0xFF7ED321).withOpacity(0.12)
+                                      : Colors.redAccent.withOpacity(0.1),
+                                  child: student.imageUrl.isEmpty
+                                      ? Text(
+                                          student.fullName.isNotEmpty
+                                              ? student.fullName[0]
+                                              : '?',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: isPresent
+                                                ? const Color(0xFF7ED321)
+                                                : Colors.redAccent,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        student.fullName,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold, fontSize: 14),
+                                      ),
+                                      Text(
+                                        age != null
+                                            ? 'Enrolled • $age years old'
+                                            : 'Enrolled student',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isDark
+                                              ? Colors.grey[400]
+                                              : AppTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      student['name'].toString(),
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    ),
-                                    Text(
-                                      'ID: ${student['code']} • ${student['age']} years old',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                                Switch(
+                                  value: isPresent,
+                                  activeColor: const Color(0xFF7ED321),
+                                  activeTrackColor:
+                                      const Color(0xFF7ED321).withOpacity(0.2),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _presentByStudentId[student.id] = value;
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            '${student.fullName} marked ${value ? 'Present' : 'Absent'}'),
+                                        duration: const Duration(seconds: 1),
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10)),
+                                        margin: const EdgeInsets.all(12),
                                       ),
-                                    ),
-                                  ],
+                                    );
+                                  },
                                 ),
-                              ),
-                              Switch(
-                                value: isPresent,
-                                activeColor: const Color(0xFF7ED321),
-                                activeTrackColor: const Color(0xFF7ED321).withOpacity(0.2),
-                                onChanged: (value) {
-                                  setState(() {
-                                    student['present'] = value;
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('${student['name']} marked ${value ? 'Present' : 'Absent'}'),
-                                      duration: const Duration(seconds: 1),
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      margin: const EdgeInsets.all(12),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
