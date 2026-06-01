@@ -6,6 +6,7 @@ class TeacherTeachingSlot {
   final String className;
   final String gradeName;
   final String classRoomId;
+  final String subjectId;
   final IconData icon;
   final Color accentColor;
 
@@ -14,6 +15,7 @@ class TeacherTeachingSlot {
     required this.className,
     required this.gradeName,
     required this.classRoomId,
+    required this.subjectId,
     this.icon = Icons.menu_book_rounded,
     this.accentColor = const Color(0xFF4A90E2),
   });

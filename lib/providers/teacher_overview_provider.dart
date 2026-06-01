@@ -100,6 +100,7 @@ class TeacherOverviewProvider with ChangeNotifier {
           className: classRoom.name,
           gradeName: grade?.name ?? 'Grade',
           classRoomId: classRoom.id,
+          subjectId: assignment.subjectId,
           icon: _iconForSubject(subjectName),
           accentColor: accent,
         ),

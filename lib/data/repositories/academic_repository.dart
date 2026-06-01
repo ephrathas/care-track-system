@@ -10,6 +10,7 @@ abstract class AcademicRepository {
   Future<void> markAttendance(AttendanceRecordModel record);
 
   Stream<List<AssignmentModel>> watchAssignmentsForClass(String classRoomId);
+  Stream<List<AssignmentModel>> watchAssignmentsForTeacher(String teacherId);
   Stream<List<AssignmentModel>> watchAssignmentsForStudent(String studentId);
   Future<String> createAssignment(AssignmentModel assignment);
 
