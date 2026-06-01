@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/domain/domain_enums.dart';
 import '../../models/user_model.dart';
 import '../repositories/user_repository.dart';
+import 'firestore_helpers.dart';
 
 class FirestoreUserRepository implements UserRepository {
   final FirebaseFirestore _db;

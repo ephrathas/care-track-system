@@ -1,3 +1,5 @@
+import 'subject_model.dart';
+
 /// Teacher assignment: one teacher teaches one subject in one class.
 class ClassSubjectModel {
   final String id;
