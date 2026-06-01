@@ -8,6 +8,7 @@ import '../../providers/healthcare_provider.dart';
 import '../../providers/marketplace_orders_provider.dart';
 import '../../providers/messaging_provider.dart';
 import '../../providers/school_admin_provider.dart';
+import '../../providers/teacher_overview_provider.dart';
 import '../admin/admin_dashboard.dart';
 import '../admin/admin_setup_gate.dart';
 import '../child/child_dashboard.dart';
@@ -102,6 +103,8 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Provider.of<MessagingProvider>(context, listen: false)
             .startListeningForTeacher(user.uid);
+        Provider.of<TeacherOverviewProvider>(context, listen: false)
+            .startListening(teacherId: user.uid, school: schoolAdmin);
       });
       return const TeacherDashboard();
     }

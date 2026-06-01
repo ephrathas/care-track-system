@@ -68,6 +68,39 @@ If parents only see **Grade 1** and one teacher, the catalog was not fully loade
 - After a hot restart, the whole app (overview, shop, admin, auth screens) should follow your choice.
 - If one screen stays light, hot restart once (`R` in terminal) so theme changes apply everywhere.
 
+## GitHub: pushes work but contribution count does not rise
+
+The green **contribution graph** on your GitHub profile is **not** the same as commits on the repo.
+
+| What you see | What it counts |
+|--------------|----------------|
+| Repo → **Commits** tab | All commits on that branch ✓ |
+| Profile → green squares | Only commits that match **all** rules below |
+
+Commits count on your profile only when:
+
+1. **Author email** on the commit matches a **verified** email on your GitHub account  
+   - GitHub → Settings → Emails → same address as `git config user.email`
+2. Commit is on the **default branch** (`main`) or `gh-pages`
+3. Repo is **public**, or you enabled [private contributions](https://github.com/settings/profile) 
+4. You are the author or co-author (not only committer with different email)
+
+Check locally (cmd):
+
+```bat
+git log -1 --format=fuller
+```
+
+If `Author` / `Commit` email is `noreply` or a different address, fix:
+
+```bat
+git config user.email "your-verified-email@example.com"
+```
+
+Future commits will count; old commits need `git commit --amend` only if not pushed yet.
+
+---
+
 ## Profile photos slow or failing?
 
 1. Confirm **Firebase Storage** is enabled and rules allow authenticated uploads.

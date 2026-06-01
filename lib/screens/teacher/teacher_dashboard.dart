@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/school_admin_provider.dart';
+import '../../providers/teacher_overview_provider.dart';
+import '../../widgets/common/education_empty_state.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
@@ -79,112 +82,113 @@ class _TeacherHomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final overview = context.watch<TeacherOverviewProvider>();
+    final schoolName =
+        context.watch<SchoolAdminProvider>().school?.name ?? 'Your school';
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: DashboardHeroHeader(
-                profileUser: user,
-                gradient: RoleStyles.forRole('Teacher')['gradient'] as LinearGradient,
-                accentColor: RoleStyles.forRole('Teacher')['accent'] as Color,
-                subtitle: 'Teacher Center',
-                title: 'Hello, ${user?.fullName ?? 'Educator'}',
-                badgeText: 'Class Grade: 3-A • Classroom 104',
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _buildQuickStats(isDark),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                child: Text(
-                  'Today\'s Class Schedule',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : AppTheme.textPrimary,
+        child: overview.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: DashboardHeroHeader(
+                      profileUser: user,
+                      gradient: RoleStyles.forRole('Teacher')['gradient'] as LinearGradient,
+                      accentColor: RoleStyles.forRole('Teacher')['accent'] as Color,
+                      subtitle: schoolName,
+                      title: 'Hello, ${user?.fullName ?? 'Educator'}',
+                      badgeText: overview.badgeText,
+                    ),
                   ),
-                ),
-              ),
-            ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final list = [
-                    ('08:30 AM', 'Mathematics Basics', 'Grade 3-A', Icons.functions_rounded, const Color(0xFF4A90E2)),
-                    ('10:00 AM', 'English Grammar', 'Grade 3-A', Icons.menu_book_rounded, const Color(0xFF7ED321)),
-                    ('11:30 AM', 'Science & Environment', 'Grade 3-A', Icons.biotech_rounded, const Color(0xFF9013FE)),
-                    ('01:30 PM', 'Creative Arts', 'Grade 3-A', Icons.palette_rounded, const Color(0xFFE2894A)),
-                  ];
-                  final item = list[index];
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                    child: _ClassScheduleCard(
-                      time: item.$1,
-                      title: item.$2,
-                      grade: item.$3,
-                      icon: item.$4,
-                      accentColor: item.$5,
-                      isDark: isDark,
-                    ),
-                  );
-                },
-                childCount: 4,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                child: Text(
-                  'Recent Active Tasks',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : AppTheme.textPrimary,
+                  SliverToBoxAdapter(
+                    child: _buildQuickStats(isDark, overview),
                   ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                child: Column(
-                  children: [
-                    _TaskTile(
-                      title: 'Grading Science Homework',
-                      subtitle: '18 of 24 sheets submitted',
-                      progress: 0.75,
-                      accent: const Color(0xFF9013FE),
-                      isDark: isDark,
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                      child: Text(
+                        'My teaching assignments',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : AppTheme.textPrimary,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _TaskTile(
-                      title: 'Weekly Attendance Report',
-                      subtitle: 'Needs review and validation',
-                      progress: 0.90,
-                      accent: const Color(0xFF7ED321),
-                      isDark: isDark,
+                  ),
+                  if (overview.slots.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: EducationEmptyState(
+                        icon: Icons.link_off_rounded,
+                        title: 'Not assigned to a class yet',
+                        message:
+                            'Ask your admin to register you as Teacher, link your account, '
+                            'then assign you to a class and subject in the Admin dashboard.',
+                      ),
+                    )
+                  else
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final slot = overview.slots[index];
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                            child: _ClassScheduleCard(
+                              time: 'Assigned',
+                              title: slot.subjectName,
+                              grade: '${slot.gradeName} · ${slot.className}',
+                              icon: slot.icon,
+                              accentColor: slot.accentColor,
+                              isDark: isDark,
+                            ),
+                          );
+                        },
+                        childCount: overview.slots.length,
+                      ),
                     ),
-                  ],
-                ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                      child: _HonestNextStepsCard(
+                        rosterCount: overview.rosterCount,
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            )
-          ],
-        ),
       ),
     );
   }
 
-  Widget _buildQuickStats(bool isDark) {
+  Widget _buildQuickStats(bool isDark, TeacherOverviewProvider overview) {
     final stats = [
-      ('Present', '92%', 'Attendance today', const Color(0xFF7ED321), Icons.people_rounded),
-      ('Homework', '4 Active', 'Due this week', const Color(0xFF4A90E2), Icons.assignment_rounded),
-      ('Alerts', '2 Urgent', 'Parent inquiries', const Color(0xFFE2894A), Icons.warning_amber_rounded),
+      (
+        'Students',
+        '${overview.rosterCount}',
+        'On your roster',
+        const Color(0xFF7ED321),
+        Icons.people_rounded
+      ),
+      (
+        'Classes',
+        '${overview.slots.length}',
+        'Teaching slots',
+        const Color(0xFF4A90E2),
+        Icons.class_rounded
+      ),
+      (
+        'School',
+        overview.slots.isEmpty ? '—' : overview.slots.first.gradeName,
+        'Primary assignment',
+        const Color(0xFFE2894A),
+        Icons.school_rounded
+      ),
     ];
 
     return SizedBox(
@@ -932,6 +936,52 @@ class _TeacherHomeworkTabState extends State<_TeacherHomeworkTab> {
   }
 }
 
+class _HonestNextStepsCard extends StatelessWidget {
+  final int rosterCount;
+  final bool isDark;
+
+  const _HonestNextStepsCard({
+    required this.rosterCount,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'What you can do now',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            rosterCount == 0
+                ? 'Take attendance once parents enroll children in your classes. '
+                    'Homework grading will appear when assignments are published.'
+                : 'You have $rosterCount student(s) on your roster. '
+                    'Open Attendance to mark present/absent. Homework tools are coming next.',
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ==================== MESSAGES TAB ====================
 class _TeacherMessagesTab extends StatelessWidget {
   const _TeacherMessagesTab();
@@ -950,6 +1000,14 @@ class _TeacherProfileTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final school = context.watch<SchoolAdminProvider>();
+    final overview = context.watch<TeacherOverviewProvider>();
+    final schoolLabel = school.school?.name ?? 'School not loaded';
+    final assignmentLabel = overview.slots.isEmpty
+        ? 'Not assigned yet'
+        : overview.slots.map((s) => s.displayLabel).join(' · ');
+    final rosterLabel =
+        overview.rosterCount == 0 ? 'No enrolled students' : '${overview.rosterCount} students';
 
     return DashboardTabScaffold(
       title: 'Profile Settings',
@@ -994,13 +1052,13 @@ class _TeacherProfileTab extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
             ),
-            child: const Column(
+            child: Column(
               children: [
-                _ProfileStatRow(label: 'School Unit', value: 'North Academy Center'),
-                Divider(),
-                _ProfileStatRow(label: 'Class Assignment', value: 'Grade 3-A'),
-                Divider(),
-                _ProfileStatRow(label: 'Room Assignment', value: 'Room 104'),
+                _ProfileStatRow(label: 'School', value: schoolLabel),
+                const Divider(),
+                _ProfileStatRow(label: 'Assignments', value: assignmentLabel),
+                const Divider(),
+                _ProfileStatRow(label: 'Roster', value: rosterLabel),
               ],
             ),
           ),
