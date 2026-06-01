@@ -12,6 +12,7 @@ import 'package:child_and_student_care_and_tracking_app/providers/parent_prefere
 import 'package:child_and_student_care_and_tracking_app/providers/school_admin_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/teacher_overview_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/teacher_homework_provider.dart';
+import 'package:child_and_student_care_and_tracking_app/providers/teacher_attendance_provider.dart';
 import 'package:child_and_student_care_and_tracking_app/providers/child_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => SchoolAdminProvider()),
         ChangeNotifierProvider(create: (_) => TeacherOverviewProvider()),
         ChangeNotifierProvider(create: (_) => TeacherHomeworkProvider()),
+        ChangeNotifierProvider(create: (_) => TeacherAttendanceProvider()),
       ],
       child: const MyApp(),
     ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/theme/app_theme.dart';
+import '../../data/firestore/firestore_academic_repository.dart';
+import '../../models/academic_models.dart';
 import '../../models/child_model.dart';
 import '../../providers/child_provider.dart';
 
@@ -77,12 +80,12 @@ class _SummaryBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Monthly Snapshot',
+                  'Published assessments',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tracking $childCount ${childCount == 1 ? 'child' : 'children'} • reports unlock after assessments are published',
+                  'Tracking $childCount ${childCount == 1 ? 'child' : 'children'} • grades appear when teachers publish them',
                   style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
                 ),
               ],
@@ -135,8 +138,8 @@ class _ChildReportCard extends StatelessWidget {
                   children: [
                     Text(child.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                     Text(
-                      child.gradeLevelId != null
-                          ? 'Enrolled • waiting for teacher assessments'
+                      child.classRoomId != null
+                          ? 'Enrolled • live report data'
                           : 'Not enrolled in class yet',
                       style: TextStyle(
                         fontSize: 12,
@@ -149,16 +152,103 @@ class _ChildReportCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            'No report data yet.\nTeachers need to publish assignments/assessments first.',
+          if (child.classRoomId == null)
+            Text(
+              'Enroll this child in a grade to receive teacher assessments.',
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+              ),
+            )
+          else
+            _PublishedAssessmentsList(studentId: child.id, isDark: isDark),
+        ],
+      ),
+    );
+  }
+}
+
+class _PublishedAssessmentsList extends StatelessWidget {
+  final String studentId;
+  final bool isDark;
+
+  const _PublishedAssessmentsList({
+    required this.studentId,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = FirestoreAcademicRepository();
+
+    return StreamBuilder<List<AssessmentModel>>(
+      stream: repo.watchPublishedAssessmentsForStudent(studentId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(minHeight: 2),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Text(
+            'Could not load reports.',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+            ),
+          );
+        }
+
+        final assessments = snapshot.data ?? [];
+        if (assessments.isEmpty) {
+          return Text(
+            'No published grades yet. Teachers enter scores from Homework → tap an assignment.',
             style: TextStyle(
               fontSize: 12,
               height: 1.4,
               color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
             ),
-          ),
-        ],
-      ),
+          );
+        }
+
+        return Column(
+          children: assessments.map((a) {
+            final pct = a.percentage?.round();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      a.title,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                  ),
+                  if (pct != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.softGreen.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$pct%',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.softGreen,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

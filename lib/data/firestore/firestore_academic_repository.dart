@@ -17,38 +17,58 @@ class FirestoreAcademicRepository implements AcademicRepository {
   CollectionReference<Map<String, dynamic>> get _attendance =>
       _db.collection(FirestoreCollections.attendance);
 
-  @override
-  Stream<List<AttendanceRecordModel>> watchAttendanceForClass(
-    String classRoomId,
-    DateTime date,
-  ) {
-    final dayStart = DateTime(date.year, date.month, date.day);
-    return _attendance
-        .where('classRoomId', isEqualTo: classRoomId)
-        .where('date', isEqualTo: Timestamp.fromDate(dayStart))
-        .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => AttendanceRecordModel.fromMap(d.data(), d.id))
-            .toList());
-  }
+  static DateTime _dayStart(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   @override
   Future<void> markAttendance(AttendanceRecordModel record) async {
+    final day = _dayStart(record.date);
     final id = record.id.isNotEmpty
         ? record.id
-        : AttendanceRecordModel.compositeId(record.studentId, record.date);
+        : AttendanceRecordModel.compositeId(record.studentId, day);
     await _attendance.doc(id).set(
           FirestoreHelpers.withTimestamps(
             {
               ...record.toMap(),
-              'date': Timestamp.fromDate(
-                DateTime(record.date.year, record.date.month, record.date.day),
-              ),
+              'date': Timestamp.fromDate(day),
             },
             isCreate: true,
           ),
           SetOptions(merge: true),
         );
+  }
+
+  /// Loads today’s attendance for many students (one doc id per student per day).
+  Future<Map<String, AttendanceStatus>> fetchAttendanceForStudentsOnDate({
+    required List<String> studentIds,
+    required DateTime date,
+  }) async {
+    final day = _dayStart(date);
+    final result = <String, AttendanceStatus>{};
+    for (final studentId in studentIds) {
+      final docId = AttendanceRecordModel.compositeId(studentId, day);
+      final doc = await _attendance.doc(docId).get();
+      if (!doc.exists) continue;
+      final record = AttendanceRecordModel.fromMap(doc.data()!, doc.id);
+      result[studentId] = record.status;
+    }
+    return result;
+  }
+
+  /// Live updates for all attendance docs in a class on a given day.
+  @override
+  Stream<List<AttendanceRecordModel>> watchAttendanceForClass(
+    String classRoomId,
+    DateTime date,
+  ) {
+    final day = _dayStart(date);
+    return _attendance
+        .where('classRoomId', isEqualTo: classRoomId)
+        .where('date', isEqualTo: Timestamp.fromDate(day))
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => AttendanceRecordModel.fromMap(d.data(), d.id))
+            .toList());
   }
 
   @override
@@ -112,10 +132,16 @@ class FirestoreAcademicRepository implements AcademicRepository {
         .where('studentId', isEqualTo: studentId)
         .snapshots()
         .map((snap) {
-      return snap.docs
+      final list = snap.docs
           .map((d) => AssessmentModel.fromMap(d.data(), d.id))
           .where((a) => a.isPublished)
           .toList();
+      list.sort((a, b) {
+        final aT = a.publishedAt ?? a.createdAt;
+        final bT = b.publishedAt ?? b.createdAt;
+        return bT.compareTo(aT);
+      });
+      return list;
     });
   }
 
@@ -132,7 +158,13 @@ class FirestoreAcademicRepository implements AcademicRepository {
   @override
   Future<String> createAssessment(AssessmentModel assessment) async {
     final ref = await _db.collection(FirestoreCollections.assessments).add(
-          FirestoreHelpers.withTimestamps(assessment.toMap(), isCreate: true),
+          FirestoreHelpers.withTimestamps(
+            {
+              ...assessment.toMap(),
+              'publishedAt': FieldValue.serverTimestamp(),
+            },
+            isCreate: true,
+          ),
         );
     return ref.id;
   }

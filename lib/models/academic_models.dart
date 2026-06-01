@@ -1,4 +1,5 @@
 import '../core/domain/domain_enums.dart';
+import '../data/firestore/firestore_helpers.dart';
 
 class AttendanceRecordModel {
   final String id;
@@ -32,10 +33,10 @@ class AttendanceRecordModel {
       schoolId: map['schoolId'] as String? ?? '',
       studentId: map['studentId'] as String? ?? '',
       classRoomId: map['classRoomId'] as String? ?? '',
-      date: DateTime.tryParse(map['date']?.toString() ?? '') ?? DateTime.now(),
+      date: FirestoreHelpers.toDateTime(map['date']) ?? DateTime.now(),
       status: AttendanceStatus.fromId(map['status'] as String?),
       markedBy: map['markedBy'] as String? ?? '',
-      markedAt: DateTime.tryParse(map['markedAt']?.toString() ?? '') ?? DateTime.now(),
+      markedAt: FirestoreHelpers.toDateTime(map['markedAt']) ?? DateTime.now(),
     );
   }
 
@@ -93,9 +94,8 @@ class AssessmentModel {
       title: map['title'] as String? ?? '',
       score: (map['score'] as num?)?.toDouble() ?? 0,
       maxScore: (map['maxScore'] as num?)?.toDouble() ?? 100,
-      publishedAt: DateTime.tryParse(map['publishedAt']?.toString() ?? ''),
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
-          DateTime.now(),
+      publishedAt: FirestoreHelpers.toDateTime(map['publishedAt']),
+      createdAt: FirestoreHelpers.toDateTime(map['createdAt']) ?? DateTime.now(),
     );
   }
 

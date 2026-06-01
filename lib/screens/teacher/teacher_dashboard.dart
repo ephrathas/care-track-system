@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/school_admin_provider.dart';
 import '../../providers/teacher_overview_provider.dart';
+import '../../providers/teacher_attendance_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
@@ -13,7 +14,6 @@ import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/settings/appearance_setting.dart';
 import '../../widgets/messaging/messages_inbox.dart';
 import 'teacher_homework_tab.dart';
-import '../../data/firestore/firestore_student_repository.dart';
 import '../../models/student_model.dart';
 import '../../models/user_model.dart';
 import '../../widgets/common/education_empty_state.dart';
@@ -389,8 +389,6 @@ class _TeacherAttendanceTab extends StatefulWidget {
 }
 
 class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
-  final _studentRepo = FirestoreStudentRepository();
-  final Map<String, bool> _presentByStudentId = {};
   String _searchQuery = '';
 
   List<StudentModel> _filter(List<StudentModel> students) {
@@ -405,6 +403,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final teacherId = context.watch<AuthProvider>().currentUser?.uid;
+    final attendance = context.watch<TeacherAttendanceProvider>();
 
     if (teacherId == null) {
       return const DashboardTabScaffold(
@@ -413,34 +412,36 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
       );
     }
 
+    if (attendance.isLoading) {
+      return const DashboardTabScaffold(
+        title: 'Attendance Registry',
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final roster = attendance.roster;
+    final list = _filter(roster);
+    final presentCount =
+        list.where((s) => attendance.isPresent(s.id)).length;
+    final rate = list.isEmpty
+        ? 0
+        : ((presentCount / list.length) * 100).round();
+
+    if (roster.isEmpty) {
+      return const DashboardTabScaffold(
+        title: 'Attendance Registry',
+        body: EducationEmptyState(
+          icon: Icons.groups_outlined,
+          title: 'No students on your roster yet',
+          message:
+              'Students appear here after parents enroll a child in your grade and subject. Ask admin to link your teacher account to class assignments.',
+        ),
+      );
+    }
+
     return DashboardTabScaffold(
       title: 'Attendance Registry',
-      body: StreamBuilder<List<StudentModel>>(
-        stream: _studentRepo.watchStudentsForTeacher(teacherId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final roster = snapshot.data ?? [];
-          final list = _filter(roster);
-          final presentCount = list
-              .where((s) => _presentByStudentId[s.id] ?? true)
-              .length;
-          final rate = list.isEmpty
-              ? 0
-              : ((presentCount / list.length) * 100).round();
-
-          if (roster.isEmpty) {
-            return EducationEmptyState(
-              icon: Icons.groups_outlined,
-              title: 'No students on your roster yet',
-              message:
-                  'Students appear here after parents enroll a child in your grade and subject. Ask admin to link your teacher account to class assignments.',
-            );
-          }
-
-          return Column(
+      body: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(20),
@@ -530,7 +531,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final student = list[index];
-                          final isPresent = _presentByStudentId[student.id] ?? true;
+                          final isPresent = attendance.isPresent(student.id);
                           final age = student.displayAge;
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -598,22 +599,35 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                                   activeColor: const Color(0xFF7ED321),
                                   activeTrackColor:
                                       const Color(0xFF7ED321).withOpacity(0.2),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _presentByStudentId[student.id] = value;
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            '${student.fullName} marked ${value ? 'Present' : 'Absent'}'),
-                                        duration: const Duration(seconds: 1),
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10)),
-                                        margin: const EdgeInsets.all(12),
-                                      ),
-                                    );
-                                  },
+                                  onChanged: attendance.isSaving
+                                      ? null
+                                      : (value) async {
+                                          await attendance.setPresent(
+                                            student: student,
+                                            teacherId: teacherId,
+                                            present: value,
+                                          );
+                                          if (!context.mounted) return;
+                                          if (attendance.error != null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(attendance.error!)),
+                                            );
+                                            return;
+                                          }
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                '${student.fullName} saved as ${value ? 'present' : 'absent'}',
+                                              ),
+                                              duration: const Duration(seconds: 1),
+                                              behavior: SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              margin: const EdgeInsets.all(12),
+                                            ),
+                                          );
+                                        },
                                 ),
                               ],
                             ),
@@ -622,9 +636,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                       ),
               ),
             ],
-          );
-        },
-      ),
+          ),
     );
   }
 }

@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/academic_models.dart';
 import '../../models/teacher_teaching_slot.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/teacher_attendance_provider.dart';
 import '../../providers/teacher_homework_provider.dart';
 import '../../providers/teacher_overview_provider.dart';
 import '../../widgets/common/education_empty_state.dart';
@@ -284,6 +285,7 @@ class _TeacherHomeworkTabState extends State<TeacherHomeworkTab> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final homework = context.watch<TeacherHomeworkProvider>();
     final overview = context.watch<TeacherOverviewProvider>();
+    final roster = context.watch<TeacherAttendanceProvider>().roster;
 
     return DashboardTabScaffold(
       title: 'Homework & Tasks',
@@ -333,8 +335,8 @@ class _TeacherHomeworkTabState extends State<TeacherHomeworkTab> {
                         borderRadius: BorderRadius.circular(18),
                         onTap: () => GradeEntrySheet.show(
                           context,
-                          assignmentTitle: assignment.title,
-                          subject: subject,
+                          assignment: assignment,
+                          roster: roster,
                         ),
                         child: Ink(
                           decoration: BoxDecoration(
