@@ -209,7 +209,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
     );
 
     if (success) {
-      _showSuccessSnackbar("Added profile for $name successfully!");
+      final photoNote = _imageBytes != null
+          ? ' Photo will appear shortly after upload.'
+          : '';
+      _showSuccessSnackbar("Enrolled $name successfully!$photoNote");
       if (mounted) {
         Navigator.pop(context);
       }

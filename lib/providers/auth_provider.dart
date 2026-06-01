@@ -157,19 +157,16 @@ class AuthProvider with ChangeNotifier {
   Future<bool> updateProfilePhoto({required Uint8List imageBytes}) async {
     if (_currentUser == null) return false;
 
-    _isLoading = true;
-    notifyListeners();
-
     try {
-      final imageUrl = await _storageService.uploadUserPhotoFromBytes(_currentUser!.uid, imageBytes);
+      final imageUrl = await _storageService
+          .uploadUserPhotoFromBytes(_currentUser!.uid, imageBytes)
+          .timeout(const Duration(seconds: 45));
       await _authService.updateProfilePic(_currentUser!.uid, imageUrl);
       _currentUser = _currentUser!.copyWith(profilePic: imageUrl);
-      _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      _isLoading = false;
       notifyListeners();
       return false;
     }

@@ -113,16 +113,7 @@ class ChildProvider with ChangeNotifier {
       final docRef = FirebaseFirestore.instance.collection('children').doc();
       final childId = docRef.id;
 
-      String imageUrl = '';
-
-      // 2. Upload image if provided
-      if (imageBytes != null) {
-        imageUrl = await _storageService.uploadChildPhotoFromBytes(childId, imageBytes);
-      } else if (imageFile != null) {
-        imageUrl = await _storageService.uploadChildPhotoFromFile(childId, imageFile);
-      }
-
-      // 3. Create ChildModel
+      // 2. Save profile first so enrollment is fast; photo uploads in background.
       final child = ChildModel(
         id: childId,
         name: name,
@@ -133,11 +124,19 @@ class ChildProvider with ChangeNotifier {
         classRoomId: classRoomId,
         dateOfBirth: dateOfBirth,
         gender: gender,
-        imageUrl: imageUrl,
+        imageUrl: '',
         vaccinations: vaccinations,
       );
 
       await _dbService.setChild(childId, child);
+
+      if (imageBytes != null || imageFile != null) {
+        _uploadChildPhotoInBackground(
+          childId: childId,
+          imageBytes: imageBytes,
+          imageFile: imageFile,
+        );
+      }
 
       if (createEnrollment &&
           gradeLevelId != null &&
@@ -173,6 +172,27 @@ class ChildProvider with ChangeNotifier {
       _errorMessage = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<void> _uploadChildPhotoInBackground({
+    required String childId,
+    Uint8List? imageBytes,
+    File? imageFile,
+  }) async {
+    try {
+      final imageUrl = imageBytes != null
+          ? await _storageService
+              .uploadChildPhotoFromBytes(childId, imageBytes)
+              .timeout(const Duration(seconds: 45))
+          : await _storageService
+              .uploadChildPhotoFromFile(childId, imageFile!)
+              .timeout(const Duration(seconds: 45));
+      await _dbService.updateChildFields(childId, {'imageUrl': imageUrl});
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Photo upload failed: $e';
+      notifyListeners();
     }
   }
 

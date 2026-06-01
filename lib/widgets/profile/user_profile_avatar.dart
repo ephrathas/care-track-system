@@ -88,9 +88,14 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
           ),
         );
       } else {
+        final err = Provider.of<AuthProvider>(context, listen: false).errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not upload photo. Please try again.'),
+          SnackBar(
+            content: Text(
+              err != null && err.contains('unauthorized')
+                  ? 'Upload blocked. Check Firebase Storage rules for signed-in users.'
+                  : (err ?? 'Could not upload photo. Check internet and Storage rules.'),
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
