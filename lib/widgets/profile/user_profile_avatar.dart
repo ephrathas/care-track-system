@@ -57,9 +57,9 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
     try {
       final selected = await _picker.pickImage(
         source: source,
-        maxWidth: 400,
-        maxHeight: 400,
-        imageQuality: 70,
+        maxWidth: 320,
+        maxHeight: 320,
+        imageQuality: 65,
       );
       if (selected == null || !mounted) return;
 
