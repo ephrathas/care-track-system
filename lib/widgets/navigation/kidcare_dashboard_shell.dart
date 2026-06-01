@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/layout/app_breakpoints.dart';
+import '../../core/theme/theme_helpers.dart';
 import 'dashboard_shell_scope.dart';
 import 'kidcare_drawer.dart';
 import 'kidcare_quick_panel.dart';
@@ -38,6 +39,7 @@ class _KidCareDashboardShellState extends State<KidCareDashboardShell> {
 
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: ThemeHelpers.pageBackground(context),
       drawer: KidCareDrawer(
         selectedNavIndex: widget.selectedIndex,
         onTabSelected: widget.onIndexChanged,

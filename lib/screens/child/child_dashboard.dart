@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_gamification_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
@@ -24,6 +25,7 @@ class _ChildDashboardState extends State<ChildDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().currentUser;
     return KidCareDashboardShell(
       selectedIndex: _navIndex,
       onIndexChanged: (index) => setState(() => _navIndex = index),
@@ -50,7 +52,7 @@ class _ChildDashboardState extends State<ChildDashboard> {
         ),
       ],
       children: [
-        _ChildHomeTab(onOpenTasks: _goToTasks),
+        _ChildHomeTab(onOpenTasks: _goToTasks, user: user),
         const _ChildHomeworkTab(),
         const _ChildRewardsTab(),
         const _ChildProfileTab(),
@@ -62,14 +64,13 @@ class _ChildDashboardState extends State<ChildDashboard> {
 // ==================== HOME TAB ====================
 class _ChildHomeTab extends StatelessWidget {
   final VoidCallback onOpenTasks;
+  final UserModel? user;
 
-  const _ChildHomeTab({required this.onOpenTasks});
+  const _ChildHomeTab({required this.onOpenTasks, this.user});
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
     final game = Provider.of<ChildGamificationProvider>(context);
-    final user = authProvider.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -80,6 +81,7 @@ class _ChildHomeTab extends StatelessWidget {
           slivers: [
             SliverToBoxAdapter(
               child: _PlayfulHeader(
+                user: user,
                 name: user?.fullName ?? 'Explorer',
                 level: game.currentLevel,
                 xp: game.currentXp,
@@ -189,6 +191,7 @@ class _ChildHomeTab extends StatelessWidget {
 }
 
 class _PlayfulHeader extends StatelessWidget {
+  final UserModel? user;
   final String name;
   final int level;
   final int xp;
@@ -196,6 +199,7 @@ class _PlayfulHeader extends StatelessWidget {
   final int badgeCount;
 
   const _PlayfulHeader({
+    this.user,
     required this.name,
     required this.level,
     required this.xp,
@@ -206,6 +210,7 @@ class _PlayfulHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DashboardHeroHeader(
+      profileUser: user,
       gradient: RoleStyles.forRole('Child')['gradient'] as LinearGradient,
       accentColor: RoleStyles.forRole('Child')['accent'] as Color,
       subtitle: 'Level $level Explorer',

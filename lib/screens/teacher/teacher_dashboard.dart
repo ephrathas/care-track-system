@@ -13,6 +13,7 @@ import '../../widgets/messaging/messages_inbox.dart';
 import '../../widgets/teacher/grade_entry_sheet.dart';
 import '../../data/firestore/firestore_student_repository.dart';
 import '../../models/student_model.dart';
+import '../../models/user_model.dart';
 import '../../widgets/common/education_empty_state.dart';
 
 class TeacherDashboard extends StatefulWidget {
@@ -27,6 +28,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().currentUser;
     return KidCareDashboardShell(
       selectedIndex: _navIndex,
       onIndexChanged: (index) => setState(() => _navIndex = index),
@@ -57,9 +59,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           label: 'Profile',
         ),
       ],
-      children: const [
-        _TeacherHomeTab(),
-        _TeacherAttendanceTab(),
+      children: [
+        _TeacherHomeTab(user: user),
+        const _TeacherAttendanceTab(),
         _TeacherHomeworkTab(),
         _TeacherMessagesTab(),
         _TeacherProfileTab(),
@@ -70,12 +72,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
 // ==================== OVERVIEW TAB ====================
 class _TeacherHomeTab extends StatelessWidget {
-  const _TeacherHomeTab();
+  final UserModel? user;
+
+  const _TeacherHomeTab({this.user});
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -86,6 +88,7 @@ class _TeacherHomeTab extends StatelessWidget {
           slivers: [
             SliverToBoxAdapter(
               child: DashboardHeroHeader(
+                profileUser: user,
                 gradient: RoleStyles.forRole('Teacher')['gradient'] as LinearGradient,
                 accentColor: RoleStyles.forRole('Teacher')['accent'] as Color,
                 subtitle: 'Teacher Center',
@@ -96,12 +99,16 @@ class _TeacherHomeTab extends StatelessWidget {
             SliverToBoxAdapter(
               child: _buildQuickStats(isDark),
             ),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                 child: Text(
                   'Today\'s Class Schedule',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : AppTheme.textPrimary,
+                  ),
                 ),
               ),
             ),
@@ -130,12 +137,16 @@ class _TeacherHomeTab extends StatelessWidget {
                 childCount: 4,
               ),
             ),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 10),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
                 child: Text(
                   'Recent Active Tasks',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : AppTheme.textPrimary,
+                  ),
                 ),
               ),
             ),

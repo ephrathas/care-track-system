@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/class_room_model.dart';
 import '../../models/grade_level_model.dart';
 import '../../models/child_model.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/marketplace_orders_provider.dart';
@@ -43,6 +44,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().currentUser;
     return KidCareDashboardShell(
       selectedIndex: _navIndex,
       onIndexChanged: (index) => setState(() => _navIndex = index),
@@ -65,7 +67,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
             label: 'Profile'),
       ],
       children: [
-        _ParentHomeTab(greeting: _greeting()),
+        _ParentHomeTab(greeting: _greeting(), user: user),
         const MarketplaceTab(),
         const _AlertsTab(),
         const _ProfileTab(),
@@ -76,15 +78,14 @@ class _ParentDashboardState extends State<ParentDashboard> {
 
 class _ParentHomeTab extends StatelessWidget {
   final String greeting;
+  final UserModel? user;
 
-  const _ParentHomeTab({required this.greeting});
+  const _ParentHomeTab({required this.greeting, this.user});
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
     final childProvider = Provider.of<ChildProvider>(context);
     final parentPrefs = Provider.of<ParentPreferencesProvider>(context);
-    final user = authProvider.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasChildren = childProvider.children.isNotEmpty;
     final showInlineAdd = hasChildren && parentPrefs.addChildDisplayMode == AddChildDisplayMode.inline;
@@ -106,6 +107,7 @@ class _ParentHomeTab extends StatelessWidget {
                 slivers: [
                   SliverToBoxAdapter(
                     child: DashboardHeroHeader(
+                      profileUser: user,
                       gradient: RoleStyles.forRole('Parent')['gradient'] as LinearGradient,
                       accentColor: RoleStyles.forRole('Parent')['accent'] as Color,
                       subtitle: greeting,

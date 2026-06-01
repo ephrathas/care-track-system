@@ -119,9 +119,11 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
 
     if (user?.hasProfilePhoto == true) {
       return CircleAvatar(
+        key: ValueKey('photo-${user!.profilePic}'),
         radius: widget.radius,
         backgroundColor: accent.withOpacity(0.15),
-        backgroundImage: NetworkImage(user!.profilePic!),
+        backgroundImage: NetworkImage(user.profilePic!),
+        onBackgroundImageError: (_, __) {},
       );
     }
 
@@ -141,7 +143,7 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
 
   @override
   Widget build(BuildContext context) {
-    final authUser = widget.user ?? Provider.of<AuthProvider>(context).currentUser;
+    final authUser = widget.user ?? context.watch<AuthProvider>().currentUser;
     final accent = _accentFor(authUser);
     final gradient = _gradientFor(authUser);
 

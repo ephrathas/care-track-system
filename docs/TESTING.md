@@ -62,6 +62,12 @@ If parents only see **Grade 1** and one teacher, the catalog was not fully loade
 | Photo upload failed | Storage → rules; Auth signed-in user |
 | Reset everything | Delete collections / test users (careful) |
 
+## Appearance (light / dark)
+
+- Open any role dashboard → **Profile** tab → **Appearance** → choose Light, Dark, or Auto.
+- After a hot restart, the whole app (overview, shop, admin, auth screens) should follow your choice.
+- If one screen stays light, hot restart once (`R` in terminal) so theme changes apply everywhere.
+
 ## Profile photos slow or failing?
 
 1. Confirm **Firebase Storage** is enabled and rules allow authenticated uploads.

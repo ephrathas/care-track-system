@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_branding.dart';
 import '../../core/navigation/kidcare_logout.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/theme_helpers.dart';
 import '../../models/grade_level_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/school_admin_provider.dart';
@@ -25,6 +26,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final user = context.watch<AuthProvider>().currentUser;
 
     return Scaffold(
+      backgroundColor: ThemeHelpers.pageBackground(context),
       appBar: AppBar(
         title: Text(admin.school?.name ?? 'School Admin'),
         actions: [

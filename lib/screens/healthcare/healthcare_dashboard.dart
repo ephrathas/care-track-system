@@ -5,6 +5,7 @@ import '../../core/constants/app_branding.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/healthcare_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
@@ -25,6 +26,7 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().currentUser;
     return KidCareDashboardShell(
       selectedIndex: _navIndex,
       onIndexChanged: (index) => setState(() => _navIndex = index),
@@ -50,8 +52,8 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
           label: 'Credentials',
         ),
       ],
-      children: const [
-        _HealthcareHomeTab(),
+      children: [
+        _HealthcareHomeTab(user: user),
         _HealthcarePatientsTab(),
         _HealthcareAppointmentsTab(),
         _HealthcareProfileTab(),
@@ -62,7 +64,9 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
 
 // ==================== HOME TAB ====================
 class _HealthcareHomeTab extends StatelessWidget {
-  const _HealthcareHomeTab();
+  final UserModel? user;
+
+  const _HealthcareHomeTab({this.user});
 
   static const _appointmentAccents = [
     Color(0xFFE2894A),
@@ -78,9 +82,7 @@ class _HealthcareHomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
     final healthcare = Provider.of<HealthcareProvider>(context);
-    final user = authProvider.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final todayVisits = healthcare.todayAppointments;
 
@@ -98,6 +100,7 @@ class _HealthcareHomeTab extends StatelessWidget {
                 slivers: [
                   SliverToBoxAdapter(
                     child: DashboardHeroHeader(
+                      profileUser: user,
                       gradient: RoleStyles.forRole('Healthcare')['gradient'] as LinearGradient,
                       accentColor: RoleStyles.forRole('Healthcare')['accent'] as Color,
                       subtitle: 'Healthcare Center',

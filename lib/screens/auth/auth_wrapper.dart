@@ -136,6 +136,9 @@ class _RolePlaceholderDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.darkBackground
+          : AppTheme.warmNeutral,
       appBar: AppBar(
         title: Text(title),
         actions: [

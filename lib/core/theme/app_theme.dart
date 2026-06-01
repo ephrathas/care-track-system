@@ -34,10 +34,29 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      scaffoldBackgroundColor: warmNeutral,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryBlue,
         primary: primaryBlue,
         surface: warmNeutral,
+      ),
+      appBarTheme: const AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        indicatorColor: primaryBlue.withOpacity(0.12),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          return GoogleFonts.poppins(
+            fontSize: 11,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w500,
+          );
+        }),
       ),
       textTheme: GoogleFonts.poppinsTextTheme(),
       elevatedButtonTheme: _buttonTheme(primaryBlue),
@@ -54,6 +73,27 @@ class AppTheme {
         brightness: Brightness.dark,
         primary: primaryBlue,
         surface: darkSurface,
+      ),
+      appBarTheme: const AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        elevation: 0,
+        backgroundColor: darkSurface,
+        indicatorColor: primaryBlue.withOpacity(0.25),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          return GoogleFonts.poppins(
+            fontSize: 11,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w500,
+            color: states.contains(WidgetState.selected)
+                ? Colors.white
+                : Colors.grey[400],
+          );
+        }),
       ),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       elevatedButtonTheme: _buttonTheme(primaryBlue),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../models/user_model.dart';
+import '../../providers/auth_provider.dart';
 import '../navigation/dashboard_header_actions.dart';
 import '../profile/user_profile_avatar.dart';
 
@@ -12,6 +15,7 @@ class DashboardHeroHeader extends StatelessWidget {
   final String? badgeText;
   final bool avatarOnRight;
   final bool showGradientRing;
+  final UserModel? profileUser;
   final Widget? trailing;
   final Widget? footer;
   final EdgeInsetsGeometry padding;
@@ -25,7 +29,8 @@ class DashboardHeroHeader extends StatelessWidget {
     this.subtitle,
     this.badgeText,
     this.avatarOnRight = true,
-    this.showGradientRing = true,
+    this.showGradientRing = false,
+    this.profileUser,
     this.trailing,
     this.footer,
     this.padding = const EdgeInsets.all(22),
@@ -34,7 +39,10 @@ class DashboardHeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = profileUser ?? context.watch<AuthProvider>().currentUser;
     final avatar = UserProfileAvatar(
+      key: ValueKey('hero-${user?.uid}-${user?.profilePic ?? ''}'),
+      user: user,
       radius: avatarOnRight ? 28 : 26,
       editable: false,
       showGradientRing: showGradientRing,
