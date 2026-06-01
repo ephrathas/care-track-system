@@ -47,66 +47,125 @@ class AcademicCatalogSeedService {
     final subjectNameToId = <String, String>{};
 
     for (final catalogGrade in AcademicCatalog.grades) {
-      final gradeRef = await _db.collection(FirestoreCollections.gradeLevels).add(
-            FirestoreHelpers.withTimestamps(
-              GradeLevelModel(
-                id: '',
-                schoolId: sid,
-                name: catalogGrade.displayName,
-                sortOrder: catalogGrade.level,
-                band: 'Primary',
-              ).toMap()
-                ..['catalogLevel'] = catalogGrade.level,
-              isCreate: true,
-            ),
-          );
+      await _seedCatalogGrade(sid, catalogGrade, subjectNameToId);
+    }
+  }
 
-      final classRef = await _db.collection(FirestoreCollections.classRooms).add(
-            FirestoreHelpers.withTimestamps(
-              ClassRoomModel(
-                id: '',
-                schoolId: sid,
-                gradeLevelId: gradeRef.id,
-                name: catalogGrade.classSectionName,
-              ).toMap(),
-              isCreate: true,
-            ),
-          );
+  /// Adds any Grades 1–5 missing from Firestore (e.g. only Grade 1 was created manually).
+  Future<int> ensureMissingCatalogGrades({String? schoolId}) async {
+    final sid = schoolId ?? SchoolConfig.defaultSchoolId;
+    final existingLevels = await _existingCatalogLevels(sid);
+    if (existingLevels.isEmpty) {
+      await seedSchoolCatalog(schoolId: sid, force: true);
+      return AcademicCatalog.grades.length;
+    }
 
-      for (final assignment in catalogGrade.subjects) {
-        var subjectId = subjectNameToId[assignment.subjectName];
-        if (subjectId == null) {
-          final subjectRef = await _db.collection(FirestoreCollections.subjects).add(
-                FirestoreHelpers.withTimestamps(
-                  SubjectModel(
-                    id: '',
-                    schoolId: sid,
-                    name: assignment.subjectName,
-                    code: _subjectCode(assignment.subjectName),
-                  ).toMap(),
-                  isCreate: true,
-                ),
-              );
-          subjectId = subjectRef.id;
-          subjectNameToId[assignment.subjectName] = subjectId;
-        }
+    final subjectNameToId = await _loadSubjectNameMap(sid);
+    var added = 0;
+    for (final catalogGrade in AcademicCatalog.grades) {
+      if (existingLevels.contains(catalogGrade.level)) continue;
+      await _seedCatalogGrade(sid, catalogGrade, subjectNameToId);
+      added++;
+    }
+    return added;
+  }
 
-        await _db.collection(FirestoreCollections.classSubjects).add(
+  Future<Set<int>> _existingCatalogLevels(String schoolId) async {
+    final snap = await _db
+        .collection(FirestoreCollections.gradeLevels)
+        .where('schoolId', isEqualTo: schoolId)
+        .get();
+    final levels = <int>{};
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final catalogLevel = data['catalogLevel'] as int?;
+      if (catalogLevel != null && catalogLevel > 0) {
+        levels.add(catalogLevel);
+        continue;
+      }
+      final parsed = AcademicCatalog.parseGradeLevel(data['name'] as String? ?? '');
+      if (parsed != null) levels.add(parsed);
+    }
+    return levels;
+  }
+
+  Future<Map<String, String>> _loadSubjectNameMap(String schoolId) async {
+    final snap = await _db
+        .collection(FirestoreCollections.subjects)
+        .where('schoolId', isEqualTo: schoolId)
+        .get();
+    final map = <String, String>{};
+    for (final doc in snap.docs) {
+      final name = doc.data()['name'] as String? ?? '';
+      if (name.isNotEmpty) map[name] = doc.id;
+    }
+    return map;
+  }
+
+  Future<void> _seedCatalogGrade(
+    String schoolId,
+    CatalogGrade catalogGrade,
+    Map<String, String> subjectNameToId,
+  ) async {
+    final gradeRef = await _db.collection(FirestoreCollections.gradeLevels).add(
+          FirestoreHelpers.withTimestamps(
+            GradeLevelModel(
+              id: '',
+              schoolId: schoolId,
+              name: catalogGrade.displayName,
+              sortOrder: catalogGrade.level,
+              band: 'Primary',
+            ).toMap()
+              ..['catalogLevel'] = catalogGrade.level,
+            isCreate: true,
+          ),
+        );
+
+    final classRef = await _db.collection(FirestoreCollections.classRooms).add(
+          FirestoreHelpers.withTimestamps(
+            ClassRoomModel(
+              id: '',
+              schoolId: schoolId,
+              gradeLevelId: gradeRef.id,
+              name: catalogGrade.classSectionName,
+            ).toMap(),
+            isCreate: true,
+          ),
+        );
+
+    for (final assignment in catalogGrade.subjects) {
+      var subjectId = subjectNameToId[assignment.subjectName];
+      if (subjectId == null) {
+        final subjectRef = await _db.collection(FirestoreCollections.subjects).add(
               FirestoreHelpers.withTimestamps(
-                {
-                  'schoolId': sid,
-                  'classRoomId': classRef.id,
-                  'subjectId': subjectId,
-                  'teacherId': '',
-                  'isActive': true,
-                  'catalogTeacherName': assignment.teacherName,
-                  'catalogTeacherEmail': assignment.teacherEmail,
-                  'catalogSubjectIcon': assignment.subjectIcon,
-                },
+                SubjectModel(
+                  id: '',
+                  schoolId: schoolId,
+                  name: assignment.subjectName,
+                  code: _subjectCode(assignment.subjectName),
+                ).toMap(),
                 isCreate: true,
               ),
             );
+        subjectId = subjectRef.id;
+        subjectNameToId[assignment.subjectName] = subjectId;
       }
+
+      await _db.collection(FirestoreCollections.classSubjects).add(
+            FirestoreHelpers.withTimestamps(
+              {
+                'schoolId': schoolId,
+                'classRoomId': classRef.id,
+                'subjectId': subjectId,
+                'teacherId': '',
+                'isActive': true,
+                'catalogTeacherName': assignment.teacherName,
+                'catalogTeacherEmail': assignment.teacherEmail,
+                'catalogSubjectIcon': assignment.subjectIcon,
+              },
+              isCreate: true,
+            ),
+          );
     }
   }
 

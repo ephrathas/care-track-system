@@ -82,7 +82,9 @@ class _FirstAdminSetupScreenState extends State<FirstAdminSetupScreen> {
               Text(
                 'Welcome to ${AppBranding.name}. You\'re the first user — '
                 'create your school profile to get started.\n\n'
-                'Important: this action will make your account the Admin account.',
+                'Important: this account becomes Admin. After setup, open the Admin '
+                'dashboard and tap "Load Grades 1–5 catalog" so parents see all grades '
+                'and teachers when enrolling children.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: isDark ? Colors.grey[400] : AppTheme.textSecondary,

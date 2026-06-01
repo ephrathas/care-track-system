@@ -128,31 +128,47 @@ class _OverviewTab extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        if (admin.grades.isEmpty)
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryBlue),
-              title: const Text('Load Grades 1–5 catalog'),
-              subtitle: const Text(
-                'Seeds grades, subjects, and default teacher assignments. You can still edit everything in the tabs below.',
-              ),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () async {
-                final ok = await admin.seedDefaultCatalog();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok
-                          ? 'Catalog loaded successfully.'
-                          : (admin.error ?? 'Catalog could not be loaded.'),
-                    ),
+        Card(
+          color: AppTheme.primaryBlue.withOpacity(0.06),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Admin setup order',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '1. Load Grades 1–5 (catalog)\n'
+                  '2. Review Classes & Subjects tabs\n'
+                  '3. Register Teacher accounts → Link teachers\n'
+                  '4. Assign teachers to class + subject slots\n'
+                  '5. Parents can enroll children',
+                  style: TextStyle(fontSize: 13, height: 1.45, color: AppTheme.textSecondary),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () async {
+                    final message = await admin.seedDefaultCatalog();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(message)),
+                    );
+                  },
+                  icon: const Icon(Icons.auto_stories_rounded, size: 20),
+                  label: Text(
+                    admin.grades.length < 5
+                        ? 'Load / complete Grades 1–5 catalog'
+                        : 'Repair missing catalog grades',
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
-        if (admin.grades.isEmpty) const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 12),
         _CheckItem(
           done: admin.grades.isNotEmpty,
           label: 'Grades 1–5 (catalog or manual)',

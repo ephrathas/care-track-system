@@ -221,21 +221,25 @@ class SchoolAdminProvider with ChangeNotifier {
     }
   }
 
-  /// Seeds Grades 1–5 catalog into Firestore when no grades exist yet.
-  Future<bool> seedDefaultCatalog() async {
+  /// Seeds Grades 1–5 catalog, or adds any missing grades if only some exist.
+  Future<String> seedDefaultCatalog() async {
     error = null;
     notifyListeners();
     try {
-      final seeded = await AcademicCatalogSeedService().seedSchoolCatalogIfEmpty(
-        schoolId: schoolId,
-      );
-      if (!seeded) {
-        error = 'Catalog already loaded. Use Grades/Classes tabs to edit.';
+      final service = AcademicCatalogSeedService();
+      final seededEmpty = await service.seedSchoolCatalogIfEmpty(schoolId: schoolId);
+      if (seededEmpty) {
+        return 'Loaded Grades 1–5 with subjects and default teachers.';
       }
-      return seeded;
+      final added = await service.ensureMissingCatalogGrades(schoolId: schoolId);
+      if (added > 0) {
+        return 'Added $added missing grade(s) from the catalog.';
+      }
+      error = 'All Grades 1–5 are already set up. Edit them in the tabs below.';
+      return error!;
     } catch (e) {
       error = e.toString();
-      return false;
+      return error!;
     } finally {
       notifyListeners();
     }
