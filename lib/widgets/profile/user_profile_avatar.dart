@@ -30,8 +30,6 @@ class UserProfileAvatar extends StatefulWidget {
 
 class _UserProfileAvatarState extends State<UserProfileAvatar> {
   final _picker = ImagePicker();
-  Uint8List? _localPreview;
-  bool _uploading = false;
 
   Color _accentFor(UserModel? user) {
     final role = user?.role ?? 'Parent';
@@ -51,50 +49,45 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
     return role.isNotEmpty ? role[0].toUpperCase() : '?';
   }
 
-  Future<void> _pickAndUpload(UserModel user) async {
-    if (!widget.editable || _uploading) return;
+  Future<void> _pickFrom(ImageSource source, UserModel user) async {
+    if (!widget.editable) return;
+    final auth = context.read<AuthProvider>();
+    if (auth.profilePhotoUploading) return;
 
     try {
       final selected = await _picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
+        source: source,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 70,
       );
       if (selected == null || !mounted) return;
 
       final bytes = await selected.readAsBytes();
-      setState(() {
-        _localPreview = bytes;
-        _uploading = true;
-      });
-
-      final success = await Provider.of<AuthProvider>(context, listen: false)
-          .updateProfilePhoto(imageBytes: bytes);
-
       if (!mounted) return;
 
-      setState(() => _uploading = false);
+      final success = await auth.updateProfilePhoto(imageBytes: bytes);
+      if (!mounted) return;
 
       if (success) {
-        setState(() => _localPreview = null);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Profile photo updated!'),
+            content: const Text('Profile photo updated'),
             behavior: SnackBarBehavior.floating,
             backgroundColor: AppTheme.softGreen,
+            duration: const Duration(seconds: 2),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
           ),
         );
       } else {
-        final err = Provider.of<AuthProvider>(context, listen: false).errorMessage;
+        final err = auth.errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               err != null && err.contains('unauthorized')
-                  ? 'Upload blocked. Check Firebase Storage rules for signed-in users.'
-                  : (err ?? 'Could not upload photo. Check internet and Storage rules.'),
+                  ? 'Upload blocked. Check Firebase Storage rules.'
+                  : (err ?? 'Could not upload photo.'),
             ),
             backgroundColor: Colors.redAccent,
           ),
@@ -102,18 +95,46 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _uploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to pick image: $e'), backgroundColor: Colors.redAccent),
       );
     }
   }
 
-  Widget _buildAvatar(UserModel? user, Color accent) {
-    if (_localPreview != null) {
+  void _showPickOptions(UserModel user) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded),
+              title: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFrom(ImageSource.gallery, user);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_rounded),
+              title: const Text('Take a photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFrom(ImageSource.camera, user);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(UserModel? user, Color accent, Uint8List? previewBytes) {
+    if (previewBytes != null) {
       return CircleAvatar(
         radius: widget.radius,
-        backgroundImage: MemoryImage(_localPreview!),
+        backgroundImage: MemoryImage(previewBytes),
       );
     }
 
@@ -143,11 +164,14 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
 
   @override
   Widget build(BuildContext context) {
-    final authUser = widget.user ?? context.watch<AuthProvider>().currentUser;
+    final auth = context.watch<AuthProvider>();
+    final authUser = widget.user ?? auth.currentUser;
+    final previewBytes = auth.profilePhotoPreview;
+    final uploading = auth.profilePhotoUploading;
     final accent = _accentFor(authUser);
     final gradient = _gradientFor(authUser);
 
-    Widget avatar = _buildAvatar(authUser, accent);
+    Widget avatar = _buildAvatar(authUser, accent, previewBytes);
 
     if (widget.showGradientRing) {
       avatar = Container(
@@ -174,7 +198,30 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
       );
     }
 
-    if (!widget.editable || authUser == null) return avatar;
+    if (!widget.editable || authUser == null) {
+      if (!uploading) return avatar;
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          avatar,
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.black26,
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return Stack(
       clipBehavior: Clip.none,
@@ -182,44 +229,45 @@ class _UserProfileAvatarState extends State<UserProfileAvatar> {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => _pickAndUpload(authUser),
+            onTap: uploading ? null : () => _showPickOptions(authUser),
             customBorder: const CircleBorder(),
             child: avatar,
           ),
         ),
-        if (_uploading)
+        if (uploading)
           Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.black45,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        if (widget.editable)
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: GestureDetector(
-              onTap: () => _pickAndUpload(authUser),
+            child: IgnorePointer(
               child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  gradient: gradient,
+                decoration: const BoxDecoration(
+                  color: Colors.black26,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
                 ),
-                child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
+                child: const Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  ),
+                ),
               ),
             ),
           ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: GestureDetector(
+            onTap: uploading ? null : () => _showPickOptions(authUser),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: gradient,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
+            ),
+          ),
+        ),
       ],
     );
   }
