@@ -152,7 +152,7 @@ class ChildProvider with ChangeNotifier {
           dateOfBirth: dateOfBirth,
           age: age,
           gender: gender,
-          imageUrl: imageUrl,
+          imageUrl: '',
           vaccinations: vaccinations,
           gradeLevelId: gradeLevelId,
           classRoomId: classRoomId,
