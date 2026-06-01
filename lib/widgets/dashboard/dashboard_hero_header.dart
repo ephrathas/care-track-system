@@ -39,9 +39,11 @@ class DashboardHeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = profileUser ?? context.watch<AuthProvider>().currentUser;
+    final auth = context.watch<AuthProvider>();
+    final user = profileUser ?? auth.currentUser;
+    final previewKey = auth.profilePhotoPreview != null ? 'preview' : (user?.profilePic ?? '');
     final avatar = UserProfileAvatar(
-      key: ValueKey('hero-${user?.uid}-${user?.profilePic ?? ''}'),
+      key: ValueKey('hero-${user?.uid}-$previewKey'),
       user: user,
       radius: avatarOnRight ? 28 : 26,
       editable: false,
