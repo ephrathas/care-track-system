@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../core/auth/auth_error_messages.dart';
 import '../models/user_model.dart';
+import '../core/utils/profile_image_utils.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 
@@ -15,11 +16,15 @@ class AuthProvider with ChangeNotifier {
   UserModel? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
+  Uint8List? _profilePhotoPreview;
+  bool _profilePhotoUploading = false;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
+  Uint8List? get profilePhotoPreview => _profilePhotoPreview;
+  bool get profilePhotoUploading => _profilePhotoUploading;
 
   AuthProvider() {
     _init();
@@ -154,22 +159,37 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Shows [bytes] on every avatar immediately; uploads in the background.
   Future<bool> updateProfilePhoto({required Uint8List imageBytes}) async {
     if (_currentUser == null) return false;
 
+    _profilePhotoPreview = imageBytes;
+    _profilePhotoUploading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
+      final compressed = await compressProfilePhotoBytes(imageBytes);
       final imageUrl = await _storageService
-          .uploadUserPhotoFromBytes(_currentUser!.uid, imageBytes)
-          .timeout(const Duration(seconds: 45));
+          .uploadUserPhotoFromBytes(_currentUser!.uid, compressed)
+          .timeout(const Duration(seconds: 30));
       await _authService.updateProfilePic(_currentUser!.uid, imageUrl);
       _currentUser = _currentUser!.copyWith(profilePic: imageUrl);
+      _profilePhotoPreview = null;
+      _profilePhotoUploading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
+      _profilePhotoUploading = false;
       notifyListeners();
       return false;
     }
+  }
+
+  void clearProfilePhotoPreview() {
+    _profilePhotoPreview = null;
+    notifyListeners();
   }
 
   Future<void> refreshUserProfile() async {
