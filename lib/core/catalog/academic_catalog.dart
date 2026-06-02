@@ -25,7 +25,7 @@ class CatalogGrade {
     required this.subjects,
   });
 
-  String get classSectionName => '$displayName — Section A';
+  String get classSectionName => '$displayName-A';
 }
 
 class AcademicCatalog {
@@ -215,5 +215,47 @@ class AcademicCatalog {
     final match = RegExp(r'(\d+)').firstMatch(gradeName);
     if (match == null) return null;
     return int.tryParse(match.group(1)!);
+  }
+
+  static const List<CatalogTeacherAssignment> defaultCoreSubjects = [
+    CatalogTeacherAssignment(
+      subjectName: 'English',
+      teacherName: 'Pending',
+      teacherEmail: '',
+      subjectIcon: 'translate',
+    ),
+    CatalogTeacherAssignment(
+      subjectName: 'Mathematics',
+      teacherName: 'Pending',
+      teacherEmail: '',
+      subjectIcon: 'calculate',
+    ),
+    CatalogTeacherAssignment(
+      subjectName: 'Science',
+      teacherName: 'Pending',
+      teacherEmail: '',
+      subjectIcon: 'science',
+    ),
+  ];
+
+  static const List<CatalogTeacherAssignment> defaultUpperSubjects = [
+    ...defaultCoreSubjects,
+    CatalogTeacherAssignment(
+      subjectName: 'Social Studies',
+      teacherName: 'Pending',
+      teacherEmail: '',
+      subjectIcon: 'public',
+    ),
+  ];
+
+  /// Template for any grade level (uses catalog when available, else defaults).
+  static CatalogGrade templateForLevel(int level) {
+    final existing = byLevel(level);
+    if (existing != null) return existing;
+    return CatalogGrade(
+      level: level,
+      displayName: 'Grade $level',
+      subjects: level <= 5 ? defaultCoreSubjects : defaultUpperSubjects,
+    );
   }
 }
