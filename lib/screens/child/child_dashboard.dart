@@ -65,8 +65,10 @@ class _ChildDashboardState extends State<ChildDashboard> {
 class _ChildHomeTab extends StatelessWidget {
   final VoidCallback onOpenTasks;
   final UserModel? user;
-
-  const _ChildHomeTab({required this.onOpenTasks, this.user});
+  const _ChildHomeTab({
+    required this.onOpenTasks,
+    this.user,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -961,7 +963,7 @@ class _ChildProfileTab extends StatelessWidget {
           Center(child: UserProfileAvatar(radius: 44, user: user)),
           const SizedBox(height: 8),
           Text(
-            'Tap your photo to update',
+            'Tap your photo to update (shown to your parent too)',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
