@@ -7,6 +7,7 @@ class SchoolModel {
   final String? address;
   final String timezone;
   final bool isActive;
+  final String? primaryAdminUid;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -17,6 +18,7 @@ class SchoolModel {
     this.address,
     this.timezone = 'UTC',
     this.isActive = true,
+    this.primaryAdminUid,
     this.createdAt,
     this.updatedAt,
   });
@@ -29,6 +31,7 @@ class SchoolModel {
       address: map['address'] as String?,
       timezone: map['timezone'] as String? ?? 'UTC',
       isActive: map['isActive'] as bool? ?? true,
+      primaryAdminUid: map['primaryAdminUid'] as String?,
     );
   }
 
@@ -38,5 +41,21 @@ class SchoolModel {
         if (address != null) 'address': address,
         'timezone': timezone,
         'isActive': isActive,
+        if (primaryAdminUid != null) 'primaryAdminUid': primaryAdminUid,
       };
+
+  SchoolModel copyWith({
+    String? name,
+    String? primaryAdminUid,
+  }) {
+    return SchoolModel(
+      id: id,
+      name: name ?? this.name,
+      type: type,
+      address: address,
+      timezone: timezone,
+      isActive: isActive,
+      primaryAdminUid: primaryAdminUid ?? this.primaryAdminUid,
+    );
+  }
 }

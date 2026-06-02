@@ -11,6 +11,7 @@ class UserModel {
   final TeacherProfile? teacherProfile;
   final HealthcareProfile? healthcareProfile;
   final String? linkedStudentId;
+  final bool mustChangePassword;
 
   UserModel({
     required this.uid,
@@ -23,6 +24,7 @@ class UserModel {
     this.teacherProfile,
     this.healthcareProfile,
     this.linkedStudentId,
+    this.mustChangePassword = false,
   });
 
   UserModel copyWith({
@@ -34,6 +36,7 @@ class UserModel {
     TeacherProfile? teacherProfile,
     HealthcareProfile? healthcareProfile,
     String? linkedStudentId,
+    bool? mustChangePassword,
   }) {
     return UserModel(
       uid: uid,
@@ -46,6 +49,7 @@ class UserModel {
       teacherProfile: teacherProfile ?? this.teacherProfile,
       healthcareProfile: healthcareProfile ?? this.healthcareProfile,
       linkedStudentId: linkedStudentId ?? this.linkedStudentId,
+      mustChangePassword: mustChangePassword ?? this.mustChangePassword,
     );
   }
 
@@ -67,6 +71,7 @@ class UserModel {
         map['healthcareProfile'] as Map<String, dynamic>?,
       ),
       linkedStudentId: map['linkedStudentId'] as String?,
+      mustChangePassword: map['mustChangePassword'] == true,
     );
   }
 
@@ -83,6 +88,7 @@ class UserModel {
       if (healthcareProfile != null)
         'healthcareProfile': healthcareProfile!.toMap(),
       if (linkedStudentId != null) 'linkedStudentId': linkedStudentId,
+      'mustChangePassword': mustChangePassword,
     };
   }
 }

@@ -13,6 +13,8 @@ class ChildModel {
   final String accountMode;
   final bool healthModuleEnabled;
   final String imageUrl;
+  final String? linkCode;
+  final String? studentUserId;
   final List<String> vaccinations;
   final double? latestHeight;
   final double? latestWeight;
@@ -31,6 +33,8 @@ class ChildModel {
     this.accountMode = 'parent_managed',
     this.healthModuleEnabled = false,
     required this.imageUrl,
+    this.linkCode,
+    this.studentUserId,
     this.vaccinations = const [],
     this.latestHeight,
     this.latestWeight,
@@ -44,6 +48,10 @@ class ChildModel {
       latestWeight != null ? '${latestWeight!.toStringAsFixed(1)} kg' : 'Not recorded';
 
   String get checkupLabel => lastCheckup.isNotEmpty ? lastCheckup : 'Not recorded';
+
+  /// True when a student Firebase Auth account is connected to this school record.
+  bool get isAccountLinked =>
+      studentUserId != null && studentUserId!.isNotEmpty;
 
   // Convert Firebase Document to Flutter Object
   factory ChildModel.fromMap(Map<String, dynamic> map, String documentId) {
@@ -62,6 +70,8 @@ class ChildModel {
       accountMode: map['accountMode'] ?? 'parent_managed',
       healthModuleEnabled: map['healthModuleEnabled'] == true,
       imageUrl: map['imageUrl'] ?? '',
+      linkCode: map['linkCode'] as String?,
+      studentUserId: map['studentUserId'] as String?,
       vaccinations: List<String>.from(map['vaccinations'] ?? []),
       latestHeight: (map['latestHeight'] as num?)?.toDouble(),
       latestWeight: (map['latestWeight'] as num?)?.toDouble(),

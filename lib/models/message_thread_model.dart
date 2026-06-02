@@ -8,6 +8,9 @@ class MessageThread {
   final String teacherName;
   final String lastMessage;
   final DateTime lastMessageAt;
+  final String? studentId;
+  final String? studentName;
+  final String? classRoomId;
   final bool unreadByParent;
   final bool unreadByTeacher;
 
@@ -19,9 +22,19 @@ class MessageThread {
     required this.teacherName,
     required this.lastMessage,
     required this.lastMessageAt,
+    this.studentId,
+    this.studentName,
+    this.classRoomId,
     this.unreadByParent = false,
     this.unreadByTeacher = false,
   });
+
+  String? get contextLabel {
+    if (studentName != null && studentName!.isNotEmpty) {
+      return 'Re: $studentName';
+    }
+    return null;
+  }
 
   bool isUnreadFor(String userId) {
     if (userId == parentId) return unreadByParent;
@@ -58,6 +71,9 @@ class MessageThread {
       teacherName: map['teacherName']?.toString() ?? 'Teacher',
       lastMessage: map['lastMessage']?.toString() ?? '',
       lastMessageAt: lastAt,
+      studentId: map['studentId'] as String?,
+      studentName: map['studentName'] as String?,
+      classRoomId: map['classRoomId'] as String?,
       unreadByParent: map['unreadByParent'] == true,
       unreadByTeacher: map['unreadByTeacher'] == true,
     );
@@ -71,6 +87,9 @@ class MessageThread {
       'teacherName': teacherName,
       'lastMessage': lastMessage,
       'lastMessageAt': lastMessageAt.toIso8601String(),
+      if (studentId != null) 'studentId': studentId,
+      if (studentName != null) 'studentName': studentName,
+      if (classRoomId != null) 'classRoomId': classRoomId,
       'unreadByParent': unreadByParent,
       'unreadByTeacher': unreadByTeacher,
     };

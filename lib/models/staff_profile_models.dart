@@ -2,21 +2,39 @@
 class TeacherProfile {
   final String? employeeId;
   final String? department;
+  final String? preferredGradeLevelId;
+  final String? preferredSubjectId;
 
-  const TeacherProfile({this.employeeId, this.department});
+  const TeacherProfile({
+    this.employeeId,
+    this.department,
+    this.preferredGradeLevelId,
+    this.preferredSubjectId,
+  });
 
   factory TeacherProfile.fromMap(Map<String, dynamic>? map) {
     if (map == null) return const TeacherProfile();
     return TeacherProfile(
       employeeId: map['employeeId'] as String?,
       department: map['department'] as String?,
+      preferredGradeLevelId: map['preferredGradeLevelId'] as String?,
+      preferredSubjectId: map['preferredSubjectId'] as String?,
     );
   }
 
   Map<String, dynamic> toMap() => {
         if (employeeId != null) 'employeeId': employeeId,
         if (department != null) 'department': department,
+        if (preferredGradeLevelId != null)
+          'preferredGradeLevelId': preferredGradeLevelId,
+        if (preferredSubjectId != null) 'preferredSubjectId': preferredSubjectId,
       };
+
+  bool get isSetupComplete =>
+      preferredGradeLevelId != null &&
+      preferredGradeLevelId!.isNotEmpty &&
+      preferredSubjectId != null &&
+      preferredSubjectId!.isNotEmpty;
 }
 
 class HealthcareProfile {
