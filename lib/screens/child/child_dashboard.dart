@@ -5,6 +5,8 @@ import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_gamification_provider.dart';
+import '../../providers/child_provider.dart';
+import '../../providers/school_admin_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
@@ -26,7 +28,10 @@ class _ChildDashboardState extends State<ChildDashboard> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().currentUser;
-    return KidCareDashboardShell(
+    return Stack(
+      children: [
+        const _ChildHomeworkBinder(),
+        KidCareDashboardShell(
       selectedIndex: _navIndex,
       onIndexChanged: (index) => setState(() => _navIndex = index),
       destinations: const [
@@ -57,8 +62,49 @@ class _ChildDashboardState extends State<ChildDashboard> {
         const _ChildRewardsTab(),
         const _ChildProfileTab(),
       ],
+        ),
+      ],
     );
   }
+}
+
+class _ChildHomeworkBinder extends StatefulWidget {
+  const _ChildHomeworkBinder();
+
+  @override
+  State<_ChildHomeworkBinder> createState() => _ChildHomeworkBinderState();
+}
+
+class _ChildHomeworkBinderState extends State<_ChildHomeworkBinder> {
+  String? _bindKey;
+
+  void _syncIfNeeded() {
+    final user = context.read<AuthProvider>().currentUser;
+    final linked = context.read<ChildProvider>().linkedChild;
+    final school = context.read<SchoolAdminProvider>();
+    final linkedId = user?.linkedStudentId;
+    final isLinked = linkedId != null && linkedId.isNotEmpty;
+    final key =
+        '$isLinked|${linked?.id ?? linkedId}|${linked?.classRoomId}|${school.subjects.length}';
+    if (key == _bindKey) return;
+    _bindKey = key;
+
+    context.read<ChildGamificationProvider>().bindHomework(
+          isAccountLinked: isLinked,
+          studentId: linked?.id ?? linkedId,
+          classRoomId: linked?.classRoomId,
+          subjectNameFor: school.subjectNameForId,
+        );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncIfNeeded();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 // ==================== HOME TAB ====================
@@ -74,6 +120,7 @@ class _ChildHomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final game = Provider.of<ChildGamificationProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final status = game.homeworkStatusMessage;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
@@ -119,6 +166,13 @@ class _ChildHomeTab extends StatelessWidget {
                     rank: game.rankTitle,
                     pending: game.pendingQuestCount,
                     isDark: isDark)),
+            if (status != null && game.pendingQuestCount == 0)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: _HomeworkStatusBanner(message: status, isDark: isDark),
+                ),
+              ),
             if (game.pendingQuestCount > 0)
               SliverToBoxAdapter(
                 child: Padding(
@@ -281,6 +335,44 @@ class _PlayfulHeader extends StatelessWidget {
                 ),
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeworkStatusBanner extends StatelessWidget {
+  final String message;
+  final bool isDark;
+
+  const _HomeworkStatusBanner({required this.message, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded,
+              size: 20, color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
+              ),
+            ),
           ),
         ],
       ),
@@ -640,6 +732,49 @@ class _ChildHomeworkTab extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final game = Provider.of<ChildGamificationProvider>(context);
     final list = game.quests;
+
+    if (game.isHomeworkLoading) {
+      return const DashboardTabScaffold(
+        title: 'My Homework Quests',
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (list.isEmpty) {
+      return DashboardTabScaffold(
+        title: 'My Homework Quests',
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.assignment_outlined,
+                  size: 56,
+                  color: isDark ? Colors.grey[600] : AppTheme.textSecondary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  game.isLiveHomework ? 'No homework quests yet' : 'Homework not available',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  game.homeworkStatusMessage ??
+                      'Your teachers will post homework here when you are enrolled.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    height: 1.4,
+                    color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return DashboardTabScaffold(
       title: 'My Homework Quests',

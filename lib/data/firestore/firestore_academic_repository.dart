@@ -89,8 +89,18 @@ class FirestoreAcademicRepository implements AcademicRepository {
 
   @override
   Stream<List<AssignmentModel>> watchAssignmentsForStudent(String studentId) {
-    // Assignments are class-scoped; student view resolves via enrollment in a later phase.
-    return Stream.value(const <AssignmentModel>[]);
+    return _db
+        .collection(FirestoreCollections.children)
+        .doc(studentId)
+        .snapshots()
+        .asyncExpand((snap) {
+      if (!snap.exists) return Stream.value(const <AssignmentModel>[]);
+      final classRoomId = snap.data()?['classRoomId'] as String? ?? '';
+      if (classRoomId.isEmpty) {
+        return Stream.value(const <AssignmentModel>[]);
+      }
+      return watchAssignmentsForClass(classRoomId);
+    });
   }
 
   List<AssignmentModel> _mapAssignments(

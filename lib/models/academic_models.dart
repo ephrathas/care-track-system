@@ -147,9 +147,8 @@ class AssignmentModel {
       teacherId: map['teacherId'] as String? ?? '',
       title: map['title'] as String? ?? '',
       description: map['description'] as String?,
-      dueAt: DateTime.tryParse(map['dueAt']?.toString() ?? ''),
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
-          DateTime.now(),
+      dueAt: FirestoreHelpers.toDateTime(map['dueAt']),
+      createdAt: FirestoreHelpers.toDateTime(map['createdAt']) ?? DateTime.now(),
       attachmentUrls: List<String>.from(map['attachmentUrls'] ?? []),
     );
   }

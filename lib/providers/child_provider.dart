@@ -58,6 +58,7 @@ class ChildProvider with ChangeNotifier {
     _childrenSubscription?.cancel();
     _childrenSubscription = null;
     _children = [];
+    stopListeningToLinkedChild();
     notifyListeners();
   }
 

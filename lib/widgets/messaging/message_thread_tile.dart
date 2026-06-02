@@ -81,6 +81,17 @@ class MessageThreadTile extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
+                    if (thread.contextLabel != null)
+                      Text(
+                        thread.contextLabel!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.primaryBlue.withOpacity(0.85),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     Text(
                       thread.lastMessage,
                       maxLines: 1,
