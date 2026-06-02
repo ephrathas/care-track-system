@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/config/school_config.dart';
 import '../../core/domain/domain_enums.dart';
 import '../../models/school_model.dart';
+import '../../models/user_model.dart';
 import '../../services/academic_catalog_seed_service.dart';
 import '../repositories/user_repository.dart';
 import 'firestore_helpers.dart';
@@ -47,7 +48,10 @@ class FirestoreAdminRepository implements AdminRepository {
     final batch = _db.batch();
     batch.set(
       schoolRef,
-      FirestoreHelpers.withTimestamps(school.toMap(), isCreate: true),
+      FirestoreHelpers.withTimestamps({
+        ...school.toMap(),
+        'primaryAdminUid': request.adminUid,
+      }, isCreate: true),
     );
     batch.set(
       userRef,
@@ -70,5 +74,77 @@ class FirestoreAdminRepository implements AdminRepository {
       throw StateError('School setup is already complete or an admin exists.');
     }
     await bootstrapSchool(request);
+  }
+
+  Future<UserModel?> findUserByEmail(String email) async {
+    final normalized = email.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    var snap = await _db
+        .collection(FirestoreCollections.users)
+        .where('email', isEqualTo: normalized)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    final doc = snap.docs.first;
+    final data = Map<String, dynamic>.from(doc.data());
+    data['uid'] = doc.id;
+    return UserModel.fromMap(data);
+  }
+
+  Future<void> promoteToAdmin({
+    required String targetUid,
+    required String schoolId,
+  }) async {
+    await _db.collection(FirestoreCollections.users).doc(targetUid).set(
+      {
+        'role': 'Admin',
+        'schoolId': schoolId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  Future<void> demoteAdmin({
+    required String targetUid,
+    required String fallbackRole,
+  }) async {
+    await _db.collection(FirestoreCollections.users).doc(targetUid).set(
+      {
+        'role': fallbackRole,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  Future<void> transferPrimaryAdmin({
+    required String schoolId,
+    required String newPrimaryAdminUid,
+  }) async {
+    await _db.collection(FirestoreCollections.schools).doc(schoolId).set(
+      {
+        'primaryAdminUid': newPrimaryAdminUid,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  Future<void> ensurePrimaryAdminUid({
+    required String schoolId,
+    required String adminUid,
+  }) async {
+    final schoolRef = _db.collection(FirestoreCollections.schools).doc(schoolId);
+    final doc = await schoolRef.get();
+    if (!doc.exists) return;
+    if ((doc.data()?['primaryAdminUid'] as String? ?? '').isNotEmpty) return;
+    await schoolRef.set(
+      {
+        'primaryAdminUid': adminUid,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
   }
 }
