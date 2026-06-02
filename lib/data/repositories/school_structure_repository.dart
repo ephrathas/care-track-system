@@ -10,6 +10,8 @@ abstract class SchoolStructureRepository {
   Future<SchoolModel?> getSchool(String schoolId);
   Stream<SchoolModel?> watchSchool(String schoolId);
 
+  Future<void> updateSchoolName(String schoolId, String name);
+
   Stream<List<GradeLevelModel>> watchGradeLevels(String schoolId);
   Future<String> createGradeLevel(GradeLevelModel grade);
   Future<void> updateGradeLevel(GradeLevelModel grade);
@@ -20,8 +22,10 @@ abstract class SchoolStructureRepository {
 
   Stream<List<SubjectModel>> watchSubjects(String schoolId);
   Future<String> createSubject(SubjectModel subject);
+  Future<void> updateSubject(SubjectModel subject);
 
   Stream<List<ClassSubjectModel>> watchClassSubjects(String classRoomId);
+  Stream<List<ClassSubjectModel>> watchSchoolClassSubjects(String schoolId);
   Stream<List<ClassSubjectModel>> watchTeacherAssignments(String teacherId);
   Future<String> assignTeacherToClassSubject(ClassSubjectModel assignment);
   Future<void> removeClassSubject(String classSubjectId);

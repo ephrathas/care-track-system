@@ -18,6 +18,11 @@ abstract class AcademicRepository {
     String studentId,
   );
 
+  Stream<List<AttendanceRecordModel>> watchRecentAttendanceForStudent(
+    String studentId, {
+    int maxRecords = 14,
+  });
+
   Stream<List<AssessmentModel>> watchAssessmentsForTeacher(String teacherId);
   Future<String> createAssessment(AssessmentModel assessment);
   Future<void> publishAssessment(String assessmentId);

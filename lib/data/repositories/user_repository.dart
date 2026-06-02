@@ -5,6 +5,8 @@ abstract class UserRepository {
   Future<UserModel?> getUser(String uid);
   Future<void> updateUser(UserModel user);
   Future<List<UserModel>> getUsersByRole(String schoolId, String role);
+  Stream<List<UserModel>> watchUsersByRole(String schoolId, String role);
+  Future<UserModel?> findUserByEmail(String email);
 }
 
 /// Admin-only operations — Phase 3 implementation.
