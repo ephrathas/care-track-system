@@ -56,6 +56,36 @@ class FirestoreUserRepository implements UserRepository {
     }).toList();
   }
 
+  @override
+  Stream<List<UserModel>> watchUsersByRole(String schoolId, String role) {
+    Query<Map<String, dynamic>> query = _users.where('role', isEqualTo: role);
+    if (schoolId.isNotEmpty) {
+      query = query.where('schoolId', isEqualTo: schoolId);
+    }
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['uid'] = doc.id;
+        return UserModel.fromMap(data);
+      }).toList();
+    });
+  }
+
+  @override
+  Future<UserModel?> findUserByEmail(String email) async {
+    final normalized = email.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    final snapshot = await _users
+        .where('email', isEqualTo: normalized)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) return null;
+    final doc = snapshot.docs.first;
+    final data = Map<String, dynamic>.from(doc.data());
+    data['uid'] = doc.id;
+    return UserModel.fromMap(data);
+  }
+
   Future<bool> hasAnyAdmin() async {
     final snapshot = await _users
         .where('role', isEqualTo: 'Admin')
