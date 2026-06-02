@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../models/chat_message_model.dart';
+import '../models/child_model.dart';
 import '../models/message_thread_model.dart';
+import '../models/student_model.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
 
@@ -81,19 +83,76 @@ class MessagingProvider with ChangeNotifier {
     _activeMessages = [];
   }
 
-  Future<MessageThread?> ensureParentTeacherThread({
+  /// Teachers linked to the child's class section.
+  Future<List<UserModel>> teachersForChild(ChildModel child) async {
+    final classId = child.classRoomId;
+    if (classId == null || classId.isEmpty) return [];
+    return _db.getTeachersForClassRoom(classId);
+  }
+
+  /// Unique parent contacts from teacher's class roster.
+  Future<List<ParentContact>> parentContactsFromRoster(
+    List<StudentModel> roster,
+  ) async {
+    final byParent = <String, ParentContact>{};
+    for (final student in roster) {
+      if (student.parentId.isEmpty) continue;
+      if (byParent.containsKey(student.parentId)) {
+        final existing = byParent[student.parentId]!;
+        final names = [...existing.studentNames];
+        if (!names.contains(student.fullName)) {
+          names.add(student.fullName);
+        }
+        byParent[student.parentId] = ParentContact(
+          parentId: existing.parentId,
+          parentName: existing.parentName,
+          studentNames: names,
+          studentId: existing.studentId,
+          classRoomId: existing.classRoomId ?? student.classRoomId,
+        );
+        continue;
+      }
+      final parent = await _db.getUserById(student.parentId);
+      byParent[student.parentId] = ParentContact(
+        parentId: student.parentId,
+        parentName: parent?.fullName ?? 'Parent',
+        studentNames: [student.fullName],
+        studentId: student.id,
+        classRoomId: student.classRoomId,
+      );
+    }
+    final list = byParent.values.toList();
+    list.sort((a, b) => a.parentName.compareTo(b.parentName));
+    return list;
+  }
+
+  Future<MessageThread?> ensureThread({
     required String parentId,
     required String parentName,
+    required UserModel teacher,
+    required ChildModel child,
   }) async {
-    final existing = await _db.findThreadForParent(parentId);
-    if (existing != null) return existing;
-
-    final teacher = await _db.getFirstUserByRole('Teacher');
-    if (teacher == null) {
-      _errorMessage = 'No teacher account found yet. Ask your school to register a teacher.';
+    _errorMessage = null;
+    final classId = child.classRoomId ?? '';
+    if (classId.isEmpty) {
+      _errorMessage = 'Enroll ${child.name} in a class before messaging teachers.';
       notifyListeners();
       return null;
     }
+
+    final teachers = await teachersForChild(child);
+    if (!teachers.any((t) => t.uid == teacher.uid)) {
+      _errorMessage = '${teacher.fullName} is not assigned to ${child.name}\'s class.';
+      notifyListeners();
+      return null;
+    }
+
+    final existing = await _db.findThreadForParticipants(
+      parentId: parentId,
+      teacherId: teacher.uid,
+      studentId: child.id,
+    );
+    if (existing != null) return existing;
 
     final thread = MessageThread(
       id: '',
@@ -103,6 +162,9 @@ class MessagingProvider with ChangeNotifier {
       teacherName: teacher.fullName,
       lastMessage: 'Conversation started',
       lastMessageAt: DateTime.now(),
+      studentId: child.id,
+      studentName: child.name,
+      classRoomId: classId,
     );
 
     final id = await _db.createMessageThread(thread);
@@ -114,7 +176,62 @@ class MessagingProvider with ChangeNotifier {
       teacherName: thread.teacherName,
       lastMessage: thread.lastMessage,
       lastMessageAt: thread.lastMessageAt,
+      studentId: thread.studentId,
+      studentName: thread.studentName,
+      classRoomId: thread.classRoomId,
     );
+  }
+
+  Future<MessageThread?> ensureTeacherToParentThread({
+    required UserModel teacher,
+    required ParentContact contact,
+  }) async {
+    _errorMessage = null;
+
+    final existing = await _db.findThreadForParticipants(
+      parentId: contact.parentId,
+      teacherId: teacher.uid,
+      studentId: contact.studentId,
+    );
+    if (existing != null) return existing;
+
+    final thread = MessageThread(
+      id: '',
+      parentId: contact.parentId,
+      teacherId: teacher.uid,
+      parentName: contact.parentName,
+      teacherName: teacher.fullName,
+      lastMessage: 'Conversation started',
+      lastMessageAt: DateTime.now(),
+      studentId: contact.studentId,
+      studentName: contact.studentNames.first,
+      classRoomId: contact.classRoomId,
+    );
+
+    final id = await _db.createMessageThread(thread);
+    return MessageThread(
+      id: id,
+      parentId: thread.parentId,
+      teacherId: thread.teacherId,
+      parentName: thread.parentName,
+      teacherName: thread.teacherName,
+      lastMessage: thread.lastMessage,
+      lastMessageAt: thread.lastMessageAt,
+      studentId: thread.studentId,
+      studentName: thread.studentName,
+      classRoomId: thread.classRoomId,
+    );
+  }
+
+  /// @deprecated Use [ensureThread] with child + teacher selection.
+  Future<MessageThread?> ensureParentTeacherThread({
+    required String parentId,
+    required String parentName,
+  }) async {
+    _errorMessage =
+        'Select a child and their class teacher to start a conversation.';
+    notifyListeners();
+    return null;
   }
 
   Future<void> sendMessage({
@@ -180,4 +297,23 @@ class MessagingProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+}
+
+class ParentContact {
+  final String parentId;
+  final String parentName;
+  final List<String> studentNames;
+  final String studentId;
+  final String? classRoomId;
+
+  ParentContact({
+    required this.parentId,
+    required this.parentName,
+    required this.studentNames,
+    required this.studentId,
+    this.classRoomId,
+  });
+
+  String get subtitle =>
+      studentNames.length == 1 ? 'Parent of ${studentNames.first}' : '${studentNames.length} children in your class';
 }

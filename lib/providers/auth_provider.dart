@@ -1,15 +1,18 @@
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../core/auth/auth_error_messages.dart';
+import '../core/constants/user_role.dart';
+import '../data/firestore/firestore_family_repository.dart';
 import '../models/user_model.dart';
+import '../core/photo/profile_photo_service.dart';
 import '../services/auth_service.dart';
-import '../services/storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
-  final StorageService _storageService = StorageService();
+  final FirestoreFamilyRepository _family = FirestoreFamilyRepository();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   UserModel? _currentUser;
@@ -22,6 +25,7 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
+  bool get mustChangePassword => _currentUser?.mustChangePassword == true;
   Uint8List? get profilePhotoPreview => _profilePhotoPreview;
   bool get profilePhotoUploading => _profilePhotoUploading;
 
@@ -38,10 +42,12 @@ class AuthProvider with ChangeNotifier {
     if (firebaseUser != null) {
       try {
         _currentUser = await _authService.getUserData(firebaseUser.uid);
+        await _ensureStudentLinkOnUserDoc();
       } catch (e) {
-        print("Auth initialization error: $e");
-        _errorMessage = "Failed to load user profile.";
-        _currentUser = null;
+        debugPrint('Auth initialization error: $e');
+        if (_currentUser == null) {
+          _errorMessage = 'Failed to load user profile.';
+        }
       }
     }
     
@@ -79,6 +85,7 @@ class AuthProvider with ChangeNotifier {
             message: AuthErrorMessages.fromCode('profile-not-found'),
           );
         }
+        await _ensureStudentLinkOnUserDoc();
         _isLoading = false;
         notifyListeners();
         return true;
@@ -168,11 +175,18 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final imageUrl = await _storageService
-          .uploadUserPhotoFromBytes(_currentUser!.uid, imageBytes)
-          .timeout(const Duration(seconds: 30));
-      await _authService.updateProfilePic(_currentUser!.uid, imageUrl);
-      _currentUser = _currentUser!.copyWith(profilePic: imageUrl);
+      final photoValue = await ProfilePhotoService.saveForUser(
+        uid: _currentUser!.uid,
+        imageBytes: imageBytes,
+      );
+      final linkedStudentId = _currentUser!.linkedStudentId;
+      if (linkedStudentId != null && linkedStudentId.isNotEmpty) {
+        await ProfilePhotoService.syncToChildSchoolRecord(
+          studentId: linkedStudentId,
+          photoValue: photoValue,
+        );
+      }
+      _currentUser = _currentUser!.copyWith(profilePic: photoValue);
       _profilePhotoPreview = null;
       _profilePhotoUploading = false;
       notifyListeners();
@@ -190,11 +204,75 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> completePasswordChange({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (_currentUser == null) return false;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _authService.updatePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      await _authService.clearMustChangePassword(_currentUser!.uid);
+      _currentUser = _currentUser!.copyWith(mustChangePassword: false);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = AuthErrorMessages.fromException(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> refreshUserProfile() async {
     final uid = _firebaseAuth.currentUser?.uid;
     if (uid == null) return;
     _currentUser = await _authService.getUserData(uid);
+    await _ensureStudentLinkOnUserDoc();
     notifyListeners();
+  }
+
+  /// If the student already linked once, restore [linkedStudentId] on the user doc.
+  Future<void> _ensureStudentLinkOnUserDoc() async {
+    final user = _currentUser;
+    if (user == null) return;
+    if (UserRole.fromLabel(user.role) != UserRole.child) return;
+    if (user.linkedStudentId != null && user.linkedStudentId!.isNotEmpty) {
+      return;
+    }
+
+    try {
+      final studentId = await _family.findStudentIdForAuthUser(user.uid);
+      if (studentId == null || studentId.isEmpty) return;
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'linkedStudentId': studentId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      _currentUser = user.copyWith(linkedStudentId: studentId);
+    } catch (e) {
+      debugPrint('Student link repair skipped: $e');
+    }
+  }
+
+  bool get isStudentProfileComplete {
+    final user = _currentUser;
+    if (user == null) return false;
+    if (UserRole.fromLabel(user.role) != UserRole.child) return true;
+    return user.linkedStudentId != null && user.linkedStudentId!.isNotEmpty;
+  }
+
+  bool get isTeacherProfileComplete {
+    final user = _currentUser;
+    if (user == null) return false;
+    if (UserRole.fromLabel(user.role) != UserRole.teacher) return true;
+    return user.teacherProfile?.isSetupComplete ?? false;
   }
 
   // 🚪 Sign Out Action

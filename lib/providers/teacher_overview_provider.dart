@@ -25,6 +25,7 @@ class TeacherOverviewProvider with ChangeNotifier {
 
   List<ClassSubjectModel> _rawAssignments = [];
   List<TeacherTeachingSlot> slots = [];
+  List<StudentModel> roster = [];
   int rosterCount = 0;
   bool isLoading = true;
   String? error;
@@ -74,10 +75,15 @@ class TeacherOverviewProvider with ChangeNotifier {
 
     _rosterSub = _students.watchStudentsForTeacher(teacherId).listen(
       (students) {
+        roster = students;
         rosterCount = students.length;
         notifyListeners();
       },
     );
+  }
+
+  int studentCountForClass(String classRoomId) {
+    return roster.where((s) => s.classRoomId == classRoomId).length;
   }
 
   void _resolveSlots() {
@@ -165,6 +171,7 @@ class TeacherOverviewProvider with ChangeNotifier {
     _school = null;
     _rawAssignments = [];
     slots = [];
+    roster = [];
     rosterCount = 0;
   }
 
