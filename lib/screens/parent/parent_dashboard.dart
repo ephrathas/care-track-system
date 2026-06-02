@@ -13,6 +13,9 @@ import '../../providers/child_provider.dart';
 import '../../providers/marketplace_orders_provider.dart';
 import '../../providers/messaging_provider.dart';
 import '../../providers/parent_preferences_provider.dart';
+import '../../widgets/profile/kidcare_avatar_image.dart';
+import '../../widgets/parent/child_account_link_status_chip.dart';
+import '../../widgets/parent/parent_child_link_code_action.dart';
 import '../../providers/school_admin_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
@@ -385,20 +388,11 @@ class _ChildProfileCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                CircleAvatar(
+                KidCareAvatarImage(
+                  photoUrl: child.imageUrl,
+                  name: child.name,
                   radius: 32,
-                  backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
-                  backgroundImage:
-                      child.imageUrl.isNotEmpty ? NetworkImage(child.imageUrl) : null,
-                  child: child.imageUrl.isEmpty
-                      ? Text(
-                          child.name.isNotEmpty ? child.name[0].toUpperCase() : 'C',
-                          style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryBlue),
-                        )
-                      : null,
+                  accent: AppTheme.primaryBlue,
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -419,6 +413,8 @@ class _ChildProfileCard extends StatelessWidget {
                                 isDark ? Colors.grey[400] : AppTheme.textSecondary),
                       ),
                       const SizedBox(height: 8),
+                      ChildAccountLinkStatusChip(child: child, compact: true),
+                      const SizedBox(height: 6),
                       Text(
                         vaxCount > 0
                             ? '$vaxCount vaccines logged'
@@ -431,6 +427,10 @@ class _ChildProfileCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+                ParentChildLinkCodeIconButton(
+                  child: child,
+                  iconColor: isDark ? Colors.grey[400] : AppTheme.primaryBlue,
                 ),
                 Icon(Icons.chevron_right_rounded,
                     color: isDark ? Colors.grey[500] : Colors.grey[400]),

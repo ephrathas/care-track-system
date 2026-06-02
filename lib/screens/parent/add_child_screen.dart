@@ -1,14 +1,14 @@
-import 'dart:typed_data';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/academic/academic_resolver.dart';
+import '../../core/academic/grade_naming.dart';
 import '../../core/config/school_config.dart';
 import '../../core/domain/domain_enums.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/grade_level_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
+import '../../widgets/parent/link_code_dialog.dart';
 import '../../providers/school_admin_provider.dart';
 import '../../widgets/parent/grade_teacher_preview.dart';
 
@@ -24,7 +24,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
   final _nameController = TextEditingController();
   DateTime? _dob;
   Gender? _gender;
+  RelationshipType _relationship = RelationshipType.guardian;
   String? _selectedGradeId;
+  String? _selectedSectionId;
   String? _resolvedClassId;
   final _ageController = TextEditingController();
   final _resolver = AcademicResolver();
@@ -32,9 +34,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
   bool _loadingPreview = false;
   bool _vaccinesExpanded = false;
 
-  // Image Selector States
-  final ImagePicker _picker = ImagePicker();
-  Uint8List? _imageBytes;
+  SectionEnrollmentStatus? _statusForClass(SchoolAdminProvider admin) {
+    final classId = _resolvedClassId ?? _selectedSectionId;
+    if (classId == null || classId.isEmpty) return null;
+    return admin.sectionEnrollmentStatus(classId);
+  }
 
   // Optional health info (not required in onboarding)
   final List<Map<String, dynamic>> _vaccinesList = [
@@ -81,19 +85,39 @@ class _AddChildScreenState extends State<AddChildScreen> {
   Future<void> _onGradeSelected(String? gradeId) async {
     setState(() {
       _selectedGradeId = gradeId;
+      _selectedSectionId = null;
       _resolvedClassId = null;
       _gradePreview = null;
     });
     if (gradeId == null) return;
 
     final schoolAdmin = Provider.of<SchoolAdminProvider>(context, listen: false);
-    final classRoom = _resolver.defaultClassForGrade(gradeId, schoolAdmin);
-    setState(() => _resolvedClassId = classRoom?.id);
+    final sections = _resolver.sectionsForGrade(gradeId, schoolAdmin);
+    if (sections.length == 1) {
+      _selectedSectionId = sections.first.id;
+      _resolvedClassId = sections.first.id;
+    }
+    await _refreshPreview();
+  }
+
+  Future<void> _onSectionSelected(String? sectionId) async {
+    setState(() {
+      _selectedSectionId = sectionId;
+      _resolvedClassId = sectionId;
+    });
+    await _refreshPreview();
+  }
+
+  Future<void> _refreshPreview() async {
+    final gradeId = _selectedGradeId;
+    if (gradeId == null) return;
 
     setState(() => _loadingPreview = true);
+    final schoolAdmin = Provider.of<SchoolAdminProvider>(context, listen: false);
     final preview = await _resolver.previewForGrade(
       gradeLevelId: gradeId,
       admin: schoolAdmin,
+      classRoomId: _selectedSectionId ?? _resolvedClassId,
     );
     if (!mounted) return;
     setState(() {
@@ -101,31 +125,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
       _resolvedClassId = preview?.classRoom?.id ?? _resolvedClassId;
       _loadingPreview = false;
     });
-  }
-
-  // Pick Image Action
-  Future<void> _selectPhoto() async {
-    try {
-      final XFile? selected = await _picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 400,
-        maxHeight: 400,
-        imageQuality: 80,
-      );
-
-      if (selected != null) {
-        final bytes = await selected.readAsBytes();
-        setState(() {
-          _imageBytes = bytes;
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text("Failed to pick image: $e"),
-            backgroundColor: Colors.redAccent),
-      );
-    }
   }
 
   void _showErrorSnackbar(String message) {
@@ -191,34 +190,50 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
     // Call provider
     if (_selectedGradeId != null && (_resolvedClassId == null || _resolvedClassId!.isEmpty)) {
-      _showErrorSnackbar('No class section for this grade. Ask admin to seed the catalog.');
+      _showErrorSnackbar('Select a section for this grade, or ask admin to add sections.');
       return;
     }
 
-    final success = await childProvider.addChild(
+    final enrollStatus = _statusForClass(
+      Provider.of<SchoolAdminProvider>(context, listen: false),
+    );
+    if (enrollStatus != null && !enrollStatus.canEnroll) {
+      _showErrorSnackbar(enrollStatus.blockingMessage);
+      return;
+    }
+
+    final result = await childProvider.addChild(
       name: name,
       age: age,
       parentId: parentId,
+      relationshipType: _relationship,
       schoolId: SchoolConfig.defaultSchoolId,
       gradeLevelId: _selectedGradeId,
       classRoomId: _resolvedClassId,
       dateOfBirth: _dob,
       gender: _gender,
-      imageBytes: _imageBytes,
       vaccinations: selectedVaccines,
     );
 
-    if (success) {
-      final photoNote = _imageBytes != null
-          ? ' Photo will appear shortly after upload.'
-          : '';
-      _showSuccessSnackbar("Enrolled $name successfully!$photoNote");
-      if (mounted) {
-        Navigator.pop(context);
+    if (result.success) {
+      if (!mounted) return;
+      if (result.linkCode != null) {
+        await LinkCodeDialog.show(
+          context,
+          title: 'Child enrolled',
+          message:
+              'When your child registers, they must choose "My parent already enrolled me", '
+              'enter this code, and use the exact same full name: $name. '
+              'They can add a profile photo after signing in.',
+          linkCode: result.linkCode!,
+          childName: name,
+        );
       }
+      if (mounted) Navigator.pop(context);
     } else {
       _showErrorSnackbar(
-          childProvider.errorMessage ?? "Failed to save profile. Try again.");
+        childProvider.errorMessage ?? 'Failed to save profile. Try again.',
+      );
     }
   }
 
@@ -228,6 +243,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final childProvider = Provider.of<ChildProvider>(context);
     final schoolAdmin = Provider.of<SchoolAdminProvider>(context);
     final List<GradeLevelModel> grades = schoolAdmin.grades;
+    final enrollmentStatus = _statusForClass(schoolAdmin);
+    final canEnroll = _selectedGradeId == null ||
+        ((_resolvedClassId != null && _resolvedClassId!.isNotEmpty) &&
+            (enrollmentStatus?.canEnroll ?? false));
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : Colors.grey[50],
@@ -257,97 +276,27 @@ class _AddChildScreenState extends State<AddChildScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 📸 Profile picture — tap anywhere on avatar or label to pick
-                Center(
-                  child: Column(
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
                     children: [
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: _selectPhoto,
-                          customBorder: const CircleBorder(),
-                          child: Stack(
-                            children: [
-                              Container(
-                                width: 110,
-                                height: 110,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color:
-                                          AppTheme.primaryBlue.withOpacity(0.3),
-                                      width: 3),
-                                  color: isDark
-                                      ? AppTheme.darkSurface
-                                      : Colors.white,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 6),
-                                    )
-                                  ],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(55),
-                                  child: _imageBytes != null
-                                      ? Image.memory(_imageBytes!,
-                                          fit: BoxFit.cover,
-                                          width: 110,
-                                          height: 110)
-                                      : Icon(
-                                          Icons.child_care_rounded,
-                                          size: 56,
-                                          color: isDark
-                                              ? Colors.white24
-                                              : Colors.grey[300],
-                                        ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: const BoxDecoration(
-                                    color: AppTheme.primaryBlue,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt_rounded,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: _selectPhoto,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          child: Text(
-                            _imageBytes != null
-                                ? 'Change Photo'
-                                : 'Upload Child Photo',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryBlue,
-                            ),
-                          ),
+                      Icon(Icons.info_outline_rounded, color: AppTheme.primaryBlue),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Profile photo: your child adds their own picture after they sign in to the student account.',
+                          style: TextStyle(fontSize: 12, height: 1.4),
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 36),
+                const SizedBox(height: 24),
 
                 // Full Name field
                 TextFormField(
@@ -419,6 +368,30 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                DropdownButtonFormField<RelationshipType>(
+                  value: _relationship,
+                  items: RelationshipType.values
+                      .map(
+                        (r) => DropdownMenuItem(
+                          value: r,
+                          child: Text(r.label),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => _relationship = v);
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Your relationship',
+                    prefixIcon: const Icon(Icons.family_restroom_outlined),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    filled: true,
+                    fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 // Age field
                 TextFormField(
                   controller: _ageController,
@@ -457,7 +430,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   validator: (_) =>
                       grades.isEmpty ? null : (_selectedGradeId == null ? 'Select grade level' : null),
                   decoration: InputDecoration(
-                    labelText: "Grade Level",
+                    labelText: "Grade",
                     prefixIcon: const Icon(Icons.stacked_bar_chart_rounded),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16)),
@@ -468,7 +441,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 if (grades.isEmpty) ...[
                   const SizedBox(height: 10),
                   Text(
-                    'School setup not ready. Ask admin to load the Grades 1–5 catalog.',
+                    'School setup not ready. Ask admin to add grades and assign teachers.',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
@@ -477,10 +450,76 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 ],
 
                 if (_selectedGradeId != null) ...[
+                  Builder(
+                    builder: (context) {
+                      final sections = _resolver.sectionsForGrade(
+                        _selectedGradeId!,
+                        schoolAdmin,
+                      );
+                      if (sections.length <= 1) return const SizedBox.shrink();
+                      return Column(
+                        children: [
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<String>(
+                            value: _selectedSectionId,
+                            items: sections
+                                .map((c) {
+                                  final gradeName = schoolAdmin.gradeNameForId(_selectedGradeId!) ?? '';
+                                  final label = SchoolAdminProvider.sectionLabel(c, gradeName);
+                                  return DropdownMenuItem(
+                                    value: c.id,
+                                    child: Text('Section $label (${c.name})'),
+                                  );
+                                })
+                                .toList(),
+                            onChanged: _onSectionSelected,
+                            validator: (_) => _selectedSectionId == null
+                                ? 'Select a section (e.g. A or B)'
+                                : null,
+                            decoration: InputDecoration(
+                              labelText: 'Section / class group',
+                              helperText: 'Each grade can have sections like A and B',
+                              prefixIcon: const Icon(Icons.class_rounded),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                              filled: true,
+                              fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                   const SizedBox(height: 28),
+                  if (enrollmentStatus != null && !enrollmentStatus.canEnroll) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.orange.withOpacity(0.35)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              enrollmentStatus.blockingMessage,
+                              style: const TextStyle(fontSize: 12, height: 1.45),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   GradeTeacherPreviewPanel(
                     preview: _gradePreview,
                     isLoading: _loadingPreview,
+                    enrollmentStatus: enrollmentStatus,
                   ),
                 ],
 
@@ -547,8 +586,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed:
-                        childProvider.isLoading ? null : _submitChildForm,
+                    onPressed: (childProvider.isLoading || !canEnroll)
+                        ? null
+                        : _submitChildForm,
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),

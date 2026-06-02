@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/child_model.dart';
-import '../../widgets/parent/child_photo_avatar.dart';
+import '../../providers/child_provider.dart';
+import '../../widgets/parent/child_account_link_status_chip.dart';
+import '../../widgets/parent/parent_child_link_code_action.dart';
+import '../../widgets/profile/kidcare_avatar_image.dart';
 
 class ChildTimelineScreen extends StatefulWidget {
   const ChildTimelineScreen({super.key});
@@ -33,9 +37,18 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
     super.dispose();
   }
 
+  ChildModel? _resolveChild(ChildProvider provider) {
+    final local = _child;
+    if (local == null) return null;
+    for (final c in provider.children) {
+      if (c.id == local.id) return c;
+    }
+    return local;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final child = _child;
+    final child = _resolveChild(context.watch<ChildProvider>());
     if (child == null) {
       return const Scaffold(body: Center(child: Text('Child not found')));
     }
@@ -49,6 +62,12 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
             expandedHeight: 220,
             pinned: true,
             stretch: true,
+            actions: [
+              ParentChildLinkCodeIconButton(
+                child: child,
+                iconColor: Colors.white,
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
@@ -64,10 +83,11 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        ChildPhotoAvatar(
-                          child: child,
+                        KidCareAvatarImage(
+                          photoUrl: child.imageUrl,
+                          name: child.name,
                           radius: 36,
-                          borderColor: Colors.white,
+                          accent: Colors.white,
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -93,9 +113,11 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
                                     : '${child.age} years • Not enrolled yet',
                                 style: const TextStyle(color: Colors.white70, fontSize: 13),
                               ),
+                              const SizedBox(height: 8),
+                              ChildAccountLinkStatusChip(child: child),
                               const SizedBox(height: 6),
                               Text(
-                                'Tap photo to update',
+                                'Photo updates when your child sets it in their app',
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.85),
                                   fontSize: 11,
