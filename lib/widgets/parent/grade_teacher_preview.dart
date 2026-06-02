@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/academic/grade_naming.dart';
 import '../../core/academic/academic_resolver.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/class_subject_model.dart';
@@ -7,11 +8,13 @@ import '../../models/class_subject_model.dart';
 class GradeTeacherPreviewPanel extends StatelessWidget {
   final GradeEnrollmentPreview? preview;
   final bool isLoading;
+  final SectionEnrollmentStatus? enrollmentStatus;
 
   const GradeTeacherPreviewPanel({
     super.key,
     required this.preview,
     this.isLoading = false,
+    this.enrollmentStatus,
   });
 
   @override
@@ -26,6 +29,12 @@ class GradeTeacherPreviewPanel extends StatelessWidget {
     }
 
     if (preview == null || preview!.teachers.isEmpty) {
+      if (enrollmentStatus != null && !enrollmentStatus!.hasSubjectSlots) {
+        return _emptyNote(
+          isDark,
+          'No subjects configured for this class yet.',
+        );
+      }
       return const SizedBox.shrink();
     }
 
@@ -39,20 +48,38 @@ class GradeTeacherPreviewPanel extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Teachers for ${preview!.grade.name}',
+                preview!.classRoom != null
+                    ? 'Teachers for ${preview!.classRoom!.name}'
+                    : 'Teachers for ${preview!.grade.name}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: -0.3,
                     ),
               ),
             ),
+            if (enrollmentStatus?.canEnroll == true)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.softGreen.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Ready to enroll',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.softGreen,
+                  ),
+                ),
+              ),
           ],
         ),
         const SizedBox(height: 6),
         Text(
-          preview!.fromCatalogOnly
-              ? 'Default assignments from school catalog.'
-              : 'Assigned by your school — contact teachers below.',
+          enrollmentStatus?.canEnroll == true
+              ? 'All subjects have teachers assigned.'
+              : 'Some subjects still need a teacher before you can enroll.',
           style: TextStyle(
             fontSize: 12,
             color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
@@ -66,6 +93,19 @@ class GradeTeacherPreviewPanel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _emptyNote(bool isDark, String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        message,
+        style: TextStyle(
+          fontSize: 12,
+          color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+        ),
+      ),
     );
   }
 }
@@ -161,13 +201,25 @@ class _TeacherAssignmentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    teacher.teacherName,
-                    style: const TextStyle(
+                    teacher.isLinked ? teacher.teacherName : 'Teacher not assigned yet',
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: teacher.isLinked ? null : Colors.orange.shade800,
                     ),
                   ),
-                  if (teacher.teacherEmail != null &&
+                  if (!teacher.isLinked && teacher.teacherName.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Catalog: ${teacher.teacherName}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                  if (teacher.isLinked &&
+                      teacher.teacherEmail != null &&
                       teacher.teacherEmail!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Row(
