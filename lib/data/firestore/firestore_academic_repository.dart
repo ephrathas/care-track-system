@@ -124,6 +124,26 @@ class FirestoreAcademicRepository implements AcademicRepository {
   }
 
   @override
+  Stream<List<AttendanceRecordModel>> watchRecentAttendanceForStudent(
+    String studentId, {
+    int maxRecords = 14,
+  }) {
+    return _attendance
+        .where('studentId', isEqualTo: studentId)
+        .snapshots()
+        .map((snap) {
+      final list = snap.docs
+          .map((d) => AttendanceRecordModel.fromMap(d.data(), d.id))
+          .toList();
+      list.sort((a, b) => b.date.compareTo(a.date));
+      if (list.length > maxRecords) {
+        return list.sublist(0, maxRecords);
+      }
+      return list;
+    });
+  }
+
+  @override
   Stream<List<AssessmentModel>> watchPublishedAssessmentsForStudent(
     String studentId,
   ) {
