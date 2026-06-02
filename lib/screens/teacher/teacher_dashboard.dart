@@ -126,8 +126,9 @@ class _TeacherHomeTab extends StatelessWidget {
                         icon: Icons.link_off_rounded,
                         title: 'Not assigned to a class yet',
                         message:
-                            'Ask your admin to register you as Teacher, link your account, '
-                            'then assign you to a class and subject in the Admin dashboard.',
+                            'After you register as Teacher, ask your admin to open '
+                            'Admin → Staff tab, link your account to the school, '
+                            'then assign you to a section + subject (e.g. Grade 1-A · Math).',
                       ),
                     )
                   else
@@ -135,10 +136,13 @@ class _TeacherHomeTab extends StatelessWidget {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final slot = overview.slots[index];
+                          final count = overview.studentCountForClass(slot.classRoomId);
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                             child: _ClassScheduleCard(
-                              time: 'Assigned',
+                              time: count == 0
+                                  ? 'No students enrolled'
+                                  : '$count student${count == 1 ? '' : 's'}',
                               title: slot.subjectName,
                               grade: '${slot.gradeName} · ${slot.className}',
                               icon: slot.icon,
@@ -390,11 +394,16 @@ class _TeacherAttendanceTab extends StatefulWidget {
 
 class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
   String _searchQuery = '';
+  String? _classRoomFilter;
 
   List<StudentModel> _filter(List<StudentModel> students) {
-    if (_searchQuery.trim().isEmpty) return students;
+    var list = students;
+    if (_classRoomFilter != null && _classRoomFilter!.isNotEmpty) {
+      list = list.where((s) => s.classRoomId == _classRoomFilter).toList();
+    }
+    if (_searchQuery.trim().isEmpty) return list;
     final q = _searchQuery.toLowerCase();
-    return students
+    return list
         .where((s) => s.fullName.toLowerCase().contains(q))
         .toList();
   }
@@ -404,6 +413,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final teacherId = context.watch<AuthProvider>().currentUser?.uid;
     final attendance = context.watch<TeacherAttendanceProvider>();
+    final overview = context.watch<TeacherOverviewProvider>();
 
     if (teacherId == null) {
       return const DashboardTabScaffold(
@@ -428,13 +438,17 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
         : ((presentCount / list.length) * 100).round();
 
     if (roster.isEmpty) {
-      return const DashboardTabScaffold(
+      return DashboardTabScaffold(
         title: 'Attendance Registry',
         body: EducationEmptyState(
-          icon: Icons.groups_outlined,
-          title: 'No students on your roster yet',
-          message:
-              'Students appear here after parents enroll a child in your grade and subject. Ask admin to link your teacher account to class assignments.',
+          icon: overview.slots.isEmpty ? Icons.link_off_rounded : Icons.groups_outlined,
+          title: overview.slots.isEmpty
+              ? 'Waiting for admin assignment'
+              : 'No students on your roster yet',
+          message: overview.slots.isEmpty
+              ? 'Ask admin to assign you in Admin → Staff tab after you register as Teacher.'
+              : 'Students appear here after parents enroll children in your assigned sections '
+                  '(${overview.slots.map((s) => s.className).join(', ')}).',
         ),
       );
     }
@@ -491,6 +505,35 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                         ],
                       ),
                     ),
+                    if (overview.slots.length > 1) ...[
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: _classRoomFilter,
+                        decoration: InputDecoration(
+                          labelText: 'Filter by section',
+                          filled: true,
+                          fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                                color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
+                          ),
+                        ),
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('All my sections'),
+                          ),
+                          ...overview.slots.map(
+                            (s) => DropdownMenuItem(
+                              value: s.classRoomId,
+                              child: Text('${s.gradeName} · ${s.className}'),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => _classRoomFilter = v),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     TextField(
                       onChanged: (val) => setState(() => _searchQuery = val),
@@ -671,10 +714,10 @@ class _HonestNextStepsCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             rosterCount == 0
-                ? 'Take attendance once parents enroll children in your classes. '
-                    'Homework grading will appear when assignments are published.'
-                : 'You have $rosterCount student(s) on your roster. '
-                    'Open Attendance to mark present/absent. Homework tools are coming next.',
+                ? 'Once admin assigns you (Staff tab) and parents enroll students in your '
+                    'sections, mark attendance here and publish homework from the Homework tab.'
+                : 'You have $rosterCount student(s) across your assigned sections. '
+                    'Mark attendance daily and publish homework for each class + subject you teach.',
             style: TextStyle(
               fontSize: 13,
               height: 1.45,
@@ -693,7 +736,7 @@ class _TeacherMessagesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MessagesInbox(title: 'Inbox Communication');
+    return const MessagesInbox(title: 'Inbox Communication', isTeacherInbox: true);
   }
 }
 
