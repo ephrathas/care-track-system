@@ -127,4 +127,42 @@ class FirestoreCollections {
   static const notifications = 'notifications';
   static const marketplaceOrders = 'marketplace_orders';
   static const products = 'products';
+  static const parentStudentRelationships = 'parent_student_relationships';
+  static const parentInvitations = 'parent_invitations';
+  static const familyLinkCodes = 'family_link_codes';
+}
+
+/// Guardian link between a parent user and a student profile.
+enum RelationshipType {
+  mother('mother', 'Mother'),
+  father('father', 'Father'),
+  guardian('guardian', 'Guardian'),
+  other('other', 'Guardian / Other');
+
+  const RelationshipType(this.id, this.label);
+  final String id;
+  final String label;
+
+  static RelationshipType fromId(String? value) {
+    for (final type in RelationshipType.values) {
+      if (type.id == value) return type;
+    }
+    return RelationshipType.guardian;
+  }
+}
+
+enum ParentInvitationStatus {
+  pending('pending'),
+  accepted('accepted'),
+  expired('expired');
+
+  const ParentInvitationStatus(this.id);
+  final String id;
+
+  static ParentInvitationStatus fromId(String? value) {
+    for (final status in ParentInvitationStatus.values) {
+      if (status.id == value) return status;
+    }
+    return ParentInvitationStatus.pending;
+  }
 }
