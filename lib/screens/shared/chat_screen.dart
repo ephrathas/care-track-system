@@ -96,7 +96,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Text(otherName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             Text(
-              user.role == 'Parent' ? 'Class teacher' : 'Parent',
+              thread.contextLabel ?? (user.role == 'Parent' ? 'Class teacher' : 'Parent'),
               style: TextStyle(
                 fontSize: 11,
                 color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
