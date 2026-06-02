@@ -3,20 +3,23 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/message_thread_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/messaging_provider.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import 'message_thread_tile.dart';
+import 'parent_start_chat_sheet.dart';
+import 'teacher_compose_sheet.dart';
 
 class MessagesInbox extends StatelessWidget {
   final String title;
   final bool showStartConversation;
+  final bool isTeacherInbox;
 
   const MessagesInbox({
     super.key,
     required this.title,
     this.showStartConversation = false,
+    this.isTeacherInbox = false,
   });
 
   @override
@@ -27,31 +30,38 @@ class MessagesInbox extends StatelessWidget {
 
     return DashboardTabScaffold(
       title: title,
+      floatingActionButton: user == null
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () {
+                if (isTeacherInbox) {
+                  TeacherComposeSheet.show(context);
+                } else if (showStartConversation) {
+                  ParentStartChatSheet.show(context);
+                }
+              },
+              icon: const Icon(Icons.edit_rounded),
+              label: Text(isTeacherInbox ? 'Message parent' : 'Message teacher'),
+            ),
       body: messaging.isLoading
           ? const Center(child: CircularProgressIndicator())
           : messaging.threads.isEmpty
               ? _EmptyInbox(
                   isDark: isDark,
-                  showStartConversation: showStartConversation,
+                  showStartConversation: showStartConversation || isTeacherInbox,
+                  isTeacher: isTeacherInbox,
                   onStart: user == null
                       ? null
-                      : () async {
-                          final thread = await context
-                              .read<MessagingProvider>()
-                              .ensureParentTeacherThread(
-                                parentId: user.uid,
-                                parentName: user.fullName,
-                              );
-                          if (!context.mounted || thread == null) return;
-                          AppRoutes.push(
-                            context,
-                            AppRoutes.chat,
-                            arguments: thread,
-                          );
+                      : () {
+                          if (isTeacherInbox) {
+                            TeacherComposeSheet.show(context);
+                          } else {
+                            ParentStartChatSheet.show(context);
+                          }
                         },
                 )
               : ListView.separated(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 88),
                   itemCount: messaging.threads.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
@@ -74,11 +84,13 @@ class MessagesInbox extends StatelessWidget {
 class _EmptyInbox extends StatelessWidget {
   final bool isDark;
   final bool showStartConversation;
+  final bool isTeacher;
   final VoidCallback? onStart;
 
   const _EmptyInbox({
     required this.isDark,
     required this.showStartConversation,
+    this.isTeacher = false,
     this.onStart,
   });
 
@@ -102,18 +114,18 @@ class _EmptyInbox extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              showStartConversation
-                  ? 'Start a secure chat with your child\'s teacher.'
-                  : 'When parents message you, conversations appear here.',
+              isTeacher
+                  ? 'Message parents of students in your assigned classes only.'
+                  : 'Message teachers assigned to your child\'s class section.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
+              style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary, height: 1.4),
             ),
             if (showStartConversation && onStart != null) ...[
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: onStart,
                 icon: const Icon(Icons.chat_rounded),
-                label: const Text('Message Teacher'),
+                label: Text(isTeacher ? 'Message parent' : 'Message teacher'),
               ),
             ],
           ],
