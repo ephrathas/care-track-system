@@ -5,10 +5,11 @@ import '../../core/constants/app_branding.dart';
 import '../../core/navigation/kidcare_logout.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_helpers.dart';
-import '../../models/grade_level_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/school_admin_provider.dart';
 import '../../widgets/settings/appearance_setting.dart';
+import 'admin_governance_tab.dart';
+import 'admin_management_tabs.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -20,6 +21,99 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   int _tab = 0;
 
+  Future<void> _editSchoolName(BuildContext context, SchoolAdminProvider admin) async {
+    final controller = TextEditingController(text: admin.school?.name ?? '');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('School name'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Display name',
+            hintText: 'e.g. Bisrat Academy',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final saved = await admin.updateSchoolName(controller.text);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(saved ? 'School name updated.' : admin.error ?? 'Could not save.'),
+      ),
+    );
+  }
+
+  Future<void> _showStarterCurriculumDialog(BuildContext context, SchoolAdminProvider admin) async {
+    var from = 1;
+    var to = 5;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Load starter curriculum'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Creates grades with section A and subject slots (no teachers yet). '
+                'Skips grades that already exist.',
+                style: TextStyle(fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: from,
+                      decoration: const InputDecoration(labelText: 'From grade'),
+                      items: List.generate(12, (i) => i + 1)
+                          .map((n) => DropdownMenuItem(value: n, child: Text('Grade $n')))
+                          .toList(),
+                      onChanged: (v) => setState(() => from = v ?? 1),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: to,
+                      decoration: const InputDecoration(labelText: 'To grade'),
+                      items: List.generate(12, (i) => i + 1)
+                          .map((n) => DropdownMenuItem(value: n, child: Text('Grade $n')))
+                          .toList(),
+                      onChanged: (v) => setState(() => to = v ?? 5),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Load')),
+          ],
+        ),
+      ),
+    );
+    if (result != true || !context.mounted) return;
+    if (from > to) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('"From" must be less than or equal to "To".')),
+      );
+      return;
+    }
+    final message = await admin.seedGradesRange(fromLevel: from, toLevel: to);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<SchoolAdminProvider>();
@@ -28,8 +122,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Scaffold(
       backgroundColor: ThemeHelpers.pageBackground(context),
       appBar: AppBar(
-        title: Text(admin.school?.name ?? 'School Admin'),
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              admin.school?.name ?? 'School Admin',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              'Manage grades, sections & staff',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_rounded),
+            tooltip: 'Edit school name',
+            onPressed: () => _editSchoolName(context, admin),
+          ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             onPressed: () => kidCareLogout(context),
@@ -39,11 +155,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
       body: IndexedStack(
         index: _tab,
         children: [
-          _OverviewTab(schoolName: admin.school?.name, userName: user?.fullName),
-          _GradesTab(admin: admin),
-          _ClassesTab(admin: admin),
-          _SubjectsTab(admin: admin),
-          _AssignTeachersTab(admin: admin),
+          _OverviewTab(
+            schoolName: admin.school?.name,
+            userName: user?.fullName,
+            onLoadStarter: () => _showStarterCurriculumDialog(context, admin),
+            onEditSchoolName: () => _editSchoolName(context, admin),
+          ),
+          const AdminGradesAndSectionsTab(),
+          const AdminSubjectsTab(),
+          const AdminTeachersTab(),
+          const AdminGovernanceTab(),
           ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -72,12 +193,36 @@ class _AdminDashboardState extends State<AdminDashboard> {
         selectedIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.stacked_bar_chart_outlined), selectedIcon: Icon(Icons.stacked_bar_chart), label: 'Grades'),
-          NavigationDestination(icon: Icon(Icons.class_outlined), selectedIcon: Icon(Icons.class_), label: 'Classes'),
-          NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book), label: 'Subjects'),
-          NavigationDestination(icon: Icon(Icons.link_outlined), selectedIcon: Icon(Icons.link), label: 'Teachers'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard_rounded),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.layers_outlined),
+            selectedIcon: Icon(Icons.layers_rounded),
+            label: 'Grades',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book_rounded),
+            label: 'Subjects',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups_rounded),
+            label: 'Staff',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shield_outlined),
+            selectedIcon: Icon(Icons.shield_rounded),
+            label: 'Admins',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -87,431 +232,152 @@ class _AdminDashboardState extends State<AdminDashboard> {
 class _OverviewTab extends StatelessWidget {
   final String? schoolName;
   final String? userName;
+  final VoidCallback onLoadStarter;
+  final VoidCallback onEditSchoolName;
 
-  const _OverviewTab({this.schoolName, this.userName});
+  const _OverviewTab({
+    this.schoolName,
+    this.userName,
+    required this.onLoadStarter,
+    required this.onEditSchoolName,
+  });
 
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<SchoolAdminProvider>();
+    final sectionCount = admin.classes.length;
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        _StatCard(
-          title: 'Grade levels',
-          value: '${admin.grades.length}',
-          icon: Icons.stacked_bar_chart_rounded,
-          color: AppTheme.primaryBlue,
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppTheme.primaryBlue, Color(0xFF4A90E2)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue.withOpacity(0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hello, ${userName ?? 'Admin'}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                schoolName ?? AppBranding.name,
+                style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14),
+              ),
+              TextButton.icon(
+                onPressed: onEditSchoolName,
+                icon: const Icon(Icons.edit_rounded, size: 14, color: Colors.white70),
+                label: const Text(
+                  'Change school name',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        _StatCard(
-          title: 'Classes',
-          value: '${admin.classes.length}',
-          icon: Icons.class_rounded,
-          color: AppTheme.softGreen,
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                title: 'Grades',
+                value: '${admin.grades.length}',
+                icon: Icons.layers_rounded,
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatCard(
+                title: 'Sections',
+                value: '$sectionCount',
+                icon: Icons.class_rounded,
+                color: AppTheme.softGreen,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        _StatCard(
-          title: 'Subjects',
-          value: '${admin.subjects.length}',
-          icon: Icons.menu_book_rounded,
-          color: const Color(0xFF9013FE),
-        ),
-        const SizedBox(height: 12),
-        _StatCard(
-          title: 'Teachers linked',
-          value: '${admin.teachers.length}',
-          icon: Icons.groups_rounded,
-          color: const Color(0xFFE2894A),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                title: 'Subjects',
+                value: '${admin.subjects.length}',
+                icon: Icons.menu_book_rounded,
+                color: const Color(0xFF9013FE),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatCard(
+                title: 'Teachers',
+                value: '${admin.teachers.length}',
+                icon: Icons.groups_rounded,
+                color: const Color(0xFFE2894A),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 24),
-        Text(
-          'Setup checklist',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
         Card(
-          color: AppTheme.primaryBlue.withOpacity(0.06),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Admin setup order',
+                  'Quick setup',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '1. Load Grades 1–5 (catalog)\n'
-                  '2. Review Classes & Subjects tabs\n'
-                  '3. Register Teacher accounts → Link teachers\n'
-                  '4. Assign teachers to class + subject slots\n'
-                  '5. Parents can enroll children',
-                  style: TextStyle(fontSize: 13, height: 1.45, color: AppTheme.textSecondary),
+                  '1. Grades tab → add unique grade names and sections (A, B…)\n'
+                  '2. Subjects tab → add courses (shared across school)\n'
+                  '3. Staff tab → assign a teacher to each section + subject\n'
+                  '4. Parents can enroll only when all subjects have teachers\n'
+                  '5. Admins tab → add other admins if needed',
+                  style: TextStyle(fontSize: 13, height: 1.5, color: AppTheme.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 FilledButton.icon(
-                  onPressed: () async {
-                    final message = await admin.seedDefaultCatalog();
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(message)),
-                    );
-                  },
+                  onPressed: onLoadStarter,
                   icon: const Icon(Icons.auto_stories_rounded, size: 20),
-                  label: Text(
-                    admin.grades.length < 5
-                        ? 'Load / complete Grades 1–5 catalog'
-                        : 'Repair missing catalog grades',
-                  ),
+                  label: const Text('Load starter curriculum (pick grade range)'),
                 ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 12),
-        _CheckItem(
-          done: admin.grades.isNotEmpty,
-          label: 'Grades 1–5 (catalog or manual)',
-        ),
-        _CheckItem(done: admin.classes.isNotEmpty, label: 'Class sections'),
-        _CheckItem(done: admin.subjects.isNotEmpty, label: 'Subjects'),
-        _CheckItem(
-          done: admin.teachers.isNotEmpty,
-          label: 'Teachers registered & linked to school',
-        ),
-        _CheckItem(
-          done: admin.teachers.isNotEmpty,
-          label: 'Link Firebase teachers to catalog slots (Teachers tab)',
-        ),
-        const SizedBox(height: 16),
-        Text(
-          '${AppBranding.name} — one school per app deployment.',
-          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-        ),
+        _CheckItem(done: admin.grades.isNotEmpty, label: 'At least one grade'),
+        _CheckItem(done: sectionCount > 0, label: 'Sections per grade (e.g. 1-A, 1-B)'),
+        _CheckItem(done: admin.subjects.isNotEmpty, label: 'Subjects defined'),
+        _CheckItem(done: admin.teachers.isNotEmpty, label: 'Teachers linked to school'),
       ],
     );
   }
-}
-
-class _GradesTab extends StatefulWidget {
-  final SchoolAdminProvider admin;
-
-  const _GradesTab({required this.admin});
-
-  @override
-  State<_GradesTab> createState() => _GradesTabState();
-}
-
-class _GradesTabState extends State<_GradesTab> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _add() async {
-    final name = _controller.text.trim();
-    if (name.isEmpty) return;
-    final ok = await widget.admin.addGradeLevel(name);
-    if (ok && mounted) _controller.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  decoration: const InputDecoration(
-                    labelText: 'New grade level',
-                    hintText: 'Grade 1, Kindergarten…',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(onPressed: _add, child: const Text('Add')),
-            ],
-          ),
-        ),
-        Expanded(
-          child: widget.admin.grades.isEmpty
-              ? _EmptyHint(message: 'No grades yet. Add Kindergarten, Grade 1, etc.')
-              : ListView.builder(
-                  itemCount: widget.admin.grades.length,
-                  itemBuilder: (_, i) {
-                    final g = widget.admin.grades[i];
-                    return ListTile(
-                      leading: CircleAvatar(child: Text('${g.sortOrder}')),
-                      title: Text(g.name),
-                      subtitle: g.band != null ? Text(g.band!) : null,
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ClassesTab extends StatefulWidget {
-  final SchoolAdminProvider admin;
-
-  const _ClassesTab({required this.admin});
-
-  @override
-  State<_ClassesTab> createState() => _ClassesTabState();
-}
-
-class _ClassesTabState extends State<_ClassesTab> {
-  final _nameController = TextEditingController();
-  String? _gradeId;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _add() async {
-    if (_gradeId == null || _nameController.text.trim().isEmpty) return;
-    final ok = await widget.admin.addClassRoom(
-      name: _nameController.text.trim(),
-      gradeLevelId: _gradeId!,
-    );
-    if (ok && mounted) _nameController.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final grades = widget.admin.grades;
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              DropdownButtonFormField<String>(
-                value: _gradeId,
-                decoration: const InputDecoration(labelText: 'Grade level'),
-                items: grades
-                    .map((g) => DropdownMenuItem(value: g.id, child: Text(g.name)))
-                    .toList(),
-                onChanged: grades.isEmpty ? null : (v) => setState(() => _gradeId = v),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Class name',
-                        hintText: '4-A, Lions…',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(onPressed: _add, child: const Text('Add')),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: widget.admin.classes.isEmpty
-              ? _EmptyHint(message: 'Add grade levels first, then create classes.')
-              : ListView.builder(
-                  itemCount: widget.admin.classes.length,
-                  itemBuilder: (_, i) {
-                    final c = widget.admin.classes[i];
-                    final grade = _gradeName(widget.admin.grades, c.gradeLevelId);
-                    return ListTile(
-                      leading: const Icon(Icons.class_rounded),
-                      title: Text(c.name),
-                      subtitle: Text(grade),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SubjectsTab extends StatefulWidget {
-  final SchoolAdminProvider admin;
-
-  const _SubjectsTab({required this.admin});
-
-  @override
-  State<_SubjectsTab> createState() => _SubjectsTabState();
-}
-
-class _SubjectsTabState extends State<_SubjectsTab> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _add() async {
-    final name = _controller.text.trim();
-    if (name.isEmpty) return;
-    final ok = await widget.admin.addSubject(name);
-    if (ok && mounted) _controller.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Subject name',
-                    hintText: 'Mathematics, Science…',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(onPressed: _add, child: const Text('Add')),
-            ],
-          ),
-        ),
-        Expanded(
-          child: widget.admin.subjects.isEmpty
-              ? _EmptyHint(message: 'Add subjects your school teaches.')
-              : ListView.builder(
-                  itemCount: widget.admin.subjects.length,
-                  itemBuilder: (_, i) {
-                    final s = widget.admin.subjects[i];
-                    return ListTile(
-                      leading: const Icon(Icons.menu_book_rounded),
-                      title: Text(s.name),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AssignTeachersTab extends StatefulWidget {
-  final SchoolAdminProvider admin;
-
-  const _AssignTeachersTab({required this.admin});
-
-  @override
-  State<_AssignTeachersTab> createState() => _AssignTeachersTabState();
-}
-
-class _AssignTeachersTabState extends State<_AssignTeachersTab> {
-  String? _classId;
-  String? _subjectId;
-  String? _teacherId;
-
-  Future<void> _assign() async {
-    if (_classId == null || _subjectId == null || _teacherId == null) return;
-    final ok = await widget.admin.assignTeacher(
-      classRoomId: _classId!,
-      subjectId: _subjectId!,
-      teacherId: _teacherId!,
-    );
-    if (ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Teacher assigned')),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final admin = widget.admin;
-    final teachers = admin.teachers;
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        if (teachers.isEmpty)
-          Column(
-            children: [
-              const _EmptyHint(
-                message:
-                    'No teachers linked yet. Register teacher accounts first, '
-                    'then tap below to link them to this school.',
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () async {
-                  final n = await admin.linkAllTeachersToSchool();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Linked $n teacher(s)')),
-                    );
-                  }
-                },
-                child: const Text('Link registered teachers'),
-              ),
-            ],
-          )
-        else ...[
-          DropdownButtonFormField<String>(
-            value: _classId,
-            decoration: const InputDecoration(labelText: 'Class'),
-            items: admin.classes
-                .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
-                .toList(),
-            onChanged: (v) => setState(() => _classId = v),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _subjectId,
-            decoration: const InputDecoration(labelText: 'Subject'),
-            items: admin.subjects
-                .map((s) => DropdownMenuItem(value: s.id, child: Text(s.name)))
-                .toList(),
-            onChanged: (v) => setState(() => _subjectId = v),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _teacherId,
-            decoration: const InputDecoration(labelText: 'Teacher'),
-            items: teachers
-                .map((t) => DropdownMenuItem(value: t.uid, child: Text(t.fullName)))
-                .toList(),
-            onChanged: (v) => setState(() => _teacherId = v),
-          ),
-          const SizedBox(height: 20),
-          FilledButton(onPressed: _assign, child: const Text('Assign teacher')),
-        ],
-      ],
-    );
-  }
-}
-
-String _gradeName(List<GradeLevelModel> grades, String id) {
-  for (final g in grades) {
-    if (g.id == id) return g.name;
-  }
-  return 'Grade';
 }
 
 class _StatCard extends StatelessWidget {
@@ -530,23 +396,19 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-              Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
-            ],
-          ),
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 10),
+          Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+          Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         ],
       ),
     );
@@ -573,26 +435,6 @@ class _CheckItem extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(child: Text(label)),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyHint extends StatelessWidget {
-  final String message;
-
-  const _EmptyHint({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppTheme.textSecondary, height: 1.5),
-        ),
       ),
     );
   }
