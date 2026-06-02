@@ -64,6 +64,12 @@ class DrawerNavigation {
             route: AppRoutes.addChildScreen,
           ),
           KidCareDrawerItem(
+            label: 'Link with code',
+            icon: Icons.link_rounded,
+            action: KidCareDrawerAction.route,
+            route: AppRoutes.linkChild,
+          ),
+          KidCareDrawerItem(
             label: 'Reports',
             icon: Icons.analytics_rounded,
             action: KidCareDrawerAction.route,
