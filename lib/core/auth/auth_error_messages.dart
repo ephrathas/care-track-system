@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 /// Maps Firebase Auth errors to clear, actionable copy for the UI.
@@ -7,6 +8,9 @@ class AuthErrorMessages {
   static String fromException(Object error) {
     if (error is FirebaseAuthException) {
       return fromCode(error.code, fallback: error.message);
+    }
+    if (error is FirebaseException && error.code == 'permission-denied') {
+      return 'Database access denied. Ask your admin to deploy the latest Firestore rules, then try again.';
     }
     return 'Something went wrong. Please try again.';
   }
@@ -34,6 +38,8 @@ class AuthErrorMessages {
         return 'Network error. Check your internet connection and try again.';
       case 'profile-not-found':
         return 'Your account signed in, but the profile is missing. Try registering again or contact support.';
+      case 'permission-denied':
+        return 'Database access denied. Deploy the latest Firestore rules and try again.';
       default:
         return fallback ?? 'Authentication failed. Please try again.';
     }
