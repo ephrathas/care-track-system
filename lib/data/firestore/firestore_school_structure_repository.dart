@@ -37,6 +37,17 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
   }
 
   @override
+  Future<void> updateSchoolName(String schoolId, String name) async {
+    await _db.collection(FirestoreCollections.schools).doc(schoolId).set(
+      {
+        'name': name.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  @override
   Stream<List<GradeLevelModel>> watchGradeLevels(String schoolId) {
     return _db
         .collection(FirestoreCollections.gradeLevels)
@@ -117,10 +128,28 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
   }
 
   @override
+  Future<void> updateSubject(SubjectModel subject) async {
+    await _db.collection(FirestoreCollections.subjects).doc(subject.id).update(
+          FirestoreHelpers.withTimestamps(subject.toMap()),
+        );
+  }
+
+  @override
   Stream<List<ClassSubjectModel>> watchClassSubjects(String classRoomId) {
     return _db
         .collection(FirestoreCollections.classSubjects)
         .where('classRoomId', isEqualTo: classRoomId)
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => ClassSubjectModel.fromMap(d.data(), d.id)).toList());
+  }
+
+  @override
+  Stream<List<ClassSubjectModel>> watchSchoolClassSubjects(String schoolId) {
+    return _db
+        .collection(FirestoreCollections.classSubjects)
+        .where('schoolId', isEqualTo: schoolId)
         .where('isActive', isEqualTo: true)
         .snapshots()
         .map((snap) =>
