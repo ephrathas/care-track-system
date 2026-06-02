@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_branding.dart';
 import '../../core/constants/role_options.dart';
 import '../../core/layout/app_breakpoints.dart';
+import '../../core/constants/routes.dart';
 import '../../core/navigation/auth_navigation.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';

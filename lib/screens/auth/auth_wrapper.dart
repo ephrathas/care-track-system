@@ -14,9 +14,12 @@ import '../../providers/teacher_attendance_provider.dart';
 import '../admin/admin_dashboard.dart';
 import '../admin/admin_setup_gate.dart';
 import '../child/child_dashboard.dart';
+import 'student_profile_setup_screen.dart';
+import 'teacher_profile_setup_screen.dart';
 import '../healthcare/healthcare_dashboard.dart';
 import '../parent/parent_dashboard.dart';
 import '../teacher/teacher_dashboard.dart';
+import 'force_password_change_screen.dart';
 import 'welcome_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -83,7 +86,19 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
       return const SchoolNotReadyScreen();
     }
 
+    if (auth.mustChangePassword) {
+      return const ForcePasswordChangeScreen();
+    }
+
     final role = UserRole.fromLabel(user.role);
+
+    if (role == UserRole.child && !auth.isStudentProfileComplete) {
+      return const StudentProfileSetupScreen();
+    }
+
+    if (role == UserRole.teacher && !auth.isTeacherProfileComplete) {
+      return const TeacherProfileSetupScreen();
+    }
 
     if (role == UserRole.admin) {
       return const AdminDashboard();
@@ -116,6 +131,13 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
     }
 
     if (role == UserRole.child) {
+      final linkedId = user.linkedStudentId;
+      if (linkedId != null && linkedId.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Provider.of<ChildProvider>(context, listen: false)
+              .startListeningToLinkedChild(linkedId);
+        });
+      }
       return const ChildDashboard();
     }
 
