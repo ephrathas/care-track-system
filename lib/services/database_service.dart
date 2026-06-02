@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/domain/domain_enums.dart';
 import '../models/chat_message_model.dart';
 import '../models/child_model.dart';
 import '../models/health_appointment_model.dart';
@@ -172,6 +173,69 @@ class DatabaseService {
     if (snapshot.docs.isEmpty) return null;
     final doc = snapshot.docs.first;
     return MessageThread.fromMap(doc.data(), doc.id);
+  }
+
+  Future<MessageThread?> findThreadForParticipants({
+    required String parentId,
+    required String teacherId,
+    String? studentId,
+  }) async {
+    final snapshot = await _db
+        .collection('message_threads')
+        .where('parentId', isEqualTo: parentId)
+        .where('teacherId', isEqualTo: teacherId)
+        .get()
+        .timeout(const Duration(seconds: 10));
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      final sid = data['studentId'] as String?;
+      if (studentId == null || studentId.isEmpty) {
+        if (sid == null || sid.isEmpty) {
+          return MessageThread.fromMap(data, doc.id);
+        }
+      } else if (sid == studentId) {
+        return MessageThread.fromMap(data, doc.id);
+      }
+    }
+    return null;
+  }
+
+  /// Teachers assigned to a class section (linked accounts only).
+  Future<List<UserModel>> getTeachersForClassRoom(String classRoomId) async {
+    if (classRoomId.isEmpty) return [];
+    final assignments = await _db
+        .collection(FirestoreCollections.classSubjects)
+        .where('classRoomId', isEqualTo: classRoomId)
+        .where('isActive', isEqualTo: true)
+        .get()
+        .timeout(const Duration(seconds: 10));
+
+    final teacherIds = <String>{};
+    for (final doc in assignments.docs) {
+      final tid = doc.data()['teacherId'] as String? ?? '';
+      if (tid.isNotEmpty) teacherIds.add(tid);
+    }
+    if (teacherIds.isEmpty) return [];
+
+    final teachers = <UserModel>[];
+    for (final tid in teacherIds) {
+      final userDoc = await _db.collection('users').doc(tid).get();
+      if (!userDoc.exists) continue;
+      final data = Map<String, dynamic>.from(userDoc.data()!);
+      data['uid'] = userDoc.id;
+      teachers.add(UserModel.fromMap(data));
+    }
+    teachers.sort((a, b) => a.fullName.compareTo(b.fullName));
+    return teachers;
+  }
+
+  Future<UserModel?> getUserById(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+    if (!doc.exists) return null;
+    final data = Map<String, dynamic>.from(doc.data()!);
+    data['uid'] = doc.id;
+    return UserModel.fromMap(data);
   }
 
   Future<void> sendChatMessage({

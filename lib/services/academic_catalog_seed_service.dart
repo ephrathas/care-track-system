@@ -70,6 +70,27 @@ class AcademicCatalogSeedService {
     return added;
   }
 
+  /// Seeds grades in [fromLevel]..[toLevel] that do not already exist (flexible range).
+  Future<int> seedGradesInRange({
+    required String schoolId,
+    required int fromLevel,
+    required int toLevel,
+  }) async {
+    final existingLevels = await _existingCatalogLevels(schoolId);
+    final subjectNameToId = await _loadSubjectNameMap(schoolId);
+    var added = 0;
+
+    for (var level = fromLevel; level <= toLevel; level++) {
+      if (existingLevels.contains(level)) continue;
+      final catalogGrade = AcademicCatalog.templateForLevel(level);
+      await _seedCatalogGrade(schoolId, catalogGrade, subjectNameToId);
+      existingLevels.add(level);
+      added++;
+    }
+
+    return added;
+  }
+
   Future<Set<int>> _existingCatalogLevels(String schoolId) async {
     final snap = await _db
         .collection(FirestoreCollections.gradeLevels)

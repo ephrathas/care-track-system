@@ -110,4 +110,30 @@ class AuthService {
   Future<void> updateProfilePic(String uid, String profilePicUrl) async {
     await _db.collection('users').doc(uid).update({'profilePic': profilePicUrl}).timeout(const Duration(seconds: 10));
   }
+
+  /// Re-authenticates then sets a new password (force-change / profile flows).
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw FirebaseAuthException(
+        code: 'user-not-found',
+        message: 'No signed-in user.',
+      );
+    }
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
+  Future<void> clearMustChangePassword(String uid) async {
+    await _db.collection('users').doc(uid).update({
+      'mustChangePassword': false,
+    }).timeout(const Duration(seconds: 10));
+  }
 }
