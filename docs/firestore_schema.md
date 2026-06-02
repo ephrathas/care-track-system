@@ -26,6 +26,8 @@ subjects/{subjectId}
 class_subjects/{classSubjectId}      ← teacher ↔ class ↔ subject
 
 users/{uid}                          ← all roles incl. Admin
+parent_student_relationships/{parentId_studentId}
+parent_invitations/{invitationId}
 children/{studentId}                 ← student profile (legacy name)
 enrollments/{enrollmentId}           ← student in class for a term
 
@@ -119,8 +121,36 @@ Links a **class + subject + teacher**. When a student enrolls in the class, they
 | teacherProfile | map? | `{ employeeId, department }` |
 | healthcareProfile | map? | `{ clinicName, licenseId, room }` |
 | linkedStudentId | string? | For `Child` role — points to `children` doc |
+| mustChangePassword | bool | Force password change UI on first login |
+| passwordChangedAt | timestamp? | |
 | createdAt | timestamp | |
 | updatedAt | timestamp | |
+
+### `parent_student_relationships/{parentId_studentId}`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| schoolId | string | |
+| parentId | string | `users` uid |
+| studentId | string | `children` doc id |
+| relationshipType | string | `mother` \| `father` \| `guardian` \| `other` |
+| isPrimary | bool | |
+| createdAt | timestamp | |
+| updatedAt | timestamp | |
+
+### `parent_invitations/{invitationId}`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| schoolId | string | |
+| studentId | string | |
+| studentUserId | string | |
+| parentEmail | string | |
+| parentName | string | |
+| relationshipType | string | |
+| status | string | `pending` \| `accepted` \| `expired` |
+| createdParentId | string? | |
+| createdAt | timestamp | |
 
 ### `children/{studentId}` — Student profile
 
@@ -137,6 +167,7 @@ Links a **class + subject + teacher**. When a student enrolls in the class, they
 | imageUrl | string | |
 | accountMode | string | `parent_managed` \| `self_login` |
 | studentUserId | string? | Firebase uid when self-login |
+| studentEmail | string? | Display only; canonical email in Auth |
 | activeEnrollmentId | string? | Current enrollment |
 | gradeLevelId | string? | Denormalized from enrollment |
 | classRoomId | string? | Denormalized from enrollment |
