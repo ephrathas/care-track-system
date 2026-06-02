@@ -13,15 +13,19 @@ class AcademicResolver {
   AcademicResolver({FirestoreSchoolStructureRepository? structure})
       : _structure = structure ?? FirestoreSchoolStructureRepository();
 
+  List<ClassRoomModel> sectionsForGrade(
+    String gradeLevelId,
+    SchoolAdminProvider admin,
+  ) {
+    return admin.sectionsForGrade(gradeLevelId);
+  }
+
   ClassRoomModel? defaultClassForGrade(
     String gradeLevelId,
     SchoolAdminProvider admin,
   ) {
-    final rooms = admin.classes
-        .where((c) => c.gradeLevelId == gradeLevelId)
-        .toList();
+    final rooms = sectionsForGrade(gradeLevelId, admin);
     if (rooms.isEmpty) return null;
-    rooms.sort((a, b) => a.name.compareTo(b.name));
     return rooms.first;
   }
 
@@ -42,6 +46,7 @@ class AcademicResolver {
   Future<GradeEnrollmentPreview?> previewForGrade({
     required String gradeLevelId,
     required SchoolAdminProvider admin,
+    String? classRoomId,
   }) async {
     GradeLevelModel? grade;
     for (final g in admin.grades) {
@@ -52,7 +57,16 @@ class AcademicResolver {
     }
     if (grade == null) return null;
 
-    final classRoom = defaultClassForGrade(gradeLevelId, admin);
+    ClassRoomModel? classRoom;
+    if (classRoomId != null && classRoomId.isNotEmpty) {
+      for (final c in admin.classes) {
+        if (c.id == classRoomId) {
+          classRoom = c;
+          break;
+        }
+      }
+    }
+    classRoom ??= defaultClassForGrade(gradeLevelId, admin);
     if (classRoom == null) {
       final catalog = catalogForGrade(grade);
       if (catalog == null) return null;
