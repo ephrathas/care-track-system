@@ -1,5 +1,6 @@
 import 'package:child_and_student_care_and_tracking_app/models/product_model.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/add_child_screen.dart';
+import 'package:child_and_student_care_and_tracking_app/screens/parent/link_child_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/billing_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/child_timeline_screen.dart';
 import 'package:child_and_student_care_and_tracking_app/screens/parent/parent_dashboard.dart';
@@ -18,6 +19,9 @@ import '../../screens/auth/register_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/role_onboarding_screen.dart';
 import '../../screens/auth/role_selection_screen.dart';
+import '../../screens/auth/registration_paths_screen.dart';
+import '../../screens/auth/student_register_screen.dart';
+import '../../screens/auth/link_parent_screen.dart';
 
 class AppRoutes {
   // Route Names (Constants)
@@ -27,8 +31,12 @@ class AppRoutes {
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
   static const String onboarding = '/onboarding';
+  static const String registrationPaths = '/registration-paths';
+  static const String studentRegister = '/student-register';
+  static const String linkParent = '/link_parent';
   static const String parentHome = '/parent_home';
   static const String addChildScreen = '/add_child';
+  static const String linkChild = '/link_child';
   static const String childTimeline = '/child_timeline';
   static const String billing = '/billing';
   static const String reports = '/reports';
@@ -48,8 +56,12 @@ class AppRoutes {
         login: (context) => const LoginScreen(),
         forgotPassword: (context) => const ForgotPasswordScreen(),
         onboarding: (context) => const RoleOnboardingScreen(),
+        registrationPaths: (context) => const RegistrationPathsScreen(),
+        studentRegister: (context) => const StudentRegisterScreen(),
+        linkParent: (context) => const LinkParentScreen(),
         parentHome: (context) => const ParentDashboard(),
         addChildScreen: (context) => const AddChildScreen(),
+        linkChild: (context) => const LinkChildScreen(),
         childTimeline: (context) => const ChildTimelineScreen(),
         billing: (context) => const BillingScreen(),
         reports: (context) => const ReportsScreen(),
