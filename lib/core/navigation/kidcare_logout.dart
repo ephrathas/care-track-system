@@ -10,9 +10,13 @@ import '../../providers/messaging_provider.dart';
 import '../../providers/teacher_overview_provider.dart';
 import '../../providers/teacher_homework_provider.dart';
 import '../../providers/teacher_attendance_provider.dart';
+import '../../providers/child_gamification_provider.dart';
 
 Future<void> kidCareLogout(BuildContext context) async {
-  Provider.of<ChildProvider>(context, listen: false).stopListening();
+  final childProvider = Provider.of<ChildProvider>(context, listen: false);
+  childProvider.stopListening();
+  childProvider.stopListeningToLinkedChild();
+  Provider.of<ChildGamificationProvider>(context, listen: false).unbindHomework();
   Provider.of<HealthcareProvider>(context, listen: false).stopListening();
   Provider.of<MarketplaceOrdersProvider>(context, listen: false).stopListening();
   Provider.of<MessagingProvider>(context, listen: false).stopListening();
