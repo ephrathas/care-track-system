@@ -13,6 +13,7 @@ import '../../providers/school_admin_provider.dart';
 import '../../widgets/dashboard/simple_bar_chart.dart';
 import '../../widgets/parent/child_account_link_status_chip.dart';
 import '../../widgets/parent/parent_child_link_code_action.dart';
+import '../../widgets/parent/parent_health_module_panel.dart';
 import '../../widgets/profile/kidcare_avatar_image.dart';
 
 class ChildTimelineScreen extends StatefulWidget {
@@ -571,46 +572,23 @@ class _HealthTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      children: [
-        _SectionCard(
-          isDark: isDark,
-          title: 'Vaccination Status',
-          child: child.vaccinations.isEmpty
-              ? const Text(
-                  'No vaccines logged yet. Update the profile from Add Child.',
-                  style: TextStyle(height: 1.4, color: AppTheme.textSecondary),
-                )
-              : Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: child.vaccinations
-                      .map(
-                        (v) => Chip(
-                          label: Text(v, style: const TextStyle(fontSize: 11)),
-                          backgroundColor: AppTheme.softGreen.withOpacity(0.12),
-                          side: BorderSide.none,
-                        ),
-                      )
-                      .toList(),
-                ),
-        ),
-        const SizedBox(height: 14),
-        _SectionCard(
-          isDark: isDark,
-          title: 'Health Updates',
-          child: Text(
-            'No health events yet.\n\nHealthcare timeline will appear when parents enable health access and records are added.',
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
-            ),
-          ),
-        ),
-      ],
+    return Consumer<ChildProvider>(
+      builder: (context, childProvider, _) {
+        ChildModel liveChild = child;
+        for (final c in childProvider.children) {
+          if (c.id == child.id) {
+            liveChild = c;
+            break;
+          }
+        }
+        return ListView(
+          padding: const EdgeInsets.all(20),
+          physics: const BouncingScrollPhysics(),
+          children: [
+            ParentHealthModulePanel(child: liveChild, isDark: isDark),
+          ],
+        );
+      },
     );
   }
 }

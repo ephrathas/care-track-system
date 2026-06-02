@@ -778,7 +778,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                   const SizedBox(height: 12),
                                   Text(
                                     _searchQuery.isEmpty
-                                        ? 'No patients registered yet.\nWhen parents add children, they appear here.'
+                                        ? 'No patients with health access yet.\nParents must enable healthcare sharing on their child\'s Health tab.'
                                         : 'No patients match your search.',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),

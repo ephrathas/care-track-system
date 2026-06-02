@@ -36,4 +36,7 @@ abstract class SchoolStructureRepository {
   );
 
   Stream<List<UserModel>> watchTeachers(String schoolId);
+
+  /// Teachers registered without a school link yet.
+  Stream<List<UserModel>> watchPendingTeachers();
 }

@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import '../core/config/school_config.dart';
 import '../core/domain/domain_enums.dart';
 import '../data/firestore/firestore_family_repository.dart';
+import '../data/firestore/firestore_health_repository.dart';
 import '../data/firestore/firestore_student_repository.dart';
 import '../models/child_model.dart';
+import '../models/health_profile_model.dart';
 import '../models/student_model.dart';
 import '../services/database_service.dart';
 import '../services/family_account_service.dart';
@@ -355,6 +357,112 @@ class ChildProvider with ChangeNotifier {
       );
     }
     notifyListeners();
+  }
+
+  /// Parent opt-in: share health profile with school healthcare staff.
+  Future<bool> setHealthModuleEnabled({
+    required String childId,
+    required String parentId,
+    required bool enabled,
+  }) async {
+    _errorMessage = null;
+    try {
+      await _dbService.updateChildFields(childId, {'healthModuleEnabled': enabled});
+      final repo = FirestoreHealthRepository();
+      if (enabled) {
+        ChildModel? source;
+        final idx = _children.indexWhere((c) => c.id == childId);
+        if (idx >= 0) source = _children[idx];
+
+        await repo.setHealthcareAccess(
+          HealthcareAccessModel(
+            studentId: childId,
+            parentId: parentId,
+            granted: true,
+            grantedAt: DateTime.now(),
+          ),
+        );
+        await repo.saveHealthProfile(
+          HealthProfileModel(
+            studentId: childId,
+            vaccinations: (source?.vaccinations ?? [])
+                .map((v) => VaccinationRecord(name: v))
+                .toList(),
+            latestHeight: source?.latestHeight,
+            latestWeight: source?.latestWeight,
+            lastCheckup: source != null && source.lastCheckup.isNotEmpty
+                ? source.lastCheckup
+                : null,
+          ),
+        );
+      } else {
+        await repo.setHealthcareAccess(
+          HealthcareAccessModel(
+            studentId: childId,
+            parentId: parentId,
+            granted: false,
+            revokedAt: DateTime.now(),
+          ),
+        );
+      }
+      _patchChildHealthFlag(childId, enabled);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void _patchChildHealthFlag(String childId, bool enabled) {
+    final idx = _children.indexWhere((c) => c.id == childId);
+    if (idx >= 0) {
+      final old = _children[idx];
+      _children[idx] = ChildModel(
+        id: old.id,
+        name: old.name,
+        age: old.age,
+        parentId: old.parentId,
+        schoolId: old.schoolId,
+        gradeLevelId: old.gradeLevelId,
+        classRoomId: old.classRoomId,
+        dateOfBirth: old.dateOfBirth,
+        gender: old.gender,
+        accountMode: old.accountMode,
+        healthModuleEnabled: enabled,
+        imageUrl: old.imageUrl,
+        linkCode: old.linkCode,
+        studentUserId: old.studentUserId,
+        vaccinations: old.vaccinations,
+        latestHeight: old.latestHeight,
+        latestWeight: old.latestWeight,
+        lastCheckup: old.lastCheckup,
+      );
+    }
+    if (_linkedChild?.id == childId) {
+      final old = _linkedChild!;
+      _linkedChild = ChildModel(
+        id: old.id,
+        name: old.name,
+        age: old.age,
+        parentId: old.parentId,
+        schoolId: old.schoolId,
+        gradeLevelId: old.gradeLevelId,
+        classRoomId: old.classRoomId,
+        dateOfBirth: old.dateOfBirth,
+        gender: old.gender,
+        accountMode: old.accountMode,
+        healthModuleEnabled: enabled,
+        imageUrl: old.imageUrl,
+        linkCode: old.linkCode,
+        studentUserId: old.studentUserId,
+        vaccinations: old.vaccinations,
+        latestHeight: old.latestHeight,
+        latestWeight: old.latestWeight,
+        lastCheckup: old.lastCheckup,
+      );
+    }
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class VaccinationRecord {
   final String name;
   final String? dose;
@@ -155,4 +157,11 @@ class HealthcareAccessModel {
         if (revokedAt != null) 'revokedAt': revokedAt,
         'allowedProfessionalIds': allowedProfessionalIds,
       };
+}
+
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  return DateTime.tryParse(value.toString());
 }

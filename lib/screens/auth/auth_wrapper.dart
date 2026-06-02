@@ -143,7 +143,8 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
 
     if (role == UserRole.healthcare) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Provider.of<HealthcareProvider>(context, listen: false).startListening();
+        Provider.of<HealthcareProvider>(context, listen: false)
+            .startListening(healthcareUserId: user.uid);
       });
       return const HealthcareDashboard();
     }

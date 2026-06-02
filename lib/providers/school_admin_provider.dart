@@ -40,6 +40,7 @@ class SchoolAdminProvider with ChangeNotifier {
   List<ClassRoomModel> classes = [];
   List<SubjectModel> subjects = [];
   List<UserModel> teachers = [];
+  List<UserModel> pendingTeachers = [];
   List<UserModel> admins = [];
   List<ClassSubjectModel> classAssignments = [];
 
@@ -49,6 +50,7 @@ class SchoolAdminProvider with ChangeNotifier {
   String? error;
 
   StreamSubscription<List<UserModel>>? _adminsSub;
+  StreamSubscription<List<UserModel>>? _pendingTeachersSub;
 
   String? get primaryAdminUid => school?.primaryAdminUid;
 
@@ -89,6 +91,12 @@ class SchoolAdminProvider with ChangeNotifier {
       notifyListeners();
     });
 
+    _pendingTeachersSub?.cancel();
+    _pendingTeachersSub = _structure.watchPendingTeachers().listen((value) {
+      pendingTeachers = value;
+      notifyListeners();
+    });
+
     _structure.watchSchoolClassSubjects(schoolId).listen((value) {
       classAssignments = value;
       notifyListeners();
@@ -104,6 +112,8 @@ class SchoolAdminProvider with ChangeNotifier {
   void stopListening() {
     _adminsSub?.cancel();
     _adminsSub = null;
+    _pendingTeachersSub?.cancel();
+    _pendingTeachersSub = null;
   }
 
   /// Backfill primary admin on schools created before governance was added.
@@ -559,6 +569,44 @@ class SchoolAdminProvider with ChangeNotifier {
     }
     return count;
   }
+
+  /// Link one pending teacher account to this school.
+  Future<bool> linkTeacherToSchool(String teacherId) async {
+    if (teacherId.isEmpty) return false;
+    try {
+      await FirebaseFirestore.instance
+          .collection(FirestoreCollections.users)
+          .doc(teacherId)
+          .set(
+        {
+          'schoolId': schoolId,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+      await syncTeacherAssignedClasses(teacherId);
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Display label for a subject slot — linked account or catalog placeholder.
+  String assignmentTeacherLabel(ClassSubjectModel slot) {
+    if (slot.teacherId.isNotEmpty) {
+      for (final t in teachers) {
+        if (t.uid == slot.teacherId) return t.fullName;
+      }
+      return 'Linked teacher';
+    }
+    final catalog = slot.catalogTeacherName?.trim();
+    if (catalog != null && catalog.isNotEmpty) return catalog;
+    return 'Teacher not assigned yet';
+  }
+
+  bool isAssignmentLinked(ClassSubjectModel slot) => slot.teacherId.isNotEmpty;
 
   /// Load starter curriculum for a grade range (skips grades that already exist).
   Future<String> seedGradesRange({required int fromLevel, required int toLevel}) async {

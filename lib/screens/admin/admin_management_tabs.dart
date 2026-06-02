@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/academic/grade_naming.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/class_room_model.dart';
+import '../../models/class_subject_model.dart';
 import '../../models/grade_level_model.dart';
 import '../../models/subject_model.dart';
 import '../../models/user_model.dart';
@@ -228,6 +229,10 @@ class _AdminTeachersTabState extends State<AdminTeachersTab> {
               'Teachers register with role Teacher and pick a preferred grade + subject. '
               'Link them to your school, then assign each teacher to a section + subject below.',
         ),
+        if (admin.pendingTeachers.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _PendingTeachersPanel(admin: admin),
+        ],
         if (admin.sectionsWithoutTeachers.isNotEmpty) ...[
           const SizedBox(height: 8),
           _WarningBanner(
@@ -290,6 +295,37 @@ class _AdminTeachersTabState extends State<AdminTeachersTab> {
             ),
           ),
         const SizedBox(height: 28),
+        if (admin.classAssignments.isNotEmpty) ...[
+          Text(
+            'Subject slots by section',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Catalog names come from the starter curriculum. Link a real teacher account in the form below.',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[400]
+                  : AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...admin.classes.map(
+            (section) => _SectionAssignmentCard(
+              section: section,
+              admin: admin,
+              onAssignSlot: (classId, subjectId) {
+                setState(() {
+                  _classId = classId;
+                  _subjectId = subjectId;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 28),
+        ],
         Text(
           'Assign teacher to section',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -372,6 +408,240 @@ class _AdminTeachersTabState extends State<AdminTeachersTab> {
       ),
     );
     if (ok == true) await admin.removeTeacherFromSchool(teacher.uid);
+  }
+}
+
+class _PendingTeachersPanel extends StatelessWidget {
+  final SchoolAdminProvider admin;
+
+  const _PendingTeachersPanel({required this.admin});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkSurface : const Color(0xFFFFF8E7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.hourglass_top_rounded, color: Colors.orange.shade800, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${admin.pendingTeachers.length} teacher(s) waiting to be linked',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'These accounts registered as Teacher but are not linked to your school yet.',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...admin.pendingTeachers.map(
+            (t) => _PendingTeacherTile(
+              teacher: t,
+              admin: admin,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingTeacherTile extends StatelessWidget {
+  final UserModel teacher;
+  final SchoolAdminProvider admin;
+
+  const _PendingTeacherTile({required this.teacher, required this.admin});
+
+  String? _prefGrade() {
+    final id = teacher.teacherProfile?.preferredGradeLevelId;
+    if (id == null) return null;
+    return admin.gradeNameForId(id);
+  }
+
+  String? _prefSubject() {
+    final id = teacher.teacherProfile?.preferredSubjectId;
+    if (id == null) return null;
+    return admin.subjectNameForId(id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final grade = _prefGrade();
+    final subject = _prefSubject();
+    final prefs = (grade != null && subject != null)
+        ? 'Prefers $grade · $subject'
+        : 'Profile setup not completed yet';
+
+    return Card(
+      margin: const EdgeInsets.only(top: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey.shade800
+              : AppTheme.inputBorder,
+        ),
+      ),
+      child: ListTile(
+        dense: true,
+        title: Text(teacher.fullName, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(teacher.email, style: const TextStyle(fontSize: 12)),
+            Text(prefs, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+          ],
+        ),
+        isThreeLine: true,
+        trailing: FilledButton.tonal(
+          onPressed: () async {
+            final ok = await admin.linkTeacherToSchool(teacher.uid);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    ok
+                        ? 'Linked ${teacher.fullName} to your school.'
+                        : admin.error ?? 'Could not link teacher.',
+                  ),
+                ),
+              );
+            }
+          },
+          child: const Text('Link'),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionAssignmentCard extends StatelessWidget {
+  final ClassRoomModel section;
+  final SchoolAdminProvider admin;
+  final void Function(String classId, String subjectId) onAssignSlot;
+
+  const _SectionAssignmentCard({
+    required this.section,
+    required this.admin,
+    required this.onAssignSlot,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final slots = admin.assignmentsForSection(section.id);
+    if (slots.isEmpty) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final counts = admin.sectionAssignmentCounts(section.id);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    section.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+                Text(
+                  '${counts.$1}/${counts.$2} linked',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: counts.$1 == counts.$2 ? AppTheme.softGreen : Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ...slots.map((slot) {
+              final linked = admin.isAssignmentLinked(slot);
+              final subjectName = admin.subjectNameForId(slot.subjectId) ?? 'Subject';
+              final teacherLabel = admin.assignmentTeacherLabel(slot);
+              return InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: linked ? null : () => onAssignSlot(section.id, slot.subjectId),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        linked ? Icons.check_circle_rounded : Icons.person_outline_rounded,
+                        size: 18,
+                        color: linked ? AppTheme.softGreen : Colors.orange,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(subjectName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                            Text(
+                              linked ? teacherLabel : '$teacherLabel (catalog placeholder)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: linked
+                                    ? AppTheme.textSecondary
+                                    : Colors.orange.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!linked)
+                        Text(
+                          'Assign',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryBlue.withOpacity(0.9),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
   }
 }
 

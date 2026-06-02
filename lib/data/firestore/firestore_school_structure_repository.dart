@@ -240,4 +240,27 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
           }).toList();
         });
   }
+
+  @override
+  Stream<List<UserModel>> watchPendingTeachers() {
+    return _db
+        .collection(FirestoreCollections.users)
+        .where('role', isEqualTo: 'Teacher')
+        .snapshots()
+        .map((snap) {
+          final list = snap.docs
+              .where((doc) {
+                final sid = doc.data()['schoolId'] as String? ?? '';
+                return sid.isEmpty;
+              })
+              .map((doc) {
+                final data = Map<String, dynamic>.from(doc.data());
+                data['uid'] = doc.id;
+                return UserModel.fromMap(data);
+              })
+              .toList();
+          list.sort((a, b) => a.fullName.compareTo(b.fullName));
+          return list;
+        });
+  }
 }
