@@ -240,4 +240,8 @@ class ChildGamificationProvider extends ChangeNotifier {
     notifyListeners();
     return unlockedBadge;
   }
+
+  void unbindHomework() {
+    notifyListeners();
+  }
 }
