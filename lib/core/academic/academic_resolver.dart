@@ -24,9 +24,7 @@ class AcademicResolver {
     String gradeLevelId,
     SchoolAdminProvider admin,
   ) {
-    final rooms = sectionsForGrade(gradeLevelId, admin);
-    if (rooms.isEmpty) return null;
-    return rooms.first;
+    return admin.primaryClassForGrade(gradeLevelId);
   }
 
   CatalogGrade? catalogForGrade(GradeLevelModel grade) {

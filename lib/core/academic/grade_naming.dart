@@ -49,6 +49,6 @@ class SectionEnrollmentStatus {
     if (unassignedSubjectNames.isEmpty) return '';
     final subjects = unassignedSubjectNames.join(', ');
     return 'Teachers are not assigned yet for: $subjects. '
-        'Please wait until the admin assigns teachers to this class, then try again.';
+        'The school admin has been notified. You will receive an alert when enrollment opens for this grade.';
   }
 }
