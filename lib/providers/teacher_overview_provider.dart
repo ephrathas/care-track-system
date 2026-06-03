@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../core/academic/enrollment_display.dart';
 import '../data/firestore/firestore_school_structure_repository.dart';
 import '../data/firestore/firestore_student_repository.dart';
 import '../models/class_room_model.dart';
@@ -41,7 +42,7 @@ class TeacherOverviewProvider with ChangeNotifier {
     }
     if (slots.length == 1) {
       final s = slots.first;
-      return '${s.gradeName} · ${s.className}';
+      return EnrollmentDisplay.teacherSlotLine(s.gradeName, s.className);
     }
     return '${slots.length} teaching slots · $rosterCount students';
   }

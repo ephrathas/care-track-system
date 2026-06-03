@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
 
 import '../core/academic/grade_naming.dart';
 import '../core/config/school_config.dart';
@@ -17,6 +17,7 @@ import '../models/school_model.dart';
 import '../models/subject_model.dart';
 import '../models/user_model.dart';
 import '../services/academic_catalog_seed_service.dart';
+import '../services/enrollment_readiness_service.dart';
 import '../core/catalog/academic_catalog.dart';
 
 /// Admin school setup — grades, classes, subjects, teacher links.
@@ -45,10 +46,17 @@ class SchoolAdminProvider with ChangeNotifier {
   List<ClassSubjectModel> classAssignments = [];
 
   bool isLoading = true;
+  bool isBusy = false;
   bool bootstrapNeeded = true;
   bool canClaimAdmin = false;
   String? error;
 
+  StreamSubscription<SchoolModel?>? _schoolSub;
+  StreamSubscription<List<GradeLevelModel>>? _gradesSub;
+  StreamSubscription<List<ClassRoomModel>>? _classesSub;
+  StreamSubscription<List<SubjectModel>>? _subjectsSub;
+  StreamSubscription<List<UserModel>>? _teachersSub;
+  StreamSubscription<List<ClassSubjectModel>>? _classSubjectsSub;
   StreamSubscription<List<UserModel>>? _adminsSub;
   StreamSubscription<List<UserModel>>? _pendingTeachersSub;
 
@@ -61,48 +69,48 @@ class SchoolAdminProvider with ChangeNotifier {
   }
 
   void startListening() {
+    stopListening();
     isLoading = true;
     notifyListeners();
     _refreshBootstrapFlags();
 
-    _structure.watchSchool(schoolId).listen((value) {
+    _schoolSub = _structure.watchSchool(schoolId).listen((value) {
       school = value;
       bootstrapNeeded = value == null;
+      isLoading = false;
       notifyListeners();
     });
 
-    _structure.watchGradeLevels(schoolId).listen((value) {
+    _gradesSub = _structure.watchGradeLevels(schoolId).listen((value) {
       grades = value.where((g) => g.isActive).toList();
       notifyListeners();
     });
 
-    _structure.watchClassRooms(schoolId).listen((value) {
+    _classesSub = _structure.watchClassRooms(schoolId).listen((value) {
       classes = value.where((c) => c.isActive).toList();
       notifyListeners();
     });
 
-    _structure.watchSubjects(schoolId).listen((value) {
+    _subjectsSub = _structure.watchSubjects(schoolId).listen((value) {
       subjects = value.where((s) => s.isActive).toList();
       notifyListeners();
     });
 
-    _structure.watchTeachers(schoolId).listen((value) {
+    _teachersSub = _structure.watchTeachers(schoolId).listen((value) {
       teachers = value;
       notifyListeners();
     });
 
-    _pendingTeachersSub?.cancel();
     _pendingTeachersSub = _structure.watchPendingTeachers().listen((value) {
       pendingTeachers = value;
       notifyListeners();
     });
 
-    _structure.watchSchoolClassSubjects(schoolId).listen((value) {
+    _classSubjectsSub = _structure.watchSchoolClassSubjects(schoolId).listen((value) {
       classAssignments = value;
       notifyListeners();
     });
 
-    _adminsSub?.cancel();
     _adminsSub = _users.watchUsersByRole('', 'Admin').listen((value) {
       admins = value..sort((a, b) => a.fullName.compareTo(b.fullName));
       notifyListeners();
@@ -110,6 +118,18 @@ class SchoolAdminProvider with ChangeNotifier {
   }
 
   void stopListening() {
+    _schoolSub?.cancel();
+    _schoolSub = null;
+    _gradesSub?.cancel();
+    _gradesSub = null;
+    _classesSub?.cancel();
+    _classesSub = null;
+    _subjectsSub?.cancel();
+    _subjectsSub = null;
+    _teachersSub?.cancel();
+    _teachersSub = null;
+    _classSubjectsSub?.cancel();
+    _classSubjectsSub = null;
     _adminsSub?.cancel();
     _adminsSub = null;
     _pendingTeachersSub?.cancel();
@@ -280,6 +300,62 @@ class SchoolAdminProvider with ChangeNotifier {
     }
   }
 
+  /// Add a grade from the standard catalog (dropdown) — avoids typos like "Grade1" vs "Grade 1".
+  Future<bool> addGradeFromCatalogLevel(int catalogLevel) async {
+    if (isBusy) return false;
+    isBusy = true;
+    error = null;
+    notifyListeners();
+    try {
+      final max = effectiveMaxCatalogGradeLevel;
+      if (max <= 0) {
+        error =
+            'Set your school grade range first (Home → Load starter curriculum).';
+        notifyListeners();
+        return false;
+      }
+      if (catalogLevel > max) {
+        error =
+            'Your school is set up through Grade $max only. '
+            'Increase the range on Home (load curriculum or change max grade).';
+        notifyListeners();
+        return false;
+      }
+      final template = AcademicCatalog.templateForLevel(catalogLevel);
+      final existing = await _structure.findGradeByCatalogLevel(schoolId, catalogLevel);
+      if (existing != null) {
+        if (existing.isActive) {
+          error = '${template.displayName} is already in your school.';
+          notifyListeners();
+          return false;
+        }
+        return await _reactivateCatalogGrade(existing, catalogLevel, template);
+      }
+      final service = AcademicCatalogSeedService();
+      final added = await service.seedGradesInRange(
+        schoolId: schoolId,
+        fromLevel: catalogLevel,
+        toLevel: catalogLevel,
+      );
+      if (added == 0) {
+        error =
+            'Could not add ${template.displayName}. Refresh and try again, '
+            'or remove any old "${template.displayName}" data in Firebase.';
+        notifyListeners();
+        return false;
+      }
+      return true;
+    } catch (e) {
+      error =
+          'Could not add grade. Refresh the browser and try again, or add one grade at a time.';
+      notifyListeners();
+      return false;
+    } finally {
+      isBusy = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> addGradeLevel(String name, {String? band}) async {
     error = null;
     final trimmed = name.trim();
@@ -293,7 +369,15 @@ class SchoolAdminProvider with ChangeNotifier {
       notifyListeners();
       return false;
     }
+    final catalogLevel = AcademicCatalog.parseGradeLevel(trimmed);
+    if (catalogLevel != null) {
+      return addGradeFromCatalogLevel(catalogLevel);
+    }
+    if (isBusy) return false;
+    isBusy = true;
+    notifyListeners();
     try {
+
       final sortOrder = GradeNaming.computeSortOrder(
         trimmed,
         grades.map((g) => g.sortOrder),
@@ -307,7 +391,8 @@ class SchoolAdminProvider with ChangeNotifier {
           band: band,
         ),
       );
-      final sectionName = '$trimmed-A';
+      final sectionName =
+          SchoolConfig.gradeOnlyEnrollment ? trimmed : '$trimmed-A';
       final classId = await _structure.createClassRoom(
         ClassRoomModel(
           id: '',
@@ -322,15 +407,150 @@ class SchoolAdminProvider with ChangeNotifier {
       );
       return true;
     } catch (e) {
-      error = e.toString();
+      error =
+          'Could not add grade. Refresh the page and try again.\n${e.toString()}';
       notifyListeners();
       return false;
+    } finally {
+      isBusy = false;
+      notifyListeners();
     }
   }
 
   bool _gradeNameExists(String name) {
     final key = GradeNaming.normalizeKey(name);
     return grades.any((g) => GradeNaming.normalizeKey(g.name) == key);
+  }
+
+  /// Restores a soft-deleted grade and its class + subject slots.
+  Future<bool> _reactivateCatalogGrade(
+    GradeLevelModel grade,
+    int catalogLevel,
+    CatalogGrade template,
+  ) async {
+    try {
+      await _dbUpdateGradeWithCatalogLevel(grade, catalogLevel, template.displayName);
+      final rooms = await _structure.fetchClassRoomsForGrade(schoolId, grade.id);
+      String classRoomId;
+      if (rooms.isEmpty) {
+        classRoomId = await _structure.createClassRoom(
+          ClassRoomModel(
+            id: '',
+            schoolId: schoolId,
+            gradeLevelId: grade.id,
+            name: template.classSectionName,
+          ),
+        );
+      } else {
+        final room = rooms.first;
+        classRoomId = room.id;
+        if (!room.isActive) {
+          await _structure.updateClassRoom(
+            ClassRoomModel(
+              id: room.id,
+              schoolId: room.schoolId,
+              gradeLevelId: room.gradeLevelId,
+              name: template.classSectionName,
+              homeroomTeacherId: room.homeroomTeacherId,
+              capacity: room.capacity,
+              isActive: true,
+            ),
+          );
+        }
+      }
+      await _ensureSubjectSlotsForSection(
+        classRoomId: classRoomId,
+        gradeLevelId: grade.id,
+      );
+      return true;
+    } catch (e) {
+      error = 'Could not restore ${template.displayName}: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> _dbUpdateGradeWithCatalogLevel(
+    GradeLevelModel grade,
+    int catalogLevel,
+    String displayName,
+  ) async {
+    await FirebaseFirestore.instance
+        .collection(FirestoreCollections.gradeLevels)
+        .doc(grade.id)
+        .update({
+      'schoolId': grade.schoolId,
+      'name': displayName,
+      'sortOrder': catalogLevel,
+      'catalogLevel': catalogLevel,
+      if (grade.band != null) 'band': grade.band,
+      'isActive': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  int _catalogLevelForGrade(GradeLevelModel g) {
+    if (g.sortOrder > 0) return g.sortOrder;
+    return AcademicCatalog.parseGradeLevel(g.name) ?? 0;
+  }
+
+  int _highestCatalogLevelAmongGrades() {
+    var highest = 0;
+    for (final g in grades) {
+      final level = _catalogLevelForGrade(g);
+      if (level > highest) highest = level;
+    }
+    return highest;
+  }
+
+  int get highestCatalogLevelAmongGrades => _highestCatalogLevelAmongGrades();
+
+  /// Stored cap from Firestore (0 = not set).
+  int get configuredMaxCatalogGradeLevel => school?.maxCatalogGradeLevel ?? 0;
+
+  /// Cap used for add-grade dropdowns and validation.
+  int get effectiveMaxCatalogGradeLevel {
+    final configured = configuredMaxCatalogGradeLevel;
+    if (configured > 0) return configured.clamp(1, 12);
+    final fromGrades = _highestCatalogLevelAmongGrades();
+    if (fromGrades > 0) return fromGrades;
+    return 0;
+  }
+
+  String get maxGradeLabel => effectiveMaxCatalogGradeLevel > 0
+      ? 'Grade ${effectiveMaxCatalogGradeLevel}'
+      : 'Not set';
+
+  Future<bool> setMaxCatalogGradeLevel(int level) async {
+    if (level < 1 || level > 12) {
+      error = 'Choose a grade between 1 and 12.';
+      notifyListeners();
+      return false;
+    }
+    final highestUsed = _highestCatalogLevelAmongGrades();
+    if (highestUsed > 0 && level < highestUsed) {
+      error =
+          'Cannot set max below Grade $highestUsed — remove that grade first.';
+      notifyListeners();
+      return false;
+    }
+    try {
+      await _structure.updateMaxCatalogGradeLevel(schoolId, level);
+      school = school?.copyWith(maxCatalogGradeLevel: level);
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> _applyMaxCatalogGradeLevel(int toLevel) async {
+    final next = toLevel.clamp(1, 12);
+    final current = configuredMaxCatalogGradeLevel;
+    if (current >= next) return;
+    await _structure.updateMaxCatalogGradeLevel(schoolId, next);
+    school = school?.copyWith(maxCatalogGradeLevel: next);
   }
 
   Future<bool> updateSchoolName(String name) async {
@@ -481,6 +701,37 @@ class SchoolAdminProvider with ChangeNotifier {
     required String subjectId,
     required String teacherId,
   }) async {
+    UserModel? teacher;
+    for (final t in teachers) {
+      if (t.uid == teacherId) {
+        teacher = t;
+        break;
+      }
+    }
+    String? gradeLevelId;
+    for (final c in classes) {
+      if (c.id == classRoomId) {
+        gradeLevelId = c.gradeLevelId;
+        break;
+      }
+    }
+    if (teacher != null &&
+        !teacherCanTeachSubject(
+          teacher,
+          subjectId,
+          gradeLevelId: gradeLevelId,
+        )) {
+      final subjectName = subjectNameForId(subjectId) ?? 'this subject';
+      final gradeName =
+          gradeLevelId != null ? gradeNameForId(gradeLevelId) : null;
+      error = gradeName != null
+          ? '${teacher.fullName} did not register to teach $subjectName in $gradeName. '
+              'They must update their teacher profile.'
+          : '${teacher.fullName} did not register to teach $subjectName. '
+              'They must update their teacher profile first.';
+      notifyListeners();
+      return false;
+    }
     try {
       final existing = await FirebaseFirestore.instance
           .collection(FirestoreCollections.classSubjects)
@@ -510,12 +761,122 @@ class SchoolAdminProvider with ChangeNotifier {
         );
       }
 
-      await syncTeacherAssignedClasses(teacherId);
-      if (previousTeacherId != null &&
-          previousTeacherId.isNotEmpty &&
-          previousTeacherId != teacherId) {
-        await syncTeacherAssignedClasses(previousTeacherId);
+      // Core assignment succeeded — optional steps must not show a false failure.
+      try {
+        await syncTeacherAssignedClasses(teacherId);
+        if (previousTeacherId != null &&
+            previousTeacherId.isNotEmpty &&
+            previousTeacherId != teacherId) {
+          await syncTeacherAssignedClasses(previousTeacherId);
+        }
+      } catch (e) {
+        debugPrint('Teacher roster sync skipped: $e');
       }
+
+      try {
+        final enrollStatus = sectionEnrollmentStatus(classRoomId);
+        var gradeLabel = 'this grade';
+        for (final c in classes) {
+          if (c.id == classRoomId) {
+            gradeLabel = gradeNameForId(c.gradeLevelId) ?? c.name;
+            break;
+          }
+        }
+        await EnrollmentReadinessService().notifyParentsIfSectionReady(
+          classRoomId: classRoomId,
+          gradeName: gradeLabel,
+          canEnroll: enrollStatus.canEnroll,
+        );
+      } catch (e) {
+        debugPrint('Parent enrollment notify skipped: $e');
+      }
+
+      error = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// School subjects not yet added as slots in this grade's class.
+  List<SubjectModel> subjectsAvailableToAddToGrade(String gradeLevelId) {
+    final room = primaryClassForGrade(gradeLevelId);
+    if (room == null) return [];
+    final used = assignmentsForSection(room.id)
+        .map((a) => a.subjectId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    return subjects.where((s) => !used.contains(s.id)).toList();
+  }
+
+  List<ClassSubjectModel> subjectSlotsForGrade(String gradeLevelId) {
+    final room = primaryClassForGrade(gradeLevelId);
+    if (room == null) return [];
+    return assignmentsForSection(room.id);
+  }
+
+  /// Add a school-wide subject to one grade (creates an empty teacher slot).
+  Future<bool> addSubjectToGrade({
+    required String gradeLevelId,
+    required String subjectId,
+  }) async {
+    error = null;
+    final room = primaryClassForGrade(gradeLevelId);
+    if (room == null) {
+      error = 'This grade has no class yet. Re-add the grade from the menu above.';
+      notifyListeners();
+      return false;
+    }
+    final exists = classAssignments.any(
+      (a) => a.classRoomId == room.id && a.subjectId == subjectId,
+    );
+    if (exists) {
+      error = 'That subject is already in this grade.';
+      notifyListeners();
+      return false;
+    }
+    try {
+      await _structure.assignTeacherToClassSubject(
+        ClassSubjectModel(
+          id: '',
+          schoolId: schoolId,
+          classRoomId: room.id,
+          subjectId: subjectId,
+          teacherId: '',
+        ),
+      );
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> removeSubjectFromGrade({
+    required String gradeLevelId,
+    required String subjectId,
+  }) async {
+    error = null;
+    final room = primaryClassForGrade(gradeLevelId);
+    if (room == null) return false;
+    ClassSubjectModel? slot;
+    for (final a in classAssignments) {
+      if (a.classRoomId == room.id && a.subjectId == subjectId) {
+        slot = a;
+        break;
+      }
+    }
+    if (slot == null || slot.id.isEmpty) {
+      error = 'Subject slot not found.';
+      notifyListeners();
+      return false;
+    }
+    try {
+      await _structure.removeClassSubject(slot.id);
       return true;
     } catch (e) {
       error = e.toString();
@@ -593,7 +954,7 @@ class SchoolAdminProvider with ChangeNotifier {
     }
   }
 
-  /// Display label for a subject slot — linked account or catalog placeholder.
+  /// Display label for a subject slot — linked account or catalog sample name.
   String assignmentTeacherLabel(ClassSubjectModel slot) {
     if (slot.teacherId.isNotEmpty) {
       for (final t in teachers) {
@@ -602,14 +963,94 @@ class SchoolAdminProvider with ChangeNotifier {
       return 'Linked teacher';
     }
     final catalog = slot.catalogTeacherName?.trim();
-    if (catalog != null && catalog.isNotEmpty) return catalog;
-    return 'Teacher not assigned yet';
+    if (catalog != null && catalog.isNotEmpty) {
+      return '$catalog (sample — not a real account)';
+    }
+    return 'No teacher assigned';
   }
 
   bool isAssignmentLinked(ClassSubjectModel slot) => slot.teacherId.isNotEmpty;
 
+  /// Subject IDs configured for a grade (from that grade's class slots).
+  List<String> subjectIdsForGradeLevel(String gradeLevelId) {
+    final room = primaryClassForGrade(gradeLevelId);
+    if (room == null) return [];
+    return assignmentsForSection(room.id)
+        .map((a) => a.subjectId)
+        .where((id) => id.isNotEmpty)
+        .toList();
+  }
+
+  /// Whether a linked teacher registered this subject for the given grade.
+  bool teacherCanTeachSubject(
+    UserModel teacher,
+    String subjectId, {
+    String? gradeLevelId,
+  }) {
+    return teacher.teacherProfile?.teachesSubject(
+          subjectId,
+          gradeLevelId: gradeLevelId,
+        ) ??
+        false;
+  }
+
+  List<UserModel> teachersEligibleForSubject(
+    String subjectId, {
+    String? classRoomId,
+  }) {
+    String? gradeLevelId;
+    if (classRoomId != null) {
+      for (final c in classes) {
+        if (c.id == classRoomId) {
+          gradeLevelId = c.gradeLevelId;
+          break;
+        }
+      }
+    }
+    return teachers
+        .where(
+          (t) => teacherCanTeachSubject(
+            t,
+            subjectId,
+            gradeLevelId: gradeLevelId,
+          ),
+        )
+        .toList();
+  }
+
+  String? gradeLevelIdForClassRoom(String classRoomId) {
+    for (final c in classes) {
+      if (c.id == classRoomId) return c.gradeLevelId;
+    }
+    return null;
+  }
+
+  String teachableSubjectsLabel(UserModel teacher) {
+    final byGrade = teacher.teacherProfile?.teachingsByGrade ?? [];
+    if (byGrade.isNotEmpty) {
+      return byGrade
+          .map((t) {
+            final grade = gradeNameForId(t.gradeLevelId) ?? 'Grade';
+            final subs = t.subjectIds
+                .map((id) => subjectNameForId(id) ?? '')
+                .where((n) => n.isNotEmpty)
+                .join(', ');
+            return '$grade: $subs';
+          })
+          .join(' · ');
+    }
+    final ids = teacher.teacherProfile?.teachableSubjectIds ?? [];
+    if (ids.isEmpty) return 'No subjects selected';
+    return ids
+        .map((id) => subjectNameForId(id) ?? '')
+        .where((n) => n.isNotEmpty)
+        .join(', ');
+  }
+
   /// Load starter curriculum for a grade range (skips grades that already exist).
   Future<String> seedGradesRange({required int fromLevel, required int toLevel}) async {
+    if (isBusy) return 'Please wait for the current operation to finish.';
+    isBusy = true;
     error = null;
     notifyListeners();
     try {
@@ -617,21 +1058,32 @@ class SchoolAdminProvider with ChangeNotifier {
         error = 'Choose a valid grade range (e.g. 1 to 8).';
         return error!;
       }
+      if (toLevel > 12) {
+        error = 'Maximum catalog level is Grade 12.';
+        return error!;
+      }
       final service = AcademicCatalogSeedService();
+      final previousMax = configuredMaxCatalogGradeLevel;
       final added = await service.seedGradesInRange(
         schoolId: schoolId,
         fromLevel: fromLevel,
         toLevel: toLevel,
       );
+      await _applyMaxCatalogGradeLevel(toLevel);
       if (added > 0) {
-        return 'Added $added grade(s) with section A and subject slots. '
-            'Assign teachers in the Staff tab before parents enroll.';
+        return 'Added $added grade(s). Highest grade is now Grade $toLevel. '
+            'Assign teachers in Staff before parents can enroll.';
       }
-      return 'No new grades added — names in that range may already exist.';
+      if (previousMax < toLevel || previousMax == 0) {
+        return 'Grade range updated to Grade $toLevel. '
+            'Add missing grades from the Grades tab.';
+      }
+      return 'No new grades added — those levels may already exist.';
     } catch (e) {
       error = e.toString();
-      return error!;
+      return 'Could not load curriculum. Refresh the browser, then add grades one at a time from the Grades tab.';
     } finally {
+      isBusy = false;
       notifyListeners();
     }
   }
@@ -653,6 +1105,24 @@ class SchoolAdminProvider with ChangeNotifier {
     return null;
   }
 
+  /// Admin UI label for a class (grade-only → "Grade 2", not "1-A" or "Grade 2-A").
+  String classDisplayLabel(ClassRoomModel classroom) {
+    if (SchoolConfig.gradeOnlyEnrollment) {
+      final gradeName = gradeNameForId(classroom.gradeLevelId);
+      if (gradeName != null && gradeName.isNotEmpty) return gradeName;
+    }
+    return classroom.name;
+  }
+
+  String? gradeNameForClassRoom(String classRoomId) {
+    for (final c in classes) {
+      if (c.id == classRoomId) {
+        return gradeNameForId(c.gradeLevelId) ?? c.name;
+      }
+    }
+    return null;
+  }
+
   String? subjectNameForId(String subjectId) {
     for (final s in subjects) {
       if (s.id == subjectId) return s.name;
@@ -661,7 +1131,24 @@ class SchoolAdminProvider with ChangeNotifier {
   }
 
   List<ClassSubjectModel> assignmentsForSection(String classRoomId) {
-    return classAssignments.where((a) => a.classRoomId == classRoomId).toList();
+    final slots = classAssignments.where((a) => a.classRoomId == classRoomId).toList();
+    // One row per subject (legacy data may have duplicate slots).
+    final bySubjectName = <String, ClassSubjectModel>{};
+    for (final slot in slots) {
+      final name = (subjectNameForId(slot.subjectId) ?? slot.subjectId).toLowerCase();
+      final existing = bySubjectName[name];
+      if (existing == null) {
+        bySubjectName[name] = slot;
+        continue;
+      }
+      if (existing.teacherId.isEmpty && slot.teacherId.isNotEmpty) {
+        bySubjectName[name] = slot;
+      }
+    }
+    final list = bySubjectName.values.toList();
+    list.sort((a, b) => (subjectNameForId(a.subjectId) ?? '')
+        .compareTo(subjectNameForId(b.subjectId) ?? ''));
+    return list;
   }
 
   bool sectionHasLinkedTeacher(String classRoomId) {
@@ -677,6 +1164,58 @@ class SchoolAdminProvider with ChangeNotifier {
 
   int get unlinkedSubjectSlotCount {
     return classAssignments.where((a) => a.teacherId.isEmpty).length;
+  }
+
+  /// Primary class for a grade (grade-only mode uses the grade-named room).
+  ClassRoomModel? primaryClassForGrade(String gradeLevelId) {
+    final sections = sectionsForGrade(gradeLevelId);
+    if (sections.isEmpty) return null;
+    final gradeName = gradeNameForId(gradeLevelId);
+    if (gradeName != null && gradeName.isNotEmpty) {
+      for (final s in sections) {
+        if (s.name == gradeName) return s;
+      }
+      for (final s in sections) {
+        if (!_isLegacySectionName(s.name, gradeName)) return s;
+      }
+    }
+    return sections.first;
+  }
+
+  static bool _isLegacySectionName(String roomName, String gradeName) {
+    final n = roomName.trim();
+    final lower = n.toLowerCase();
+    if (lower.contains('section')) return true;
+    if (RegExp(r'^\d+-[A-Za-z]$').hasMatch(n)) return true;
+    if (n.contains('—') || n.contains('-')) {
+      if (lower.contains('section') || RegExp(r'\d+\s*-\s*[A-Za-z]').hasMatch(n)) {
+        return true;
+      }
+    }
+    return n != gradeName && n.length <= 4;
+  }
+
+  bool isGradeReadyForEnrollment(String gradeLevelId) {
+    final room = primaryClassForGrade(gradeLevelId);
+    if (room == null) return false;
+    return sectionEnrollmentStatus(room.id).canEnroll;
+  }
+
+  int get gradesReadyCount =>
+      grades.where((g) => isGradeReadyForEnrollment(g.id)).length;
+
+  int get gradesPendingTeachersCount => grades.length - gradesReadyCount;
+
+  /// Standard levels not yet added, capped by [effectiveMaxCatalogGradeLevel].
+  List<int> availableCatalogLevelsToAdd() {
+    final max = effectiveMaxCatalogGradeLevel;
+    if (max <= 0) return [];
+    final used = <int>{};
+    for (final g in grades) {
+      final level = _catalogLevelForGrade(g);
+      if (level > 0) used.add(level);
+    }
+    return List.generate(max, (i) => i + 1).where((l) => !used.contains(l)).toList();
   }
 
   /// Section label shown to parents, e.g. "Grade 1-A" → section "A".
