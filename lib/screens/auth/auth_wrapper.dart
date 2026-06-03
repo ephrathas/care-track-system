@@ -145,6 +145,8 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Provider.of<HealthcareProvider>(context, listen: false)
             .startListening(healthcareUserId: user.uid);
+        Provider.of<MessagingProvider>(context, listen: false)
+            .startListeningForHealthcare(user.uid);
       });
       return const HealthcareDashboard();
     }

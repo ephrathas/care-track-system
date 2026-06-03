@@ -4,14 +4,18 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../core/config/school_config.dart';
+import '../core/health/health_concerns.dart';
 import '../core/domain/domain_enums.dart';
+import '../data/firestore/firestore_doctor_matching_repository.dart';
 import '../data/firestore/firestore_family_repository.dart';
 import '../data/firestore/firestore_health_repository.dart';
 import '../data/firestore/firestore_student_repository.dart';
 import '../models/child_model.dart';
+import '../models/doctor_matching_models.dart';
 import '../models/health_profile_model.dart';
 import '../models/student_model.dart';
 import '../services/database_service.dart';
+import '../services/doctor_matching_service.dart';
 import '../services/family_account_service.dart';
 import '../services/storage_service.dart';
 
@@ -196,6 +200,8 @@ class ChildProvider with ChangeNotifier {
     Uint8List? imageBytes,
     File? imageFile,
     List<String> vaccinations = const [],
+    List<String> healthConcernIds = const [],
+    bool usesPrivateDoctor = false,
     bool createEnrollment = true,
     RelationshipType relationshipType = RelationshipType.guardian,
   }) async {
@@ -219,9 +225,22 @@ class ChildProvider with ChangeNotifier {
         gender: gender,
         imageUrl: '',
         vaccinations: vaccinations,
+        healthConcernIds: healthConcernIds,
+        usesPrivateDoctor: usesPrivateDoctor,
       );
 
       await _dbService.setChild(childId, child);
+
+      if (healthConcernIds.isNotEmpty) {
+        await FirestoreHealthRepository().saveHealthProfile(
+          HealthProfileModel(
+            studentId: childId,
+            medicalConditions: healthConcernIds
+                .map((id) => HealthConcerns.byId(id)?.label ?? id)
+                .toList(),
+          ),
+        );
+      }
 
       await _family.createRelationship(
         parentId: parentId,
@@ -263,6 +282,17 @@ class ChildProvider with ChangeNotifier {
         studentName: name,
       );
 
+      if (!usesPrivateDoctor && healthConcernIds.isNotEmpty) {
+        await DoctorMatchingService().processConcernsForStudent(
+          schoolId: schoolId,
+          parentId: parentId,
+          studentId: childId,
+          studentName: name,
+          concernIds: healthConcernIds,
+          usesPrivateDoctor: usesPrivateDoctor,
+        );
+      }
+
       _isLoading = false;
       notifyListeners();
       return (success: true, linkCode: linkCode);
@@ -271,6 +301,74 @@ class ChildProvider with ChangeNotifier {
       _errorMessage = e.toString();
       notifyListeners();
       return (success: false, linkCode: null);
+    }
+  }
+
+  Future<bool> assignDoctorToChild({
+    required String childId,
+    required String parentId,
+    required String doctorId,
+    required String specialtyId,
+    required String schoolId,
+  }) async {
+    try {
+      final repo = FirestoreDoctorMatchingRepository();
+      final doctors = await repo.findDoctorsForSpecialty(
+        schoolId: schoolId,
+        specialtyId: specialtyId,
+      );
+      MatchedDoctor? doctor;
+      for (final d in doctors) {
+        if (d.doctorId == doctorId) {
+          doctor = d;
+          break;
+        }
+      }
+      if (doctor == null) {
+        _errorMessage = 'Doctor not found for this specialty.';
+        notifyListeners();
+        return false;
+      }
+      await repo.assignDoctor(
+        schoolId: schoolId,
+        parentId: parentId,
+        studentId: childId,
+        doctor: doctor,
+        specialtyId: specialtyId,
+      );
+      final idx = _children.indexWhere((c) => c.id == childId);
+      if (idx >= 0) {
+        final old = _children[idx];
+        _children[idx] = ChildModel(
+          id: old.id,
+          name: old.name,
+          age: old.age,
+          parentId: old.parentId,
+          schoolId: old.schoolId,
+          gradeLevelId: old.gradeLevelId,
+          classRoomId: old.classRoomId,
+          dateOfBirth: old.dateOfBirth,
+          gender: old.gender,
+          accountMode: old.accountMode,
+          healthModuleEnabled: old.healthModuleEnabled,
+          healthConcernIds: old.healthConcernIds,
+          usesPrivateDoctor: old.usesPrivateDoctor,
+          assignedDoctorId: doctorId,
+          imageUrl: old.imageUrl,
+          linkCode: old.linkCode,
+          studentUserId: old.studentUserId,
+          vaccinations: old.vaccinations,
+          latestHeight: old.latestHeight,
+          latestWeight: old.latestWeight,
+          lastCheckup: old.lastCheckup,
+        );
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
     }
   }
 

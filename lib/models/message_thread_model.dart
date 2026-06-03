@@ -11,6 +11,7 @@ class MessageThread {
   final String? studentId;
   final String? studentName;
   final String? classRoomId;
+  final String threadType;
   final bool unreadByParent;
   final bool unreadByTeacher;
 
@@ -25,15 +26,20 @@ class MessageThread {
     this.studentId,
     this.studentName,
     this.classRoomId,
+    this.threadType = 'teacher',
     this.unreadByParent = false,
     this.unreadByTeacher = false,
   });
 
+  bool get isHealthcareThread => threadType == 'healthcare';
+
   String? get contextLabel {
     if (studentName != null && studentName!.isNotEmpty) {
-      return 'Re: $studentName';
+      return isHealthcareThread
+          ? 'Health follow-up: $studentName'
+          : 'Re: $studentName';
     }
-    return null;
+    return isHealthcareThread ? 'Health follow-up' : null;
   }
 
   bool isUnreadFor(String userId) {
@@ -74,6 +80,7 @@ class MessageThread {
       studentId: map['studentId'] as String?,
       studentName: map['studentName'] as String?,
       classRoomId: map['classRoomId'] as String?,
+      threadType: map['threadType'] as String? ?? 'teacher',
       unreadByParent: map['unreadByParent'] == true,
       unreadByTeacher: map['unreadByTeacher'] == true,
     );
@@ -90,6 +97,7 @@ class MessageThread {
       if (studentId != null) 'studentId': studentId,
       if (studentName != null) 'studentName': studentName,
       if (classRoomId != null) 'classRoomId': classRoomId,
+      'threadType': threadType,
       'unreadByParent': unreadByParent,
       'unreadByTeacher': unreadByTeacher,
     };

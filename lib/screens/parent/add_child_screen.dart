@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../widgets/parent/link_code_dialog.dart';
 import '../../providers/school_admin_provider.dart';
+import '../../core/health/health_concerns.dart';
 import '../../widgets/parent/grade_teacher_preview.dart';
 
 class AddChildScreen extends StatefulWidget {
@@ -32,22 +33,15 @@ class _AddChildScreenState extends State<AddChildScreen> {
   final _resolver = AcademicResolver();
   GradeEnrollmentPreview? _gradePreview;
   bool _loadingPreview = false;
-  bool _vaccinesExpanded = false;
+  bool _healthExpanded = true;
+  bool _usesPrivateDoctor = false;
+  final Set<String> _selectedConcernIds = {HealthConcerns.none};
 
   SectionEnrollmentStatus? _statusForClass(SchoolAdminProvider admin) {
     final classId = _resolvedClassId ?? _selectedSectionId;
     if (classId == null || classId.isEmpty) return null;
     return admin.sectionEnrollmentStatus(classId);
   }
-
-  // Optional health info (not required in onboarding)
-  final List<Map<String, dynamic>> _vaccinesList = [
-    {'name': 'BCG (Tuberculosis)', 'checked': false},
-    {'name': 'HepB (Hepatitis B)', 'checked': false},
-    {'name': 'DTaP (Diphtheria, Tetanus, Pertussis)', 'checked': false},
-    {'name': 'MMR (Measles, Mumps, Rubella)', 'checked': false},
-    {'name': 'Polio (IPV)', 'checked': false},
-  ];
 
   @override
   void dispose() {
@@ -182,11 +176,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final String name = _nameController.text.trim();
     final int age = int.parse(_ageController.text.trim());
 
-    // Gather selected vaccines
-    final List<String> selectedVaccines = _vaccinesList
-        .where((element) => element['checked'] == true)
-        .map((element) => element['name'] as String)
-        .toList();
+    final concernIds = _usesPrivateDoctor
+        ? <String>[]
+        : _selectedConcernIds.toList();
 
     // Call provider
     if (_selectedGradeId != null && (_resolvedClassId == null || _resolvedClassId!.isEmpty)) {
@@ -212,7 +204,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
       classRoomId: _resolvedClassId,
       dateOfBirth: _dob,
       gender: _gender,
-      vaccinations: selectedVaccines,
+      healthConcernIds: concernIds,
+      usesPrivateDoctor: _usesPrivateDoctor,
     );
 
     if (result.success) {
@@ -224,7 +217,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
           message:
               'When your child registers, they must choose "My parent already enrolled me", '
               'enter this code, and use the exact same full name: $name. '
-              'They can add a profile photo after signing in.',
+              'They can complete their profile after signing in.',
           linkCode: result.linkCode!,
           childName: name,
         );
@@ -276,28 +269,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline_rounded, color: AppTheme.primaryBlue),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Profile photo: your child adds their own picture after they sign in to the student account.',
-                          style: TextStyle(fontSize: 12, height: 1.4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
                 // Full Name field
                 TextFormField(
                   controller: _nameController,
@@ -527,55 +498,82 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
                 ExpansionTile(
                   tilePadding: EdgeInsets.zero,
-                  initiallyExpanded: _vaccinesExpanded,
-                  onExpansionChanged: (v) => setState(() => _vaccinesExpanded = v),
+                  initiallyExpanded: _healthExpanded,
+                  onExpansionChanged: (v) => setState(() => _healthExpanded = v),
                   title: Text(
-                    'Immunizations (optional)',
+                    'Health follow-up (optional)',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   subtitle: const Text(
-                    'Tap to record vaccinations',
+                    'Select areas where your child may need a school doctor',
                     style: TextStyle(fontSize: 12),
                   ),
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? AppTheme.darkSurface : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: isDark ? Colors.transparent : Colors.grey[200]!),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _usesPrivateDoctor,
+                      thumbColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.selected)) {
+                          return AppTheme.primaryBlue;
+                        }
+                        return null;
+                      }),
+                      title: const Text(
+                        'We use a private doctor outside school',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                       ),
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _vaccinesList.length,
-                        separatorBuilder: (context, index) => Divider(
-                          height: 1,
-                          color: isDark ? Colors.white12 : Colors.grey[100],
-                        ),
-                        itemBuilder: (context, index) {
-                          final item = _vaccinesList[index];
-                          return CheckboxListTile(
-                            value: item['checked'],
-                            title: Text(
-                              item['name'],
-                              style: const TextStyle(
-                                  fontSize: 13.5, fontWeight: FontWeight.w500),
-                            ),
-                            activeColor: AppTheme.primaryBlue,
-                            checkColor: Colors.white,
-                            onChanged: (val) {
-                              setState(() {
-                                _vaccinesList[index]['checked'] = val;
-                              });
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                          );
-                        },
-                      ),
+                      onChanged: (v) => setState(() {
+                        _usesPrivateDoctor = v;
+                        if (v) _selectedConcernIds.clear();
+                      }),
                     ),
+                    if (!_usesPrivateDoctor)
+                      ...HealthConcerns.catalog.map((concern) {
+                        final selected = _selectedConcernIds.contains(concern.id);
+                        return CheckboxListTile(
+                          value: selected,
+                          secondary: Icon(concern.icon, color: AppTheme.primaryBlue),
+                          title: Text(
+                            concern.label,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            concern.description,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          activeColor: AppTheme.primaryBlue,
+                          onChanged: (val) {
+                            setState(() {
+                              if (val == true) {
+                                _selectedConcernIds.add(concern.id);
+                              } else {
+                                _selectedConcernIds.remove(concern.id);
+                              }
+                              if (_selectedConcernIds.isEmpty) {
+                                _selectedConcernIds.add(HealthConcerns.none);
+                              }
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      }),
+                    if (!_usesPrivateDoctor)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'If no doctor with the right specialty exists yet, the school admin is notified and you will get an alert when one is added.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            height: 1.4,
+                            color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
 

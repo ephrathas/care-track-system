@@ -179,6 +179,7 @@ class DatabaseService {
     required String parentId,
     required String teacherId,
     String? studentId,
+    String threadType = 'teacher',
   }) async {
     final snapshot = await _db
         .collection('message_threads')
@@ -189,6 +190,7 @@ class DatabaseService {
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
+      if ((data['threadType'] as String? ?? 'teacher') != threadType) continue;
       final sid = data['studentId'] as String?;
       if (studentId == null || studentId.isEmpty) {
         if (sid == null || sid.isEmpty) {

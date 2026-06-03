@@ -38,6 +38,10 @@ class MessagingProvider with ChangeNotifier {
     _listen(_db.getMessageThreadsForTeacher(teacherId));
   }
 
+  void startListeningForHealthcare(String doctorId) {
+    startListeningForTeacher(doctorId);
+  }
+
   void _listen(Stream<List<MessageThread>> stream) {
     _isLoading = true;
     _errorMessage = null;
@@ -220,6 +224,51 @@ class MessagingProvider with ChangeNotifier {
       studentId: thread.studentId,
       studentName: thread.studentName,
       classRoomId: thread.classRoomId,
+    );
+  }
+
+  Future<MessageThread?> ensureDoctorParentThread({
+    required String parentId,
+    required String parentName,
+    required UserModel doctor,
+    required ChildModel child,
+    required String specialtyLabel,
+  }) async {
+    _errorMessage = null;
+
+    final existing = await _db.findThreadForParticipants(
+      parentId: parentId,
+      teacherId: doctor.uid,
+      studentId: child.id,
+      threadType: 'healthcare',
+    );
+    if (existing != null) return existing;
+
+    final thread = MessageThread(
+      id: '',
+      parentId: parentId,
+      teacherId: doctor.uid,
+      parentName: parentName,
+      teacherName: doctor.fullName,
+      lastMessage: 'Health follow-up started ($specialtyLabel)',
+      lastMessageAt: DateTime.now(),
+      studentId: child.id,
+      studentName: child.name,
+      threadType: 'healthcare',
+    );
+
+    final id = await _db.createMessageThread(thread);
+    return MessageThread(
+      id: id,
+      parentId: thread.parentId,
+      teacherId: thread.teacherId,
+      parentName: thread.parentName,
+      teacherName: thread.teacherName,
+      lastMessage: thread.lastMessage,
+      lastMessageAt: thread.lastMessageAt,
+      studentId: thread.studentId,
+      studentName: thread.studentName,
+      threadType: thread.threadType,
     );
   }
 

@@ -41,8 +41,14 @@ class HealthcareProfile {
   final String? clinicName;
   final String? licenseId;
   final String? room;
+  final List<String> specialtyIds;
 
-  const HealthcareProfile({this.clinicName, this.licenseId, this.room});
+  const HealthcareProfile({
+    this.clinicName,
+    this.licenseId,
+    this.room,
+    this.specialtyIds = const [],
+  });
 
   factory HealthcareProfile.fromMap(Map<String, dynamic>? map) {
     if (map == null) return const HealthcareProfile();
@@ -50,12 +56,17 @@ class HealthcareProfile {
       clinicName: map['clinicName'] as String?,
       licenseId: map['licenseId'] as String?,
       room: map['room'] as String?,
+      specialtyIds: List<String>.from(map['specialtyIds'] ?? []),
     );
   }
+
+  bool coversSpecialty(String specialtyId) =>
+      specialtyIds.contains(specialtyId);
 
   Map<String, dynamic> toMap() => {
         if (clinicName != null) 'clinicName': clinicName,
         if (licenseId != null) 'licenseId': licenseId,
         if (room != null) 'room': room,
+        'specialtyIds': specialtyIds,
       };
 }

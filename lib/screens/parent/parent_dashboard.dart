@@ -22,6 +22,7 @@ import '../../widgets/dashboard/dashboard_section_header.dart';
 import '../../widgets/dashboard/dashboard_stat_card.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
+import '../../core/health/health_concerns.dart';
 import '../../widgets/parent/add_child_action_button.dart';
 import '../../widgets/parent/add_child_display_setting.dart';
 import '../../widgets/settings/appearance_setting.dart';
@@ -189,7 +190,7 @@ class _ParentHomeTab extends StatelessWidget {
             icon: Icons.favorite_rounded,
             label: 'Health',
             value: '$healthEnabled',
-            subtitle: 'Profiles enabled',
+            subtitle: 'Clinic access on',
             accent: AppTheme.softGreen,
           ),
           const SizedBox(width: 12),
@@ -330,10 +331,10 @@ class _ParentHomeTab extends StatelessWidget {
           const SizedBox(height: 12),
           _InsightPanel(
             isDark: isDark,
-            title: 'Health Updates',
+            title: 'Health & doctors',
             subtitle: healthEnabled > 0
-                ? '$healthEnabled child profile(s) have health module enabled.'
-                : 'Health tracking is optional. Enable it later from healthcare setup.',
+                ? '$healthEnabled child(ren) with clinic access. Open a child Health tab to assign doctors and message them.'
+                : 'Select health follow-up needs when enrolling. Assign school doctors from each child\'s Health tab.',
             icon: Icons.health_and_safety_rounded,
             color: AppTheme.softGreen,
           ),
@@ -362,7 +363,6 @@ class _ChildProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vaxCount = child.vaccinations.length;
     final admin = context.watch<SchoolAdminProvider>();
     final gradeName = _resolveGradeName(admin.grades, child.gradeLevelId);
     final className = _resolveClassName(admin.classes, child.classRoomId);
@@ -416,13 +416,11 @@ class _ChildProfileCard extends StatelessWidget {
                       ChildAccountLinkStatusChip(child: child, compact: true),
                       const SizedBox(height: 6),
                       Text(
-                        vaxCount > 0
-                            ? '$vaxCount vaccines logged'
-                            : 'Vaccination profile incomplete',
+                        _healthStatusLine(child),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: vaxCount > 0 ? AppTheme.softGreen : Colors.orange,
+                          color: _healthStatusColor(child),
                         ),
                       ),
                     ],
@@ -440,6 +438,26 @@ class _ChildProfileCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _healthStatusLine(ChildModel child) {
+    if (child.usesPrivateDoctor) return 'Private doctor — outside school';
+    if (child.assignedDoctorId != null && child.assignedDoctorId!.isNotEmpty) {
+      return 'School doctor assigned';
+    }
+    if (child.healthConcernIds.isNotEmpty) {
+      return 'Follow-up: ${HealthConcerns.labelsForIds(child.healthConcernIds)}';
+    }
+    return 'No health follow-up selected';
+  }
+
+  Color _healthStatusColor(ChildModel child) {
+    if (child.assignedDoctorId != null && child.assignedDoctorId!.isNotEmpty) {
+      return AppTheme.softGreen;
+    }
+    if (child.usesPrivateDoctor) return AppTheme.textSecondary;
+    if (child.healthConcernIds.isNotEmpty) return Colors.orange;
+    return AppTheme.textSecondary;
   }
 }
 

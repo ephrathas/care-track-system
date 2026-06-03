@@ -12,6 +12,9 @@ class ChildModel {
   final Gender? gender;
   final String accountMode;
   final bool healthModuleEnabled;
+  final List<String> healthConcernIds;
+  final bool usesPrivateDoctor;
+  final String? assignedDoctorId;
   final String imageUrl;
   final String? linkCode;
   final String? studentUserId;
@@ -32,6 +35,9 @@ class ChildModel {
     this.gender,
     this.accountMode = 'parent_managed',
     this.healthModuleEnabled = false,
+    this.healthConcernIds = const [],
+    this.usesPrivateDoctor = false,
+    this.assignedDoctorId,
     required this.imageUrl,
     this.linkCode,
     this.studentUserId,
@@ -69,6 +75,9 @@ class ChildModel {
       gender: Gender.fromId(map['gender'] as String?),
       accountMode: map['accountMode'] ?? 'parent_managed',
       healthModuleEnabled: map['healthModuleEnabled'] == true,
+      healthConcernIds: List<String>.from(map['healthConcernIds'] ?? []),
+      usesPrivateDoctor: map['usesPrivateDoctor'] == true,
+      assignedDoctorId: map['assignedDoctorId'] as String?,
       imageUrl: map['imageUrl'] ?? '',
       linkCode: map['linkCode'] as String?,
       studentUserId: map['studentUserId'] as String?,
@@ -92,6 +101,9 @@ class ChildModel {
       if (gender != null) 'gender': gender!.id,
       'accountMode': accountMode,
       'healthModuleEnabled': healthModuleEnabled,
+      'healthConcernIds': healthConcernIds,
+      'usesPrivateDoctor': usesPrivateDoctor,
+      if (assignedDoctorId != null) 'assignedDoctorId': assignedDoctorId,
       'imageUrl': imageUrl,
       'vaccinations': vaccinations,
       if (latestHeight != null) 'latestHeight': latestHeight,

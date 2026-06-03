@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_helpers.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/school_admin_provider.dart';
+import '../../widgets/admin/admin_doctor_requests_panel.dart';
 import '../../widgets/settings/appearance_setting.dart';
 import 'admin_governance_tab.dart';
 import 'admin_management_tabs.dart';
@@ -294,6 +295,8 @@ class _OverviewTab extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        const AdminDoctorRequestsPanel(),
         const SizedBox(height: 20),
         Row(
           children: [
