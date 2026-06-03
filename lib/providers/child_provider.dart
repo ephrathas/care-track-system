@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import '../core/config/school_config.dart';
 import '../core/domain/domain_enums.dart';
@@ -171,9 +170,9 @@ class ChildProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return result;
-    } on FirebaseFunctionsException catch (e) {
+    } on FamilyAccountException catch (e) {
       _isLoading = false;
-      _errorMessage = e.message ?? 'Could not create student account.';
+      _errorMessage = e.message;
       notifyListeners();
       return null;
     } catch (e) {
