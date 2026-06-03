@@ -12,4 +12,7 @@ class SchoolConfig {
   );
 
   static const int currentStudentSchemaVersion = 1;
+
+  /// One class per grade (no A/B sections) for parent enrollment UI.
+  static const bool gradeOnlyEnrollment = true;
 }
