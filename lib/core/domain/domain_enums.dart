@@ -58,6 +58,7 @@ enum NotificationType {
   healthAppointment('health_appointment'),
   doctorMatchRequest('doctor_match_request'),
   doctorAvailable('doctor_available'),
+  enrollmentReady('enrollment_ready'),
   messageReceived('message_received'),
   marketplaceOrder('marketplace_order'),
   announcement('announcement');
@@ -126,6 +127,7 @@ class FirestoreCollections {
   static const healthAppointments = 'health_appointments';
   static const doctorMatchRequests = 'doctor_match_requests';
   static const studentDoctorAssignments = 'student_doctor_assignments';
+  static const enrollmentReadinessRequests = 'enrollment_readiness_requests';
   static const messageThreads = 'message_threads';
   static const messages = 'messages';
   static const notifications = 'notifications';
