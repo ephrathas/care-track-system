@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/academic/enrollment_display.dart';
 import '../../core/academic/grade_naming.dart';
 import '../../core/academic/academic_resolver.dart';
 import '../../core/theme/app_theme.dart';
@@ -48,9 +49,10 @@ class GradeTeacherPreviewPanel extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                preview!.classRoom != null
-                    ? 'Teachers for ${preview!.classRoom!.name}'
-                    : 'Teachers for ${preview!.grade.name}',
+                EnrollmentDisplay.teachersForGradeTitle(
+                  preview!.grade.name,
+                  classRoomName: preview!.classRoom?.name,
+                ),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: -0.3,
