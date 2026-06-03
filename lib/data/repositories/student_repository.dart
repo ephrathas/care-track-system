@@ -17,6 +17,7 @@ abstract class StudentRepository {
   });
 
   Stream<List<EnrollmentModel>> watchEnrollmentsByClass(String classRoomId);
+  Stream<List<StudentModel>> watchStudentsForClass(String classRoomId);
   Stream<EnrollmentModel?> watchActiveEnrollment(String studentId);
 
   /// Teacher roster — active enrollments in classes they teach.

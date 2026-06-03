@@ -12,9 +12,19 @@ abstract class SchoolStructureRepository {
 
   Future<void> updateSchoolName(String schoolId, String name);
 
+  Future<void> updateMaxCatalogGradeLevel(String schoolId, int level);
+
   Stream<List<GradeLevelModel>> watchGradeLevels(String schoolId);
   Future<String> createGradeLevel(GradeLevelModel grade);
   Future<void> updateGradeLevel(GradeLevelModel grade);
+
+  /// Any grade document for this catalog level (includes soft-deleted).
+  Future<GradeLevelModel?> findGradeByCatalogLevel(String schoolId, int catalogLevel);
+
+  Future<List<ClassRoomModel>> fetchClassRoomsForGrade(
+    String schoolId,
+    String gradeLevelId,
+  );
 
   Stream<List<ClassRoomModel>> watchClassRooms(String schoolId, {String? gradeLevelId});
   Future<String> createClassRoom(ClassRoomModel classRoom);
