@@ -58,6 +58,7 @@ enum NotificationType {
   healthAppointment('health_appointment'),
   doctorMatchRequest('doctor_match_request'),
   doctorAvailable('doctor_available'),
+  doctorPatientAssigned('doctor_patient_assigned'),
   enrollmentReady('enrollment_ready'),
   messageReceived('message_received'),
   marketplaceOrder('marketplace_order'),

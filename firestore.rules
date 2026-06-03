@@ -1,5 +1,6 @@
 rules_version = '2';
-// DRAFT — tighten before production. Deploy: firebase deploy --only firestore:rules
+// Deploy: firebase deploy --only firestore:rules
+// Parents must be able to enroll children and use health/doctor matching.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -14,6 +15,18 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && userDoc().data.role == 'Admin';
+    }
+
+    function isParent() {
+      return isSignedIn() && userDoc().data.role == 'Parent';
+    }
+
+    function isTeacher() {
+      return isSignedIn() && userDoc().data.role == 'Teacher';
+    }
+
+    function isHealthcare() {
+      return isSignedIn() && userDoc().data.role == 'Healthcare';
     }
 
     match /schools/{schoolId} {
@@ -49,12 +62,108 @@ service cloud.firestore {
 
     match /children/{studentId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.parentId == request.auth.uid ||
+        request.resource.data.parentId == request.auth.uid
+      );
     }
 
     match /enrollments/{id} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (isAdmin() || isParent());
+    }
+
+    match /parent_student_relationships/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.parentId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        isAdmin() || resource.data.parentId == request.auth.uid
+      );
+    }
+
+    match /family_link_codes/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (isAdmin() || isParent());
+    }
+
+    match /health_profiles/{studentId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || isParent() || isHealthcare());
+    }
+
+    match /healthcare_access/{studentId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || isParent());
+    }
+
+    match /health_appointments/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (isAdmin() || isHealthcare() || isParent());
+    }
+
+    match /doctor_match_requests/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isAdmin() || isHealthcare() || isParent());
+    }
+
+    match /student_doctor_assignments/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isAdmin() || isParent() || isHealthcare());
+    }
+
+    match /enrollment_readiness_requests/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isAdmin() || isParent());
+    }
+
+    match /notifications/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+    }
+
+    match /assignments/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || isTeacher());
+    }
+
+    match /attendance/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || isTeacher());
+    }
+
+    match /assessments/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || isTeacher());
+    }
+
+    match /message_threads/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /messages/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /marketplace_orders/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /products/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /parent_invitations/{id} {
+      allow read, write: if isSignedIn();
     }
 
     match /{document=**} {

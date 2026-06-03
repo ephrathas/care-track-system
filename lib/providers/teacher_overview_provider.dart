@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/academic/enrollment_display.dart';
+import '../core/config/school_config.dart';
 import '../data/firestore/firestore_school_structure_repository.dart';
 import '../data/firestore/firestore_student_repository.dart';
 import '../models/class_room_model.dart';
@@ -104,7 +105,9 @@ class TeacherOverviewProvider with ChangeNotifier {
       resolved.add(
         TeacherTeachingSlot(
           subjectName: subjectName,
-          className: classRoom.name,
+          className: SchoolConfig.gradeOnlyEnrollment
+              ? (grade?.name ?? 'Grade')
+              : classRoom.name,
           gradeName: grade?.name ?? 'Grade',
           classRoomId: classRoom.id,
           subjectId: assignment.subjectId,

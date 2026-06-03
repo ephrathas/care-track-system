@@ -100,12 +100,16 @@ class FirestoreStudentRepository implements StudentRepository {
     );
     await batch.commit();
 
-    await _notifyTeachersOfEnrollment(
-      schoolId: student.schoolId,
-      classRoomId: classRoomId,
-      studentName: student.fullName,
-      enrollmentId: enrollmentRef.id,
-    );
+    try {
+      await _notifyTeachersOfEnrollment(
+        schoolId: student.schoolId,
+        classRoomId: classRoomId,
+        studentName: student.fullName,
+        enrollmentId: enrollmentRef.id,
+      );
+    } catch (_) {
+      // Enrollment succeeded; teacher notification is best-effort.
+    }
 
     return enrollment;
   }
@@ -182,38 +186,38 @@ class FirestoreStudentRepository implements StudentRepository {
         .where('teacherId', isEqualTo: teacherId)
         .where('isActive', isEqualTo: true)
         .snapshots()
-        .asyncMap((assignSnap) async {
+        .asyncExpand((assignSnap) {
       final classIds = assignSnap.docs
           .map((d) => d.data()['classRoomId'] as String? ?? '')
           .where((id) => id.isNotEmpty)
           .toSet()
           .toList();
-      if (classIds.isEmpty) return <StudentModel>[];
-
-      final studentIds = <String>{};
-      for (final classId in classIds) {
-        final enrollSnap = await _enrollments
-            .where('classRoomId', isEqualTo: classId)
-            .where('status', isEqualTo: EnrollmentStatus.active.id)
-            .get();
-        for (final e in enrollSnap.docs) {
-          final sid = e.data()['studentId'] as String? ?? '';
-          if (sid.isNotEmpty) studentIds.add(sid);
-        }
-      }
-
-      if (studentIds.isEmpty) return <StudentModel>[];
-
-      final students = <StudentModel>[];
-      for (final sid in studentIds) {
-        final doc = await _children.doc(sid).get();
-        if (doc.exists) {
-          students.add(StudentModel.fromMap(doc.data()!, doc.id));
-        }
-      }
-      students.sort((a, b) => a.fullName.compareTo(b.fullName));
-      return students;
+      if (classIds.isEmpty) return Stream.value(<StudentModel>[]);
+      return _watchStudentsForClassIds(classIds);
     });
+  }
+
+  /// Live roster for one or more class rooms — reads enrolled children directly.
+  Stream<List<StudentModel>> _watchStudentsForClassIds(List<String> classIds) {
+    final ids = classIds.toSet().toList();
+    if (ids.isEmpty) return Stream.value(const []);
+
+    if (ids.length == 1) {
+      return watchStudentsForClass(ids.first);
+    }
+
+    return _children
+        .where('classRoomId', whereIn: ids.length > 10 ? ids.sublist(0, 10) : ids)
+        .snapshots()
+        .map((snap) {
+          final students = snap.docs
+              .map((d) => StudentModel.fromMap(d.data(), d.id))
+              .toList();
+          students.sort(
+            (a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
+          );
+          return students;
+        });
   }
 
   @override

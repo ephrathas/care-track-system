@@ -60,6 +60,20 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
   }
 
   @override
+  Future<void> updateEnabledHealthSpecialties(
+    String schoolId,
+    List<String> specialtyIds,
+  ) async {
+    await _db.collection(FirestoreCollections.schools).doc(schoolId).set(
+      {
+        'enabledHealthSpecialtyIds': specialtyIds,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  @override
   Stream<List<GradeLevelModel>> watchGradeLevels(String schoolId) {
     return _db
         .collection(FirestoreCollections.gradeLevels)
@@ -290,10 +304,51 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
   }
 
   @override
+  Stream<List<UserModel>> watchHealthcareStaff(String schoolId) {
+    return _db
+        .collection(FirestoreCollections.users)
+        .where('schoolId', isEqualTo: schoolId)
+        .where('role', isEqualTo: 'Healthcare')
+        .snapshots()
+        .map((snap) {
+          final list = snap.docs.map((doc) {
+            final data = Map<String, dynamic>.from(doc.data());
+            data['uid'] = doc.id;
+            return UserModel.fromMap(data);
+          }).toList();
+          list.sort((a, b) => a.fullName.compareTo(b.fullName));
+          return list;
+        });
+  }
+
+  @override
   Stream<List<UserModel>> watchPendingTeachers() {
     return _db
         .collection(FirestoreCollections.users)
         .where('role', isEqualTo: 'Teacher')
+        .snapshots()
+        .map((snap) {
+          final list = snap.docs
+              .where((doc) {
+                final sid = doc.data()['schoolId'] as String? ?? '';
+                return sid.isEmpty;
+              })
+              .map((doc) {
+                final data = Map<String, dynamic>.from(doc.data());
+                data['uid'] = doc.id;
+                return UserModel.fromMap(data);
+              })
+              .toList();
+          list.sort((a, b) => a.fullName.compareTo(b.fullName));
+          return list;
+        });
+  }
+
+  @override
+  Stream<List<UserModel>> watchPendingHealthcare() {
+    return _db
+        .collection(FirestoreCollections.users)
+        .where('role', isEqualTo: 'Healthcare')
         .snapshots()
         .map((snap) {
           final list = snap.docs

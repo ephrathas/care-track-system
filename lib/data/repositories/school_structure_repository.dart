@@ -14,6 +14,11 @@ abstract class SchoolStructureRepository {
 
   Future<void> updateMaxCatalogGradeLevel(String schoolId, int level);
 
+  Future<void> updateEnabledHealthSpecialties(
+    String schoolId,
+    List<String> specialtyIds,
+  );
+
   Stream<List<GradeLevelModel>> watchGradeLevels(String schoolId);
   Future<String> createGradeLevel(GradeLevelModel grade);
   Future<void> updateGradeLevel(GradeLevelModel grade);
@@ -47,6 +52,10 @@ abstract class SchoolStructureRepository {
 
   Stream<List<UserModel>> watchTeachers(String schoolId);
 
+  Stream<List<UserModel>> watchHealthcareStaff(String schoolId);
+
   /// Teachers registered without a school link yet.
   Stream<List<UserModel>> watchPendingTeachers();
+
+  Stream<List<UserModel>> watchPendingHealthcare();
 }

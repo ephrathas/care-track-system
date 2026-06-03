@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/school_admin_provider.dart';
 import 'admin_doctor_requests_panel.dart';
 import 'admin_grade_range_dialogs.dart';
+import 'admin_health_services_panel.dart';
 
 class AdminOverviewPanel extends StatelessWidget {
   final String? schoolName;
@@ -36,6 +37,7 @@ class AdminOverviewPanel extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         const AdminDoctorRequestsPanel(),
+        const AdminHealthServicesPanel(),
         const SizedBox(height: 20),
         Text(
           'Overview',

@@ -162,6 +162,8 @@ class HealthcareProfile {
   bool coversSpecialty(String specialtyId) =>
       specialtyIds.contains(specialtyId);
 
+  bool get isSetupComplete => specialtyIds.isNotEmpty;
+
   Map<String, dynamic> toMap() => {
         if (clinicName != null) 'clinicName': clinicName,
         if (licenseId != null) 'licenseId': licenseId,

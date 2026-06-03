@@ -280,7 +280,7 @@ class _ChildReportCard extends StatelessWidget {
 
                     Text(
 
-                      child.classRoomId != null ? classLabel : 'Not enrolled in class yet',
+                      child.classRoomId != null ? classLabel : 'Not enrolled in a grade yet',
 
                       style: TextStyle(
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/domain/domain_enums.dart';
@@ -5,6 +7,7 @@ import '../../models/child_model.dart';
 import '../../models/health_appointment_model.dart';
 import '../../models/health_profile_model.dart';
 import '../repositories/health_repository.dart';
+import 'firestore_doctor_matching_repository.dart';
 import 'firestore_helpers.dart';
 
 class FirestoreHealthRepository implements HealthRepository {
@@ -43,6 +46,12 @@ class FirestoreHealthRepository implements HealthRepository {
     });
   }
 
+  Future<HealthcareAccessModel?> getHealthcareAccess(String studentId) async {
+    final doc = await _access.doc(studentId).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return HealthcareAccessModel.fromMap(doc.data()!, doc.id);
+  }
+
   @override
   Future<void> setHealthcareAccess(HealthcareAccessModel access) async {
     final data = access.toMap();
@@ -71,21 +80,73 @@ class FirestoreHealthRepository implements HealthRepository {
     });
   }
 
-  /// Loads child records the healthcare user may view (opt-in + access granted).
+  /// Loads child records the healthcare user may view (opt-in access + direct assignments).
   Stream<List<ChildModel>> watchAccessiblePatients(String healthcareUserId) {
-    return watchAccessibleStudentIds(healthcareUserId).asyncMap((ids) async {
-      if (ids.isEmpty) return <ChildModel>[];
+    return watchPatientsForHealthcareProfessional(healthcareUserId);
+  }
+
+  Stream<List<ChildModel>> watchPatientsForHealthcareProfessional(
+    String healthcareUserId,
+  ) {
+    final doctorRepo = FirestoreDoctorMatchingRepository();
+    final controller = StreamController<List<ChildModel>>.broadcast();
+    Set<String> accessIds = {};
+    Set<String> assignedIds = {};
+
+    Future<void> emitPatients() async {
+      final ids = {...accessIds, ...assignedIds};
+      if (ids.isEmpty) {
+        if (!controller.isClosed) controller.add([]);
+        return;
+      }
+
       final patients = <ChildModel>[];
       for (final id in ids) {
-        final doc = await _db.collection(FirestoreCollections.children).doc(id).get();
+        final doc =
+            await _db.collection(FirestoreCollections.children).doc(id).get();
         if (!doc.exists) continue;
         final child = ChildModel.fromMap(doc.data()!, doc.id);
-        if (!child.healthModuleEnabled) continue;
+        final directlyAssigned = assignedIds.contains(id);
+        if (!child.healthModuleEnabled && !directlyAssigned) continue;
+        if (directlyAssigned &&
+            child.assignedDoctorId != null &&
+            child.assignedDoctorId!.isNotEmpty &&
+            child.assignedDoctorId != healthcareUserId) {
+          continue;
+        }
         patients.add(child);
       }
       patients.sort((a, b) => a.name.compareTo(b.name));
-      return patients;
-    });
+      if (!controller.isClosed) controller.add(patients);
+    }
+
+    StreamSubscription<List<String>>? accessSub;
+    StreamSubscription<List<String>>? assignedSub;
+
+    controller.onListen = () {
+      accessSub = watchAccessibleStudentIds(healthcareUserId).listen(
+        (ids) {
+          accessIds = ids.toSet();
+          emitPatients();
+        },
+        onError: controller.addError,
+      );
+      assignedSub =
+          doctorRepo.watchAssignedStudentIdsForDoctor(healthcareUserId).listen(
+        (ids) {
+          assignedIds = ids.toSet();
+          emitPatients();
+        },
+        onError: controller.addError,
+      );
+    };
+
+    controller.onCancel = () {
+      accessSub?.cancel();
+      assignedSub?.cancel();
+    };
+
+    return controller.stream;
   }
 
   @override

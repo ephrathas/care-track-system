@@ -212,6 +212,41 @@ class FirestoreDoctorMatchingRepository {
             .toList());
   }
 
+  Stream<List<String>> watchAssignedStudentIdsForDoctor(String doctorId) {
+    return _db
+        .collection(FirestoreCollections.studentDoctorAssignments)
+        .where('doctorId', isEqualTo: doctorId)
+        .where('status', isEqualTo: 'active')
+        .snapshots()
+        .map((snap) {
+          final ids = <String>[];
+          for (final doc in snap.docs) {
+            final sid = doc.data()['studentId'] as String? ?? '';
+            if (sid.isNotEmpty) ids.add(sid);
+          }
+          return ids;
+        });
+  }
+
+  Future<void> notifyDoctorOfPatientAssignment({
+    required String doctorId,
+    required String studentName,
+    required String specialtyLabel,
+    required String studentId,
+  }) async {
+    await _db.collection(FirestoreCollections.notifications).add({
+      'recipientId': doctorId,
+      'recipientRole': 'Healthcare',
+      'type': NotificationType.doctorPatientAssigned.id,
+      'title': 'New patient assigned',
+      'body':
+          '$studentName needs $specialtyLabel follow-up. Open Pediatric Directory to review their profile.',
+      'relatedStudentId': studentId,
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<String> assignDoctor({
     required String schoolId,
     required String parentId,
@@ -241,8 +276,50 @@ class FirestoreDoctorMatchingRepository {
     );
 
     await _db.collection(FirestoreCollections.children).doc(studentId).set(
-      {'assignedDoctorId': doctor.doctorId},
+      {
+        'assignedDoctorId': doctor.doctorId,
+        'healthModuleEnabled': true,
+      },
       SetOptions(merge: true),
+    );
+
+    final accessRef =
+        _db.collection(FirestoreCollections.healthcareAccess).doc(studentId);
+    final existingAccess = await accessRef.get();
+    final allowed = existingAccess.exists
+        ? List<String>.from(
+            existingAccess.data()?['allowedProfessionalIds'] ?? [],
+          )
+        : <String>[];
+    if (!allowed.contains(doctor.doctorId)) {
+      allowed.add(doctor.doctorId);
+    }
+    await accessRef.set(
+      FirestoreHelpers.withTimestamps(
+        {
+          'studentId': studentId,
+          'parentId': parentId,
+          'granted': true,
+          'grantedAt': FieldValue.serverTimestamp(),
+          'allowedProfessionalIds': allowed,
+        },
+        isCreate: true,
+      ),
+      SetOptions(merge: true),
+    );
+
+    final childDoc =
+        await _db.collection(FirestoreCollections.children).doc(studentId).get();
+    final childData = childDoc.data();
+    final studentName = childData?['fullName'] as String? ??
+        childData?['name'] as String? ??
+        'Student';
+
+    await notifyDoctorOfPatientAssignment(
+      doctorId: doctor.doctorId,
+      studentName: studentName,
+      specialtyLabel: label,
+      studentId: studentId,
     );
 
     final pending = await findPendingRequest(

@@ -18,6 +18,7 @@ import '../models/subject_model.dart';
 import '../models/user_model.dart';
 import '../services/academic_catalog_seed_service.dart';
 import '../services/enrollment_readiness_service.dart';
+import '../core/health/health_concerns.dart';
 import '../core/catalog/academic_catalog.dart';
 
 /// Admin school setup — grades, classes, subjects, teacher links.
@@ -41,7 +42,9 @@ class SchoolAdminProvider with ChangeNotifier {
   List<ClassRoomModel> classes = [];
   List<SubjectModel> subjects = [];
   List<UserModel> teachers = [];
+  List<UserModel> healthcareStaff = [];
   List<UserModel> pendingTeachers = [];
+  List<UserModel> pendingHealthcare = [];
   List<UserModel> admins = [];
   List<ClassSubjectModel> classAssignments = [];
 
@@ -56,9 +59,11 @@ class SchoolAdminProvider with ChangeNotifier {
   StreamSubscription<List<ClassRoomModel>>? _classesSub;
   StreamSubscription<List<SubjectModel>>? _subjectsSub;
   StreamSubscription<List<UserModel>>? _teachersSub;
+  StreamSubscription<List<UserModel>>? _healthcareSub;
   StreamSubscription<List<ClassSubjectModel>>? _classSubjectsSub;
   StreamSubscription<List<UserModel>>? _adminsSub;
   StreamSubscription<List<UserModel>>? _pendingTeachersSub;
+  StreamSubscription<List<UserModel>>? _pendingHealthcareSub;
 
   String? get primaryAdminUid => school?.primaryAdminUid;
 
@@ -101,8 +106,18 @@ class SchoolAdminProvider with ChangeNotifier {
       notifyListeners();
     });
 
+    _healthcareSub = _structure.watchHealthcareStaff(schoolId).listen((value) {
+      healthcareStaff = value;
+      notifyListeners();
+    });
+
     _pendingTeachersSub = _structure.watchPendingTeachers().listen((value) {
       pendingTeachers = value;
+      notifyListeners();
+    });
+
+    _pendingHealthcareSub = _structure.watchPendingHealthcare().listen((value) {
+      pendingHealthcare = value;
       notifyListeners();
     });
 
@@ -128,12 +143,16 @@ class SchoolAdminProvider with ChangeNotifier {
     _subjectsSub = null;
     _teachersSub?.cancel();
     _teachersSub = null;
+    _healthcareSub?.cancel();
+    _healthcareSub = null;
     _classSubjectsSub?.cancel();
     _classSubjectsSub = null;
     _adminsSub?.cancel();
     _adminsSub = null;
     _pendingTeachersSub?.cancel();
     _pendingTeachersSub = null;
+    _pendingHealthcareSub?.cancel();
+    _pendingHealthcareSub = null;
   }
 
   /// Backfill primary admin on schools created before governance was added.
@@ -954,6 +973,69 @@ class SchoolAdminProvider with ChangeNotifier {
     }
   }
 
+  List<String> get enabledHealthSpecialtyIds =>
+      school?.enabledHealthSpecialtyIds ?? const [];
+
+  List<HealthConcernOption> get enabledHealthConcerns =>
+      HealthConcerns.forSchool(enabledHealthSpecialtyIds);
+
+  Future<bool> updateEnabledHealthSpecialties(List<String> specialtyIds) async {
+    try {
+      await _structure.updateEnabledHealthSpecialties(
+        schoolId,
+        specialtyIds.toSet().toList()..sort(),
+      );
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<int> linkAllHealthcareToSchool() async {
+    final snap = await FirebaseFirestore.instance
+        .collection(FirestoreCollections.users)
+        .where('role', isEqualTo: 'Healthcare')
+        .get();
+    var count = 0;
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      if (data['schoolId'] == null || data['schoolId'] == '') {
+        await doc.reference.set(
+          {
+            'schoolId': schoolId,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+        count++;
+      }
+    }
+    return count;
+  }
+
+  Future<bool> linkHealthcareToSchool(String healthcareUserId) async {
+    if (healthcareUserId.isEmpty) return false;
+    try {
+      await FirebaseFirestore.instance
+          .collection(FirestoreCollections.users)
+          .doc(healthcareUserId)
+          .set(
+        {
+          'schoolId': schoolId,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+      return true;
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Display label for a subject slot — linked account or catalog sample name.
   String assignmentTeacherLabel(ClassSubjectModel slot) {
     if (slot.teacherId.isNotEmpty) {
@@ -1130,6 +1212,54 @@ class SchoolAdminProvider with ChangeNotifier {
     return null;
   }
 
+  /// Parent enrollment preview — built from live admin cache (no extra Firestore round-trip).
+  List<AssignedTeacherView> assignedTeacherViewsForClass(String classRoomId) {
+    final slots = assignmentsForSection(classRoomId);
+    final views = <AssignedTeacherView>[];
+    for (final slot in slots) {
+      if (!slot.isActive) continue;
+
+      SubjectModel? subject;
+      for (final s in subjects) {
+        if (s.id == slot.subjectId) {
+          subject = s;
+          break;
+        }
+      }
+      subject ??= SubjectModel(
+        id: slot.subjectId,
+        schoolId: schoolId,
+        name: subjectNameForId(slot.subjectId) ?? 'Subject',
+      );
+
+      UserModel? teacher;
+      if (slot.teacherId.isNotEmpty) {
+        for (final t in teachers) {
+          if (t.uid == slot.teacherId) {
+            teacher = t;
+            break;
+          }
+        }
+      }
+
+      final linked = slot.teacherId.isNotEmpty && teacher != null;
+      views.add(
+        AssignedTeacherView(
+          subject: subject,
+          teacherId: slot.teacherId,
+          teacherName: teacher?.fullName ??
+              slot.catalogTeacherName ??
+              'Teacher pending',
+          teacherEmail: teacher?.email ?? slot.catalogTeacherEmail,
+          subjectIconKey: slot.catalogSubjectIcon,
+          isLinked: linked,
+        ),
+      );
+    }
+    views.sort((a, b) => a.subject.name.compareTo(b.subject.name));
+    return views;
+  }
+
   List<ClassSubjectModel> assignmentsForSection(String classRoomId) {
     final slots = classAssignments.where((a) => a.classRoomId == classRoomId).toList();
     // One row per subject (legacy data may have duplicate slots).
@@ -1170,8 +1300,33 @@ class SchoolAdminProvider with ChangeNotifier {
   ClassRoomModel? primaryClassForGrade(String gradeLevelId) {
     final sections = sectionsForGrade(gradeLevelId);
     if (sections.isEmpty) return null;
-    final gradeName = gradeNameForId(gradeLevelId);
-    if (gradeName != null && gradeName.isNotEmpty) {
+    final gradeName = gradeNameForId(gradeLevelId) ?? '';
+
+    ClassRoomModel? bestPartial;
+    var bestPartialScore = -1;
+
+    for (final s in sections) {
+      final legacy = _isLegacySectionName(s.name, gradeName);
+      final counts = sectionAssignmentCounts(s.id);
+      if (counts.$2 == 0) continue;
+
+      if (sectionEnrollmentStatus(s.id).canEnroll && !legacy) {
+        return s;
+      }
+      if (sectionEnrollmentStatus(s.id).canEnroll) {
+        return s;
+      }
+
+      final score = counts.$1 * 10 + (legacy ? 0 : 100);
+      if (score > bestPartialScore) {
+        bestPartialScore = score;
+        bestPartial = s;
+      }
+    }
+
+    if (bestPartial != null) return bestPartial;
+
+    if (gradeName.isNotEmpty) {
       for (final s in sections) {
         if (s.name == gradeName) return s;
       }
@@ -1180,6 +1335,13 @@ class SchoolAdminProvider with ChangeNotifier {
       }
     }
     return sections.first;
+  }
+
+  /// Enrollment readiness for parent UI — uses the best class for this grade.
+  SectionEnrollmentStatus? gradeEnrollmentStatus(String gradeLevelId) {
+    final room = primaryClassForGrade(gradeLevelId);
+    if (room == null) return null;
+    return sectionEnrollmentStatus(room.id);
   }
 
   static bool _isLegacySectionName(String roomName, String gradeName) {

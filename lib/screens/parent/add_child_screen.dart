@@ -6,6 +6,7 @@ import '../../core/academic/academic_resolver.dart';
 import '../../core/academic/grade_naming.dart';
 import '../../core/config/school_config.dart';
 import '../../services/enrollment_readiness_service.dart';
+import '../../services/doctor_matching_service.dart';
 import '../../core/domain/domain_enums.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/grade_level_model.dart';
@@ -34,13 +35,60 @@ class _AddChildScreenState extends State<AddChildScreen> {
   String? _resolvedClassId;
   final _ageController = TextEditingController();
   final _resolver = AcademicResolver();
-  GradeEnrollmentPreview? _gradePreview;
-  bool _loadingPreview = false;
-  bool _healthExpanded = true;
+  bool _healthExpanded = false;
   bool _usesPrivateDoctor = false;
   final Set<String> _selectedConcernIds = {HealthConcerns.none};
+  List<String> _missingDoctorSpecialties = [];
+  bool _checkingDoctors = false;
+
+  final DoctorMatchingService _doctorMatching = DoctorMatchingService();
+
+  Future<void> _refreshDoctorReadiness() async {
+    if (_usesPrivateDoctor) {
+      if (!mounted) return;
+      setState(() {
+        _missingDoctorSpecialties = [];
+        _checkingDoctors = false;
+      });
+      return;
+    }
+
+    final concernIds = _selectedConcernIds
+        .where((id) => id.isNotEmpty && id != HealthConcerns.none)
+        .toList();
+    if (concernIds.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _missingDoctorSpecialties = [];
+        _checkingDoctors = false;
+      });
+      return;
+    }
+
+    if (mounted) setState(() => _checkingDoctors = true);
+    try {
+      final missing = await _doctorMatching.missingDoctorSpecialtyLabels(
+        schoolId: SchoolConfig.defaultSchoolId,
+        concernIds: concernIds,
+      );
+      if (!mounted) return;
+      setState(() => _missingDoctorSpecialties = missing);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _missingDoctorSpecialties = []);
+    } finally {
+      if (mounted) setState(() => _checkingDoctors = false);
+    }
+  }
+
+  void _onHealthConcernsChanged() {
+    unawaited(_refreshDoctorReadiness());
+  }
 
   SectionEnrollmentStatus? _statusForClass(SchoolAdminProvider admin) {
+    if (_selectedGradeId != null && SchoolConfig.gradeOnlyEnrollment) {
+      return admin.gradeEnrollmentStatus(_selectedGradeId!);
+    }
     final classId = _resolvedClassId ?? _selectedSectionId;
     if (classId == null || classId.isEmpty) return null;
     return admin.sectionEnrollmentStatus(classId);
@@ -79,31 +127,30 @@ class _AddChildScreenState extends State<AddChildScreen> {
     });
   }
 
-  Future<void> _onGradeSelected(String? gradeId) async {
+  void _applyGradeSelection(String? gradeId, SchoolAdminProvider admin) {
     if (gradeId == null) {
       setState(() {
         _selectedGradeId = null;
         _selectedSectionId = null;
         _resolvedClassId = null;
-        _gradePreview = null;
-        _loadingPreview = false;
       });
       return;
     }
 
-    final schoolAdmin = Provider.of<SchoolAdminProvider>(context, listen: false);
-    final primaryClass = schoolAdmin.primaryClassForGrade(gradeId);
-
+    final primaryClass = admin.primaryClassForGrade(gradeId);
     setState(() {
       _selectedGradeId = gradeId;
-      _selectedSectionId = primaryClass?.id;
       _resolvedClassId = primaryClass?.id;
-      _gradePreview = null;
-      _loadingPreview = primaryClass != null;
+      _selectedSectionId = primaryClass?.id;
     });
+  }
 
-    await _refreshPreview();
-    unawaited(_notifyAdminIfGradeNotReady(schoolAdmin));
+  Future<void> _onGradeSelected(String? gradeId) async {
+    final schoolAdmin = Provider.of<SchoolAdminProvider>(context, listen: false);
+    _applyGradeSelection(gradeId, schoolAdmin);
+    if (gradeId != null) {
+      unawaited(_notifyAdminIfGradeNotReady(schoolAdmin));
+    }
   }
 
   Future<void> _notifyAdminIfGradeNotReady(SchoolAdminProvider admin) async {
@@ -138,34 +185,20 @@ class _AddChildScreenState extends State<AddChildScreen> {
       _selectedSectionId = sectionId;
       _resolvedClassId = sectionId;
     });
-    await _refreshPreview();
   }
 
-  Future<void> _refreshPreview() async {
-    final gradeId = _selectedGradeId;
-    if (gradeId == null) return;
-
-    if (mounted) setState(() => _loadingPreview = true);
-    try {
-      final schoolAdmin =
-          Provider.of<SchoolAdminProvider>(context, listen: false);
-      final classId = _resolvedClassId ?? _selectedSectionId;
-      final preview = await _resolver.previewForGrade(
-        gradeLevelId: gradeId,
-        admin: schoolAdmin,
-        classRoomId: classId,
-      );
-      if (!mounted) return;
-      final primary = schoolAdmin.primaryClassForGrade(gradeId);
-      setState(() {
-        _gradePreview = preview;
-        _resolvedClassId =
-            preview?.classRoom?.id ?? primary?.id ?? _resolvedClassId;
-        _selectedSectionId = _resolvedClassId;
-      });
-    } finally {
-      if (mounted) setState(() => _loadingPreview = false);
-    }
+  GradeEnrollmentPreview? _previewFor(
+    SchoolAdminProvider admin,
+    String? gradeId,
+    String? classId,
+  ) {
+    if (gradeId == null) return null;
+    final room = classId ?? admin.primaryClassForGrade(gradeId)?.id;
+    return _resolver.previewForGradeSync(
+      gradeLevelId: gradeId,
+      admin: admin,
+      classRoomId: room,
+    );
   }
 
   void _showErrorSnackbar(String message) {
@@ -227,9 +260,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
         ? <String>[]
         : _selectedConcernIds.where((id) => id.isNotEmpty).toList();
 
-    // Call provider
+    final schoolAdmin = Provider.of<SchoolAdminProvider>(context, listen: false);
+    final resolvedRoom = _selectedGradeId != null
+        ? schoolAdmin.primaryClassForGrade(_selectedGradeId!)
+        : null;
+    final effectiveClassId = _resolvedClassId ?? resolvedRoom?.id;
+
     if (_selectedGradeId != null &&
-        (_resolvedClassId == null || _resolvedClassId!.isEmpty)) {
+        (effectiveClassId == null || effectiveClassId.isEmpty)) {
       _showErrorSnackbar(
         SchoolConfig.gradeOnlyEnrollment
             ? 'This grade is not set up yet. Ask the school admin to add it and assign teachers.'
@@ -238,9 +276,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
       return;
     }
 
-    final enrollStatus = _statusForClass(
-      Provider.of<SchoolAdminProvider>(context, listen: false),
-    );
+    final enrollStatus = _statusForClass(schoolAdmin);
     if (enrollStatus != null && !enrollStatus.canEnroll) {
       _showErrorSnackbar(enrollStatus.blockingMessage);
       return;
@@ -253,7 +289,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
       relationshipType: _relationship,
       schoolId: SchoolConfig.defaultSchoolId,
       gradeLevelId: _selectedGradeId,
-      classRoomId: _resolvedClassId,
+      classRoomId: effectiveClassId,
       dateOfBirth: _dob,
       gender: _gender,
       healthConcernIds: concernIds,
@@ -289,9 +325,21 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final schoolAdmin = Provider.of<SchoolAdminProvider>(context);
     final List<GradeLevelModel> grades = schoolAdmin.grades;
     final enrollmentStatus = _statusForClass(schoolAdmin);
-    final canEnroll = _selectedGradeId == null ||
-        ((_resolvedClassId != null && _resolvedClassId!.isNotEmpty) &&
-            (enrollmentStatus?.canEnroll ?? false));
+    final resolvedRoom = _selectedGradeId != null
+        ? schoolAdmin.primaryClassForGrade(_selectedGradeId!)
+        : null;
+    final effectiveClassId = _resolvedClassId ?? resolvedRoom?.id;
+    final gradePreview = _previewFor(
+      schoolAdmin,
+      _selectedGradeId,
+      effectiveClassId,
+    );
+    final teachersReady = _selectedGradeId != null &&
+        effectiveClassId != null &&
+        effectiveClassId.isNotEmpty &&
+        (enrollmentStatus?.canEnroll ?? false);
+    final canEnroll = teachersReady && !childProvider.isLoading;
+    final healthOptions = HealthConcerns.forSchool(schoolAdmin.enabledHealthSpecialtyIds);
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : Colors.grey[50],
@@ -543,8 +591,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     const SizedBox(height: 16),
                   ],
                   GradeTeacherPreviewPanel(
-                    preview: _gradePreview,
-                    isLoading: _loadingPreview,
+                    preview: gradePreview,
+                    isLoading: false,
                     enrollmentStatus: enrollmentStatus,
                   ),
                 ],
@@ -566,77 +614,145 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     style: TextStyle(fontSize: 12),
                   ),
                   children: [
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _usesPrivateDoctor,
-                      thumbColor: WidgetStateProperty.resolveWith((states) {
-                        if (states.contains(WidgetState.selected)) {
-                          return AppTheme.primaryBlue;
-                        }
-                        return null;
-                      }),
-                      title: const Text(
-                        'We use a private doctor outside school',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                      onChanged: (v) => setState(() {
-                        _usesPrivateDoctor = v;
-                        if (v) {
-                          _selectedConcernIds.clear();
-                        } else if (_selectedConcernIds.isEmpty) {
-                          _selectedConcernIds.add(HealthConcerns.none);
-                        }
-                      }),
-                    ),
-                    if (!_usesPrivateDoctor)
-                      ...HealthConcerns.catalog.map((concern) {
-                        final selected = _selectedConcernIds.contains(concern.id);
-                        return CheckboxListTile(
-                          value: selected,
-                          secondary: Icon(concern.icon, color: AppTheme.primaryBlue),
-                          title: Text(
-                            concern.label,
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: Text(
-                            concern.description,
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                          activeColor: AppTheme.primaryBlue,
-                          onChanged: (val) {
-                            setState(() {
-                              if (val == true) {
-                                _selectedConcernIds.add(concern.id);
-                              } else {
-                                _selectedConcernIds.remove(concern.id);
-                              }
-                              if (_selectedConcernIds.isEmpty) {
-                                _selectedConcernIds.add(HealthConcerns.none);
-                              }
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity.leading,
-                        );
-                      }),
-                    if (!_usesPrivateDoctor)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          'If no doctor with the right specialty exists yet, the school admin is notified and you will get an alert when one is added.',
-                          style: TextStyle(
-                            fontSize: 11,
-                            height: 1.4,
-                            color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'We use a private doctor outside school',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: _usesPrivateDoctor,
+                                activeTrackColor:
+                                    AppTheme.primaryBlue.withValues(alpha: 0.45),
+                                activeThumbColor: Colors.white,
+                                inactiveThumbColor: Colors.white,
+                                inactiveTrackColor:
+                                    isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                onChanged: (v) {
+                                  setState(() {
+                                    _usesPrivateDoctor = v;
+                                    if (v) {
+                                      _selectedConcernIds.clear();
+                                    } else if (_selectedConcernIds.isEmpty) {
+                                      _selectedConcernIds.add(HealthConcerns.none);
+                                    }
+                                  });
+                                  _onHealthConcernsChanged();
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                      ),
+                        if (!_usesPrivateDoctor)
+                          ...healthOptions.map((concern) {
+                            final selected = _selectedConcernIds.contains(concern.id);
+                            return CheckboxListTile(
+                              value: selected,
+                              contentPadding: EdgeInsets.zero,
+                              secondary: Icon(concern.icon, color: AppTheme.primaryBlue),
+                              title: Text(
+                                concern.label,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Text(
+                                concern.description,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              activeColor: AppTheme.primaryBlue,
+                              onChanged: (val) {
+                                setState(() {
+                                  if (val == true) {
+                                    _selectedConcernIds.add(concern.id);
+                                  } else {
+                                    _selectedConcernIds.remove(concern.id);
+                                  }
+                                  if (_selectedConcernIds.isEmpty) {
+                                    _selectedConcernIds.add(HealthConcerns.none);
+                                  }
+                                });
+                                _onHealthConcernsChanged();
+                              },
+                              controlAffinity: ListTileControlAffinity.leading,
+                            );
+                          }),
+                        if (!_usesPrivateDoctor && _checkingDoctors)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: LinearProgressIndicator(minHeight: 2),
+                          ),
+                        if (!_usesPrivateDoctor &&
+                            !_checkingDoctors &&
+                            _missingDoctorSpecialties.isNotEmpty)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.orange.withOpacity(0.35)),
+                            ),
+                            child: Text(
+                              'No school doctor for: ${_missingDoctorSpecialties.join(', ')}. '
+                              'You can still enroll — the admin is notified and you will get an alert when a doctor is added.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.4,
+                                color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                        if (!_usesPrivateDoctor)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              'If no doctor with the right specialty exists yet, the school admin is notified and you will get an alert when one is added.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.4,
+                                color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
 
                 const SizedBox(height: 32),
+
+                if (_selectedGradeId != null && !canEnroll && !childProvider.isLoading)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      enrollmentStatus == null
+                          ? 'This grade is not set up yet. Ask the school admin to add it and assign teachers.'
+                          : enrollmentStatus.blockingMessage,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
+                      ),
+                    ),
+                  ),
 
                 // Submit Action Button
                 SizedBox(

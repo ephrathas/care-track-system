@@ -73,4 +73,15 @@ class HealthConcerns {
         .map((id) => byId(id)?.label ?? id)
         .join(', ');
   }
+
+  /// Options enabled for this school (empty school list = full catalog).
+  static List<HealthConcernOption> forSchool(List<String> enabledIds) {
+    if (enabledIds.isEmpty) return catalog;
+    return catalog.where((c) => enabledIds.contains(c.id)).toList();
+  }
+
+  /// Parent/doctor pickers — excludes general wellness-only unless enabled.
+  static List<HealthConcernOption> clinicalForSchool(List<String> enabledIds) {
+    return forSchool(enabledIds).where((c) => c.id != none).toList();
+  }
 }

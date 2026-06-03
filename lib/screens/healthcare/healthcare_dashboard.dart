@@ -13,6 +13,7 @@ import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/settings/appearance_setting.dart';
+import '../auth/healthcare_profile_setup_screen.dart';
 
 class HealthcareDashboard extends StatefulWidget {
   const HealthcareDashboard({super.key});
@@ -778,7 +779,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                   const SizedBox(height: 12),
                                   Text(
                                     _searchQuery.isEmpty
-                                        ? 'No patients with health access yet.\nParents must enable healthcare sharing on their child\'s Health tab.'
+                                        ? 'No patients assigned yet.\nStudents appear here when parents enroll with health needs and a doctor is assigned, or when clinic access is enabled on the child\'s Health tab.'
                                         : 'No patients match your search.',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary),
@@ -1113,6 +1114,21 @@ class _HealthcareProfileTab extends StatelessWidget {
                 _ProfileStatRow(
                     label: 'Room Registry', value: 'Clinic Room 402'),
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const HealthcareProfileSetupScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.medical_services_outlined),
+              label: const Text('Update health services I provide'),
             ),
           ),
           const SizedBox(height: 16),

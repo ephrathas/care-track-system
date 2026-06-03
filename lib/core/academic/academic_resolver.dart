@@ -46,6 +46,19 @@ class AcademicResolver {
     required SchoolAdminProvider admin,
     String? classRoomId,
   }) async {
+    return previewForGradeSync(
+      gradeLevelId: gradeLevelId,
+      admin: admin,
+      classRoomId: classRoomId,
+    );
+  }
+
+  /// Instant preview from admin cache — no Firestore round-trip (parent enroll UI).
+  GradeEnrollmentPreview? previewForGradeSync({
+    required String gradeLevelId,
+    required SchoolAdminProvider admin,
+    String? classRoomId,
+  }) {
     GradeLevelModel? grade;
     for (final g in admin.grades) {
       if (g.id == gradeLevelId) {
@@ -91,7 +104,7 @@ class AcademicResolver {
       );
     }
 
-    final teachers = await teachersForClass(classRoom.id);
+    var teachers = admin.assignedTeacherViewsForClass(classRoom.id);
     return GradeEnrollmentPreview(
       grade: grade,
       classRoom: classRoom,

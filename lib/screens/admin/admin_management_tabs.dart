@@ -13,6 +13,7 @@ import '../../models/user_model.dart';
 import '../../providers/school_admin_provider.dart';
 import '../../widgets/admin/assign_teacher_dialog.dart';
 import '../../widgets/admin/grade_enrolled_students_panel.dart';
+import '../../widgets/admin/admin_healthcare_staff_panel.dart';
 
 /// Grades + sections (classes) in one place — Grade 1 → A, B, …
 class AdminGradesAndSectionsTab extends StatelessWidget {
@@ -301,6 +302,7 @@ class _AdminTeachersTabState extends State<AdminTeachersTab> {
               onRemove: () => _confirmRemoveTeacher(context, admin, t),
             ),
           ),
+        const AdminHealthcareStaffPanel(),
         const SizedBox(height: 28),
         if (admin.classAssignments.isNotEmpty) ...[
           Text(

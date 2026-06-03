@@ -62,8 +62,31 @@ class EnrollmentDisplay {
       if (byId != null && byId.isNotEmpty) return byId;
     }
     if (classRoomId != null && classRoomId.isNotEmpty) {
-      return admin.gradeNameForClassRoom(classRoomId);
+      final fromRoom = admin.gradeNameForClassRoom(classRoomId);
+      if (fromRoom != null && fromRoom.isNotEmpty) {
+        if (SchoolConfig.gradeOnlyEnrollment &&
+            _looksLikeLegacySectionName(fromRoom)) {
+          for (final c in admin.classes) {
+            if (c.id == classRoomId) {
+              final gradeName = admin.gradeNameForId(c.gradeLevelId);
+              if (gradeName != null && gradeName.isNotEmpty) return gradeName;
+            }
+          }
+        }
+        return fromRoom;
+      }
     }
     return null;
+  }
+
+  static bool _looksLikeLegacySectionName(String name) {
+    final n = name.trim();
+    final lower = n.toLowerCase();
+    if (lower.contains('section')) return true;
+    if (RegExp(r'^\d+-[A-Za-z]$').hasMatch(n)) return true;
+    if (RegExp(r'Grade\s+\d+\s*-\s*[A-Za-z]', caseSensitive: false).hasMatch(n)) {
+      return true;
+    }
+    return false;
   }
 }

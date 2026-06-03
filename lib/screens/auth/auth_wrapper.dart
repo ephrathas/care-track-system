@@ -16,6 +16,7 @@ import '../admin/admin_setup_gate.dart';
 import '../child/child_dashboard.dart';
 import 'student_profile_setup_screen.dart';
 import 'teacher_profile_setup_screen.dart';
+import 'healthcare_profile_setup_screen.dart';
 import '../healthcare/healthcare_dashboard.dart';
 import '../parent/parent_dashboard.dart';
 import '../teacher/teacher_dashboard.dart';
@@ -98,6 +99,10 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
 
     if (role == UserRole.teacher && !auth.isTeacherProfileComplete) {
       return const TeacherProfileSetupScreen();
+    }
+
+    if (role == UserRole.healthcare && !auth.isHealthcareProfileComplete) {
+      return const HealthcareProfileSetupScreen();
     }
 
     if (role == UserRole.admin) {

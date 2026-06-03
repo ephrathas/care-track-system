@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/academic/enrollment_display.dart';
+import '../../core/config/school_config.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -127,10 +128,13 @@ class _TeacherHomeTab extends StatelessWidget {
                       child: EducationEmptyState(
                         icon: Icons.link_off_rounded,
                         title: 'Not assigned to a class yet',
-                        message:
-                            'After you register as Teacher, ask your admin to open '
-                            'Admin → Staff tab, link your account to the school, '
-                            'then assign you to a section + subject (e.g. Grade 1-A · Math).',
+                        message: SchoolConfig.gradeOnlyEnrollment
+                            ? 'After you register as Teacher, ask your admin to open '
+                                'Admin → Staff tab, link your account to the school, '
+                                'then assign you to a grade + subject (e.g. Grade 1 · Math).'
+                            : 'After you register as Teacher, ask your admin to open '
+                                'Admin → Staff tab, link your account to the school, '
+                                'then assign you to a section + subject (e.g. Grade 1-A · Math).',
                       ),
                     )
                   else

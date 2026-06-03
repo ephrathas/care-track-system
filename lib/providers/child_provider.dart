@@ -231,17 +231,6 @@ class ChildProvider with ChangeNotifier {
 
       await _dbService.setChild(childId, child);
 
-      if (healthConcernIds.isNotEmpty) {
-        await FirestoreHealthRepository().saveHealthProfile(
-          HealthProfileModel(
-            studentId: childId,
-            medicalConditions: healthConcernIds
-                .map((id) => HealthConcerns.byId(id)?.label ?? id)
-                .toList(),
-          ),
-        );
-      }
-
       await _family.createRelationship(
         parentId: parentId,
         studentId: childId,
@@ -275,22 +264,52 @@ class ChildProvider with ChangeNotifier {
         );
       }
 
-      final linkCode = await _family.createLinkCodeForStudent(
-        studentId: childId,
-        schoolId: schoolId,
-        createdByUid: parentId,
-        studentName: name,
-      );
-
-      if (!usesPrivateDoctor && healthConcernIds.isNotEmpty) {
-        await DoctorMatchingService().processConcernsForStudent(
-          schoolId: schoolId,
-          parentId: parentId,
+      String? linkCode;
+      try {
+        linkCode = await _family.createLinkCodeForStudent(
           studentId: childId,
+          schoolId: schoolId,
+          createdByUid: parentId,
           studentName: name,
-          concernIds: healthConcernIds,
-          usesPrivateDoctor: usesPrivateDoctor,
         );
+      } catch (_) {
+        linkCode = null;
+      }
+
+      try {
+        if (healthConcernIds.isNotEmpty) {
+          await FirestoreHealthRepository().saveHealthProfile(
+            HealthProfileModel(
+              studentId: childId,
+              medicalConditions: healthConcernIds
+                  .map((id) => HealthConcerns.byId(id)?.label ?? id)
+                  .toList(),
+            ),
+          );
+        }
+
+        if (!usesPrivateDoctor && healthConcernIds.isNotEmpty) {
+          final hasClinicalConcerns = healthConcernIds.any(
+            (id) => id.isNotEmpty && id != HealthConcerns.none,
+          );
+          if (hasClinicalConcerns) {
+            await setHealthModuleEnabled(
+              childId: childId,
+              parentId: parentId,
+              enabled: true,
+            );
+          }
+          await DoctorMatchingService().processConcernsForStudent(
+            schoolId: schoolId,
+            parentId: parentId,
+            studentId: childId,
+            studentName: name,
+            concernIds: healthConcernIds,
+            usesPrivateDoctor: usesPrivateDoctor,
+          );
+        }
+      } catch (_) {
+        // Health/doctor sidecar must not block core enrollment.
       }
 
       _isLoading = false;
@@ -350,7 +369,7 @@ class ChildProvider with ChangeNotifier {
           dateOfBirth: old.dateOfBirth,
           gender: old.gender,
           accountMode: old.accountMode,
-          healthModuleEnabled: old.healthModuleEnabled,
+          healthModuleEnabled: true,
           healthConcernIds: old.healthConcernIds,
           usesPrivateDoctor: old.usesPrivateDoctor,
           assignedDoctorId: doctorId,
@@ -471,12 +490,24 @@ class ChildProvider with ChangeNotifier {
         final idx = _children.indexWhere((c) => c.id == childId);
         if (idx >= 0) source = _children[idx];
 
+        final existingAccess = await repo.getHealthcareAccess(childId);
+        final allowed = List<String>.from(
+          existingAccess?.allowedProfessionalIds ?? [],
+        );
+        final assignedDoctor = source?.assignedDoctorId;
+        if (assignedDoctor != null &&
+            assignedDoctor.isNotEmpty &&
+            !allowed.contains(assignedDoctor)) {
+          allowed.add(assignedDoctor);
+        }
+
         await repo.setHealthcareAccess(
           HealthcareAccessModel(
             studentId: childId,
             parentId: parentId,
             granted: true,
             grantedAt: DateTime.now(),
+            allowedProfessionalIds: allowed,
           ),
         );
         await repo.saveHealthProfile(

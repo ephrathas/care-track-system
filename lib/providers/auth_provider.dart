@@ -275,6 +275,13 @@ class AuthProvider with ChangeNotifier {
     return user.teacherProfile?.isSetupComplete ?? false;
   }
 
+  bool get isHealthcareProfileComplete {
+    final user = _currentUser;
+    if (user == null) return false;
+    if (UserRole.fromLabel(user.role) != UserRole.healthcare) return true;
+    return user.healthcareProfile?.isSetupComplete ?? false;
+  }
+
   // 🚪 Sign Out Action
   Future<void> logout() async {
     _isLoading = true;

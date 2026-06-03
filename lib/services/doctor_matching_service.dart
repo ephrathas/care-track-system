@@ -9,6 +9,26 @@ class DoctorMatchingService {
   DoctorMatchingService({FirestoreDoctorMatchingRepository? repo})
       : _repo = repo ?? FirestoreDoctorMatchingRepository();
 
+  /// Specialty labels with no registered school doctor yet (for parent enrollment UI).
+  Future<List<String>> missingDoctorSpecialtyLabels({
+    required String schoolId,
+    required List<String> concernIds,
+  }) async {
+    final missing = <String>[];
+    final unique = concernIds.toSet().where((id) => id.isNotEmpty).toList();
+    for (final specialtyId in unique) {
+      if (specialtyId == HealthConcerns.none) continue;
+      final doctors = await _repo.findDoctorsForSpecialty(
+        schoolId: schoolId,
+        specialtyId: specialtyId,
+      );
+      if (doctors.isEmpty) {
+        missing.add(HealthConcerns.byId(specialtyId)?.label ?? specialtyId);
+      }
+    }
+    return missing;
+  }
+
   Future<void> processConcernsForStudent({
     required String schoolId,
     required String parentId,
@@ -29,15 +49,23 @@ class DoctorMatchingService {
         specialtyId: specialtyId,
       );
 
-      if (doctors.isNotEmpty) {
+      if (doctors.length == 1) {
+        await _repo.assignDoctor(
+          schoolId: schoolId,
+          parentId: parentId,
+          studentId: studentId,
+          doctor: doctors.first,
+          specialtyId: specialtyId,
+        );
+      } else {
         await _repo.notifyParentDoctorAvailable(
           parentId: parentId,
           studentName: studentName,
           specialtyLabel: HealthConcerns.byId(specialtyId)?.label ?? specialtyId,
           studentId: studentId,
         );
-        continue;
       }
+      continue;
 
       final requestId = await _repo.createMatchRequest(
         schoolId: schoolId,

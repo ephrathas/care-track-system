@@ -60,23 +60,12 @@ class HealthcareProvider with ChangeNotifier {
     _accessSubscription?.cancel();
     _appointmentsSubscription?.cancel();
 
-    _accessSubscription =
-        _healthRepo.watchAccessibleStudentIds(healthcareUserId).listen(
-      (ids) {
-        _accessibleStudentIds = ids.toSet();
-        _applyAppointmentFilter();
-        notifyListeners();
-      },
-      onError: (err) {
-        _errorMessage = err.toString();
-        notifyListeners();
-      },
-    );
-
     _patientsSubscription =
-        _healthRepo.watchAccessiblePatients(healthcareUserId).listen(
+        _healthRepo.watchPatientsForHealthcareProfessional(healthcareUserId).listen(
       (data) {
         _patients = data;
+        _accessibleStudentIds = data.map((p) => p.id).toSet();
+        _applyAppointmentFilter();
         _isLoading = false;
         notifyListeners();
       },

@@ -321,8 +321,8 @@ class _ParentHomeTab extends StatelessWidget {
             isDark: isDark,
             title: 'Academic Progress',
             subtitle: hasEnrolledChildren
-                ? 'Children are enrolled in class. Grades will appear once teachers publish assessments.'
-                : 'No class enrollment yet. Add grade and class to see teacher-assigned subjects.',
+                ? 'Children are enrolled in grade. Grades will appear once teachers publish assessments.'
+                : 'No grade enrollment yet. Enroll a child to see teacher-assigned subjects.',
             icon: Icons.auto_graph_rounded,
             color: AppTheme.primaryBlue,
             onTap: () => Navigator.pushNamed(context, AppRoutes.reports),

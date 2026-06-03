@@ -10,6 +10,8 @@ class SchoolModel {
   final String? primaryAdminUid;
   /// Highest standard grade level (1–12) this school uses; set via starter curriculum.
   final int? maxCatalogGradeLevel;
+  /// Health specialties parents/doctors can use (empty = all catalog options).
+  final List<String> enabledHealthSpecialtyIds;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -22,6 +24,7 @@ class SchoolModel {
     this.isActive = true,
     this.primaryAdminUid,
     this.maxCatalogGradeLevel,
+    this.enabledHealthSpecialtyIds = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -36,6 +39,9 @@ class SchoolModel {
       isActive: map['isActive'] as bool? ?? true,
       primaryAdminUid: map['primaryAdminUid'] as String?,
       maxCatalogGradeLevel: (map['maxCatalogGradeLevel'] as num?)?.toInt(),
+      enabledHealthSpecialtyIds: List<String>.from(
+        map['enabledHealthSpecialtyIds'] ?? [],
+      ),
     );
   }
 
@@ -47,6 +53,7 @@ class SchoolModel {
         'isActive': isActive,
         if (primaryAdminUid != null) 'primaryAdminUid': primaryAdminUid,
         if (maxCatalogGradeLevel != null) 'maxCatalogGradeLevel': maxCatalogGradeLevel,
+        'enabledHealthSpecialtyIds': enabledHealthSpecialtyIds,
       };
 
   SchoolModel copyWith({
