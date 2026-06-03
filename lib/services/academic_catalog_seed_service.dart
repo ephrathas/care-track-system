@@ -86,6 +86,10 @@ class AcademicCatalogSeedService {
       await _seedCatalogGrade(schoolId, catalogGrade, subjectNameToId);
       existingLevels.add(level);
       added++;
+      // Brief pause reduces Firestore web listener assertion errors during bulk seed.
+      if (level < toLevel) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
     }
 
     return added;
@@ -99,6 +103,7 @@ class AcademicCatalogSeedService {
     final levels = <int>{};
     for (final doc in snap.docs) {
       final data = doc.data();
+      if (data['isActive'] == false) continue;
       final catalogLevel = data['catalogLevel'] as int?;
       if (catalogLevel != null && catalogLevel > 0) {
         levels.add(catalogLevel);
