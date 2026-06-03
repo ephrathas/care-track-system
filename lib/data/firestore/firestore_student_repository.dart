@@ -152,6 +152,16 @@ class FirestoreStudentRepository implements StudentRepository {
   }
 
   @override
+  Stream<List<StudentModel>> watchStudentsForClass(String classRoomId) {
+    return _children
+        .where('classRoomId', isEqualTo: classRoomId)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => StudentModel.fromMap(d.data(), d.id))
+            .toList());
+  }
+
+  @override
   Stream<EnrollmentModel?> watchActiveEnrollment(String studentId) {
     return _enrollments
         .where('studentId', isEqualTo: studentId)

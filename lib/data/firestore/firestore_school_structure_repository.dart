@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../core/catalog/academic_catalog.dart';
 import '../../core/domain/domain_enums.dart';
 import '../../models/class_room_model.dart';
 import '../../models/class_subject_model.dart';
@@ -48,6 +49,17 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
   }
 
   @override
+  Future<void> updateMaxCatalogGradeLevel(String schoolId, int level) async {
+    await _db.collection(FirestoreCollections.schools).doc(schoolId).set(
+      {
+        'maxCatalogGradeLevel': level.clamp(1, 12),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  @override
   Stream<List<GradeLevelModel>> watchGradeLevels(String schoolId) {
     return _db
         .collection(FirestoreCollections.gradeLevels)
@@ -75,6 +87,42 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
     await _db.collection(FirestoreCollections.gradeLevels).doc(grade.id).update(
           FirestoreHelpers.withTimestamps(grade.toMap()),
         );
+  }
+
+  @override
+  Future<GradeLevelModel?> findGradeByCatalogLevel(
+    String schoolId,
+    int catalogLevel,
+  ) async {
+    final snap = await _db
+        .collection(FirestoreCollections.gradeLevels)
+        .where('schoolId', isEqualTo: schoolId)
+        .get();
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final grade = GradeLevelModel.fromMap(data, doc.id);
+      final stored = data['catalogLevel'] as int?;
+      final level = stored != null && stored > 0
+          ? stored
+          : AcademicCatalog.parseGradeLevel(grade.name);
+      if (level == catalogLevel) return grade;
+    }
+    return null;
+  }
+
+  @override
+  Future<List<ClassRoomModel>> fetchClassRoomsForGrade(
+    String schoolId,
+    String gradeLevelId,
+  ) async {
+    final snap = await _db
+        .collection(FirestoreCollections.classRooms)
+        .where('schoolId', isEqualTo: schoolId)
+        .where('gradeLevelId', isEqualTo: gradeLevelId)
+        .get();
+    final list = snap.docs.map((d) => ClassRoomModel.fromMap(d.data(), d.id)).toList();
+    list.sort((a, b) => a.name.compareTo(b.name));
+    return list;
   }
 
   @override
