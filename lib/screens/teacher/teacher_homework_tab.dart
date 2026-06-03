@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/academic/enrollment_display.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/academic_models.dart';
 import '../../models/teacher_teaching_slot.dart';
@@ -38,7 +39,7 @@ class _TeacherHomeworkTabState extends State<TeacherHomeworkTab> {
     for (final slot in overview.slots) {
       if (slot.classRoomId == assignment.classRoomId &&
           slot.subjectId == assignment.subjectId) {
-        return '${slot.gradeName} · ${slot.className}';
+        return EnrollmentDisplay.teacherSlotLine(slot.gradeName, slot.className);
       }
     }
     return 'Class';

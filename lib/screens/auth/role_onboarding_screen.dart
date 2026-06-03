@@ -50,9 +50,6 @@ class _RoleOnboardingScreenState extends State<RoleOnboardingScreen> {
         case UserRole.child:
           Navigator.pushNamed(context, AppRoutes.studentRegister);
           break;
-        case UserRole.parent:
-          Navigator.pushNamed(context, AppRoutes.registrationPaths);
-          break;
         default:
           AuthNavigation.openRegister(context, _role);
       }

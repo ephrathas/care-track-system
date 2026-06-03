@@ -4,8 +4,6 @@ import '../../core/constants/add_child_display_mode.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/class_room_model.dart';
-import '../../models/grade_level_model.dart';
 import '../../models/child_model.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
@@ -22,6 +20,7 @@ import '../../widgets/dashboard/dashboard_section_header.dart';
 import '../../widgets/dashboard/dashboard_stat_card.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
+import '../../core/academic/enrollment_display.dart';
 import '../../core/health/health_concerns.dart';
 import '../../widgets/parent/add_child_action_button.dart';
 import '../../widgets/parent/add_child_display_setting.dart';
@@ -364,9 +363,12 @@ class _ChildProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<SchoolAdminProvider>();
-    final gradeName = _resolveGradeName(admin.grades, child.gradeLevelId);
-    final className = _resolveClassName(admin.classes, child.classRoomId);
-    final enrollmentLabel = [gradeName, className].whereType<String>().join(' • ');
+    final ageGradeLine = EnrollmentDisplay.childAgeAndGradeLine(
+      admin: admin,
+      age: child.age,
+      gradeLevelId: child.gradeLevelId,
+      classRoomId: child.classRoomId,
+    );
 
     return Material(
       color: isDark ? AppTheme.darkSurface : Colors.white,
@@ -404,9 +406,7 @@ class _ChildProfileCard extends StatelessWidget {
                               fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 4),
                       Text(
-                        enrollmentLabel.isEmpty
-                            ? '${child.age} years old • Class not assigned'
-                            : '${child.age} years old • $enrollmentLabel',
+                        ageGradeLine,
                         style: TextStyle(
                             fontSize: 12,
                             color:
@@ -642,22 +642,6 @@ class _AlertsTab extends StatelessWidget {
       ),
     );
   }
-}
-
-String? _resolveGradeName(List<GradeLevelModel> grades, String? gradeId) {
-  if (gradeId == null) return null;
-  for (final grade in grades) {
-    if (grade.id == gradeId) return grade.name;
-  }
-  return gradeId;
-}
-
-String? _resolveClassName(List<ClassRoomModel> classes, String? classId) {
-  if (classId == null) return null;
-  for (final c in classes) {
-    if (c.id == classId) return c.name;
-  }
-  return classId;
 }
 
 class _ProfileTab extends StatelessWidget {

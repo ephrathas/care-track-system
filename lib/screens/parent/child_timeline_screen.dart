@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/academic/enrollment_display.dart';
 import '../../core/domain/domain_enums.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/firestore/firestore_academic_repository.dart';
@@ -56,11 +57,12 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
   }
 
   String _classLabel(SchoolAdminProvider school, ChildModel child) {
-    if (child.classRoomId == null) return 'Not enrolled yet';
-    for (final c in school.classes) {
-      if (c.id == child.classRoomId) return c.name;
-    }
-    return 'Enrolled in class';
+    return EnrollmentDisplay.classOrGradeLabel(
+      school,
+      child.classRoomId,
+      gradeLevelId: child.gradeLevelId,
+      fallback: 'Not enrolled yet',
+    );
   }
 
   @override

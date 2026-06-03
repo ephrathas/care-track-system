@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/academic/academic_resolver.dart';
 import '../../core/academic/grade_naming.dart';
 import '../../core/config/school_config.dart';
+import '../../services/enrollment_readiness_service.dart';
 import '../../core/domain/domain_enums.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/grade_level_model.dart';
@@ -77,21 +80,57 @@ class _AddChildScreenState extends State<AddChildScreen> {
   }
 
   Future<void> _onGradeSelected(String? gradeId) async {
-    setState(() {
-      _selectedGradeId = gradeId;
-      _selectedSectionId = null;
-      _resolvedClassId = null;
-      _gradePreview = null;
-    });
-    if (gradeId == null) return;
+    if (gradeId == null) {
+      setState(() {
+        _selectedGradeId = null;
+        _selectedSectionId = null;
+        _resolvedClassId = null;
+        _gradePreview = null;
+        _loadingPreview = false;
+      });
+      return;
+    }
 
     final schoolAdmin = Provider.of<SchoolAdminProvider>(context, listen: false);
-    final sections = _resolver.sectionsForGrade(gradeId, schoolAdmin);
-    if (sections.length == 1) {
-      _selectedSectionId = sections.first.id;
-      _resolvedClassId = sections.first.id;
-    }
+    final primaryClass = schoolAdmin.primaryClassForGrade(gradeId);
+
+    setState(() {
+      _selectedGradeId = gradeId;
+      _selectedSectionId = primaryClass?.id;
+      _resolvedClassId = primaryClass?.id;
+      _gradePreview = null;
+      _loadingPreview = primaryClass != null;
+    });
+
     await _refreshPreview();
+    unawaited(_notifyAdminIfGradeNotReady(schoolAdmin));
+  }
+
+  Future<void> _notifyAdminIfGradeNotReady(SchoolAdminProvider admin) async {
+    try {
+      final gradeId = _selectedGradeId;
+      final classId = _resolvedClassId;
+      if (gradeId == null || classId == null || classId.isEmpty) return;
+
+      final status = admin.sectionEnrollmentStatus(classId);
+      if (status.canEnroll) return;
+
+      final parentId =
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+      if (parentId == null) return;
+
+      final gradeName = admin.gradeNameForId(gradeId) ?? 'Grade';
+      await EnrollmentReadinessService().reportParentInterest(
+        parentId: parentId,
+        gradeLevelId: gradeId,
+        gradeName: gradeName,
+        classRoomId: classId,
+        schoolId: SchoolConfig.defaultSchoolId,
+        missingSubjects: status.unassignedSubjectNames,
+      );
+    } catch (_) {
+      // Non-blocking: parent still sees the on-screen warning.
+    }
   }
 
   Future<void> _onSectionSelected(String? sectionId) async {
@@ -106,19 +145,27 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final gradeId = _selectedGradeId;
     if (gradeId == null) return;
 
-    setState(() => _loadingPreview = true);
-    final schoolAdmin = Provider.of<SchoolAdminProvider>(context, listen: false);
-    final preview = await _resolver.previewForGrade(
-      gradeLevelId: gradeId,
-      admin: schoolAdmin,
-      classRoomId: _selectedSectionId ?? _resolvedClassId,
-    );
-    if (!mounted) return;
-    setState(() {
-      _gradePreview = preview;
-      _resolvedClassId = preview?.classRoom?.id ?? _resolvedClassId;
-      _loadingPreview = false;
-    });
+    if (mounted) setState(() => _loadingPreview = true);
+    try {
+      final schoolAdmin =
+          Provider.of<SchoolAdminProvider>(context, listen: false);
+      final classId = _resolvedClassId ?? _selectedSectionId;
+      final preview = await _resolver.previewForGrade(
+        gradeLevelId: gradeId,
+        admin: schoolAdmin,
+        classRoomId: classId,
+      );
+      if (!mounted) return;
+      final primary = schoolAdmin.primaryClassForGrade(gradeId);
+      setState(() {
+        _gradePreview = preview;
+        _resolvedClassId =
+            preview?.classRoom?.id ?? primary?.id ?? _resolvedClassId;
+        _selectedSectionId = _resolvedClassId;
+      });
+    } finally {
+      if (mounted) setState(() => _loadingPreview = false);
+    }
   }
 
   void _showErrorSnackbar(String message) {
@@ -178,11 +225,16 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
     final concernIds = _usesPrivateDoctor
         ? <String>[]
-        : _selectedConcernIds.toList();
+        : _selectedConcernIds.where((id) => id.isNotEmpty).toList();
 
     // Call provider
-    if (_selectedGradeId != null && (_resolvedClassId == null || _resolvedClassId!.isEmpty)) {
-      _showErrorSnackbar('Select a section for this grade, or ask admin to add sections.');
+    if (_selectedGradeId != null &&
+        (_resolvedClassId == null || _resolvedClassId!.isEmpty)) {
+      _showErrorSnackbar(
+        SchoolConfig.gradeOnlyEnrollment
+            ? 'This grade is not set up yet. Ask the school admin to add it and assign teachers.'
+            : 'Select a section for this grade, or ask admin to add sections.',
+      );
       return;
     }
 
@@ -421,46 +473,49 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 ],
 
                 if (_selectedGradeId != null) ...[
-                  Builder(
-                    builder: (context) {
-                      final sections = _resolver.sectionsForGrade(
-                        _selectedGradeId!,
-                        schoolAdmin,
-                      );
-                      if (sections.length <= 1) return const SizedBox.shrink();
-                      return Column(
-                        children: [
-                          const SizedBox(height: 16),
-                          DropdownButtonFormField<String>(
-                            value: _selectedSectionId,
-                            items: sections
-                                .map((c) {
-                                  final gradeName = schoolAdmin.gradeNameForId(_selectedGradeId!) ?? '';
-                                  final label = SchoolAdminProvider.sectionLabel(c, gradeName);
-                                  return DropdownMenuItem(
-                                    value: c.id,
-                                    child: Text('Section $label (${c.name})'),
-                                  );
-                                })
-                                .toList(),
-                            onChanged: _onSectionSelected,
-                            validator: (_) => _selectedSectionId == null
-                                ? 'Select a section (e.g. A or B)'
-                                : null,
-                            decoration: InputDecoration(
-                              labelText: 'Section / class group',
-                              helperText: 'Each grade can have sections like A and B',
-                              prefixIcon: const Icon(Icons.class_rounded),
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16)),
-                              filled: true,
-                              fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                  if (!SchoolConfig.gradeOnlyEnrollment)
+                    Builder(
+                      builder: (context) {
+                        final sections = _resolver.sectionsForGrade(
+                          _selectedGradeId!,
+                          schoolAdmin,
+                        );
+                        if (sections.length <= 1) return const SizedBox.shrink();
+                        return Column(
+                          children: [
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              value: _selectedSectionId,
+                              items: sections
+                                  .map((c) {
+                                    final gradeName =
+                                        schoolAdmin.gradeNameForId(_selectedGradeId!) ?? '';
+                                    final label =
+                                        SchoolAdminProvider.sectionLabel(c, gradeName);
+                                    return DropdownMenuItem(
+                                      value: c.id,
+                                      child: Text('Section $label (${c.name})'),
+                                    );
+                                  })
+                                  .toList(),
+                              onChanged: _onSectionSelected,
+                              validator: (_) => _selectedSectionId == null
+                                  ? 'Select a section (e.g. A or B)'
+                                  : null,
+                              decoration: InputDecoration(
+                                labelText: 'Section / class group',
+                                helperText: 'Each grade can have sections like A and B',
+                                prefixIcon: const Icon(Icons.class_rounded),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                                filled: true,
+                                fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                          ],
+                        );
+                      },
+                    ),
                   const SizedBox(height: 28),
                   if (enrollmentStatus != null && !enrollmentStatus.canEnroll) ...[
                     Container(
@@ -526,7 +581,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
                       ),
                       onChanged: (v) => setState(() {
                         _usesPrivateDoctor = v;
-                        if (v) _selectedConcernIds.clear();
+                        if (v) {
+                          _selectedConcernIds.clear();
+                        } else if (_selectedConcernIds.isEmpty) {
+                          _selectedConcernIds.add(HealthConcerns.none);
+                        }
                       }),
                     ),
                     if (!_usesPrivateDoctor)

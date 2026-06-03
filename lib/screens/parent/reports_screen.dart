@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 
 
 
+import '../../core/academic/enrollment_display.dart';
+
 import '../../core/domain/domain_enums.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -214,33 +216,17 @@ class _ChildReportCard extends StatelessWidget {
 
   const _ChildReportCard({required this.child, required this.isDark});
 
-
-
-  static String _classNameFor(SchoolAdminProvider school, String classRoomId) {
-
-    for (final c in school.classes) {
-
-      if (c.id == classRoomId) return c.name;
-
-    }
-
-    return 'Enrolled';
-
-  }
-
-
-
   @override
 
   Widget build(BuildContext context) {
 
     final school = context.watch<SchoolAdminProvider>();
 
-    final classLabel = child.classRoomId != null
-
-        ? _classNameFor(school, child.classRoomId!)
-
-        : 'Not enrolled';
+    final classLabel = EnrollmentDisplay.classOrGradeLabel(
+      school,
+      child.classRoomId,
+      gradeLevelId: child.gradeLevelId,
+    );
 
 
 

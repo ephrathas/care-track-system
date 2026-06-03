@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../core/academic/enrollment_display.dart';
 import '../../core/constants/role_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -12,6 +13,7 @@ import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/settings/appearance_setting.dart';
+import '../auth/teacher_profile_setup_screen.dart';
 import '../../widgets/messaging/messages_inbox.dart';
 import 'teacher_homework_tab.dart';
 import '../../models/student_model.dart';
@@ -144,7 +146,10 @@ class _TeacherHomeTab extends StatelessWidget {
                                   ? 'No students enrolled'
                                   : '$count student${count == 1 ? '' : 's'}',
                               title: slot.subjectName,
-                              grade: '${slot.gradeName} · ${slot.className}',
+                              grade: EnrollmentDisplay.teacherSlotLine(
+                                slot.gradeName,
+                                slot.className,
+                              ),
                               icon: slot.icon,
                               accentColor: slot.accentColor,
                               isDark: isDark,
@@ -447,8 +452,8 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
               : 'No students on your roster yet',
           message: overview.slots.isEmpty
               ? 'Ask admin to assign you in Admin → Staff tab after you register as Teacher.'
-              : 'Students appear here after parents enroll children in your assigned sections '
-                  '(${overview.slots.map((s) => s.className).join(', ')}).',
+              : 'Students appear here after parents enroll children in your assigned grades '
+                  '(${overview.slots.map((s) => EnrollmentDisplay.teacherSlotLine(s.gradeName, s.className)).toSet().join(', ')}).',
         ),
       );
     }
@@ -527,7 +532,12 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                           ...overview.slots.map(
                             (s) => DropdownMenuItem(
                               value: s.classRoomId,
-                              child: Text('${s.gradeName} · ${s.className}'),
+                              child: Text(
+                                EnrollmentDisplay.teacherSlotLine(
+                                  s.gradeName,
+                                  s.className,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -808,6 +818,21 @@ class _TeacherProfileTab extends StatelessWidget {
                 const Divider(),
                 _ProfileStatRow(label: 'Roster', value: rosterLabel),
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const TeacherProfileSetupScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.menu_book_outlined),
+              label: const Text('Update grades & subjects I teach'),
             ),
           ),
           const SizedBox(height: 16),

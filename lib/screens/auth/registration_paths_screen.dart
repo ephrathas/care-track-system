@@ -47,7 +47,7 @@ class RegistrationPathsScreen extends StatelessWidget {
                 'Share the 6-digit link code with your child',
                 'Child can sign up and use the same code to connect',
               ],
-              onTap: () => AuthNavigation.openOnboarding(context, UserRole.parent),
+              onTap: () => AuthNavigation.openRegister(context, UserRole.parent),
             ),
             const SizedBox(height: 16),
             _PathCard(
@@ -72,10 +72,10 @@ class RegistrationPathsScreen extends StatelessWidget {
               title: 'I\'m a teacher',
               steps: const [
                 'Create your teacher account',
-                'Pick your preferred grade and subject',
-                'Admin assigns you to a section (e.g. Grade 1-A)',
+                'Pick subjects you teach (from the school list)',
+                'Admin assigns you to a grade + subject you qualify for',
               ],
-              onTap: () => AuthNavigation.openOnboarding(context, UserRole.teacher),
+              onTap: () => AuthNavigation.openRegister(context, UserRole.teacher),
             ),
             const SizedBox(height: 16),
             _PathCard(
