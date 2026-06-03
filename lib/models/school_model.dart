@@ -8,6 +8,8 @@ class SchoolModel {
   final String timezone;
   final bool isActive;
   final String? primaryAdminUid;
+  /// Highest standard grade level (1–12) this school uses; set via starter curriculum.
+  final int? maxCatalogGradeLevel;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -19,6 +21,7 @@ class SchoolModel {
     this.timezone = 'UTC',
     this.isActive = true,
     this.primaryAdminUid,
+    this.maxCatalogGradeLevel,
     this.createdAt,
     this.updatedAt,
   });
@@ -32,6 +35,7 @@ class SchoolModel {
       timezone: map['timezone'] as String? ?? 'UTC',
       isActive: map['isActive'] as bool? ?? true,
       primaryAdminUid: map['primaryAdminUid'] as String?,
+      maxCatalogGradeLevel: (map['maxCatalogGradeLevel'] as num?)?.toInt(),
     );
   }
 
@@ -42,11 +46,13 @@ class SchoolModel {
         'timezone': timezone,
         'isActive': isActive,
         if (primaryAdminUid != null) 'primaryAdminUid': primaryAdminUid,
+        if (maxCatalogGradeLevel != null) 'maxCatalogGradeLevel': maxCatalogGradeLevel,
       };
 
   SchoolModel copyWith({
     String? name,
     String? primaryAdminUid,
+    int? maxCatalogGradeLevel,
   }) {
     return SchoolModel(
       id: id,
@@ -56,6 +62,7 @@ class SchoolModel {
       timezone: timezone,
       isActive: isActive,
       primaryAdminUid: primaryAdminUid ?? this.primaryAdminUid,
+      maxCatalogGradeLevel: maxCatalogGradeLevel ?? this.maxCatalogGradeLevel,
     );
   }
 }
