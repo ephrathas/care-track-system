@@ -25,7 +25,8 @@ class CatalogGrade {
     required this.subjects,
   });
 
-  String get classSectionName => '$displayName-A';
+  /// Single class per grade (e.g. "Grade 1", not "Grade 1-A").
+  String get classSectionName => displayName;
 }
 
 class AcademicCatalog {
