@@ -19,6 +19,7 @@ import '../../core/constants/routes.dart';
 import '../../providers/messaging_provider.dart';
 import '../../services/database_service.dart';
 import '../auth/healthcare_profile_setup_screen.dart';
+import '../../widgets/staff/staff_profile_incomplete_banner.dart';
 
 class HealthcareDashboard extends StatefulWidget {
   const HealthcareDashboard({super.key});
@@ -95,10 +96,13 @@ class _HealthcareHomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final healthcare = Provider.of<HealthcareProvider>(context);
+    final auth = context.watch<AuthProvider>();
     final schoolName =
         context.watch<SchoolAdminProvider>().school?.name ?? 'School clinic';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final todayVisits = healthcare.todayAppointments;
+    final accent = RoleStyles.forRole('Healthcare')['accent'] as Color;
+    final profileIncomplete = !auth.isHealthcareProfileComplete;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
@@ -116,7 +120,7 @@ class _HealthcareHomeTab extends StatelessWidget {
                     child: DashboardHeroHeader(
                       profileUser: user,
                       gradient: RoleStyles.forRole('Healthcare')['gradient'] as LinearGradient,
-                      accentColor: RoleStyles.forRole('Healthcare')['accent'] as Color,
+                      accentColor: accent,
                       subtitle: 'Healthcare Center',
                       title: 'Hello, ${user?.fullName ?? 'Healthcare Professional'}',
                       badgeText: '$schoolName • School health',
@@ -124,6 +128,24 @@ class _HealthcareHomeTab extends StatelessWidget {
                       padding: const EdgeInsets.all(24),
                     ),
                   ),
+                  if (profileIncomplete)
+                    SliverToBoxAdapter(
+                      child: StaffProfileIncompleteBanner(
+                        accentColor: accent,
+                        title: 'Finish your clinic profile',
+                        message:
+                            'Select the health services you provide so parents can '
+                            'match enrolled children to your care.',
+                        actionLabel: 'Set up health services',
+                        onAction: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const HealthcareProfileSetupScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   SliverToBoxAdapter(
                     child: _buildClinicStats(
                       isDark,

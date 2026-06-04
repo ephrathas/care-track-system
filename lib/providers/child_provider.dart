@@ -414,7 +414,7 @@ class ChildProvider with ChangeNotifier {
       notifyListeners();
       return name;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
       _isLoading = false;
       notifyListeners();
       return null;

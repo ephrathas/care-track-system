@@ -29,9 +29,17 @@ class _LinkChildScreenState extends State<LinkChildScreen> {
     final parentId = context.read<AuthProvider>().currentUser?.uid;
     if (parentId == null) return;
 
+    final code = _codeController.text.trim();
+    if (code.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter the full 6-digit code from your child.')),
+      );
+      return;
+    }
+
     final name = await context.read<ChildProvider>().claimChildWithLinkCode(
           parentId: parentId,
-          code: _codeController.text,
+          code: code,
           relationshipType: _relationship,
         );
 
@@ -39,17 +47,16 @@ class _LinkChildScreenState extends State<LinkChildScreen> {
     if (name != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Linked to $name successfully.'),
+          content: Text('Linked to $name. They appear under My Children.'),
           backgroundColor: AppTheme.softGreen,
         ),
       );
       Navigator.pop(context);
     } else {
+      final raw = context.read<ChildProvider>().errorMessage ?? 'Could not link child.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            context.read<ChildProvider>().errorMessage ?? 'Could not link child.',
-          ),
+          content: Text(raw.replaceFirst('Exception: ', '')),
         ),
       );
     }
@@ -69,10 +76,24 @@ class _LinkChildScreenState extends State<LinkChildScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'If your child registered first, ask them for their 6-digit family link code.',
+              'If your child registered on their own, ask them for their 6-digit code '
+              '(Profile → My parent link code, or the screen right after they signed up).',
               style: TextStyle(
                 color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
                 height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppTheme.softGreen.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Steps: 1) Child shares code  2) You enter it below  '
+                '3) Child appears on your Home tab',
+                style: TextStyle(fontSize: 12, height: 1.4),
               ),
             ),
             const SizedBox(height: 24),

@@ -97,6 +97,12 @@ class DrawerNavigation {
           KidCareDrawerItem(label: 'My Tasks', icon: Icons.assignment_rounded, tabIndex: 1),
           KidCareDrawerItem(label: 'Badges', icon: Icons.emoji_events_rounded, tabIndex: 2),
           KidCareDrawerItem(label: 'Profile', icon: Icons.person_rounded, tabIndex: 3, isDividerAfter: true),
+          KidCareDrawerItem(
+            label: 'My parent link code',
+            icon: Icons.pin_rounded,
+            action: KidCareDrawerAction.route,
+            route: AppRoutes.linkParent,
+          ),
         ];
       case UserRole.healthcare:
         return const [

@@ -23,6 +23,7 @@ import '../../models/student_model.dart';
 import '../../models/user_model.dart';
 import '../../widgets/common/education_empty_state.dart';
 import '../../widgets/care/student_care_sheet.dart';
+import '../../widgets/staff/staff_profile_incomplete_banner.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -101,8 +102,11 @@ class _TeacherHomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final overview = context.watch<TeacherOverviewProvider>();
+    final auth = context.watch<AuthProvider>();
     final schoolName =
         context.watch<SchoolAdminProvider>().school?.name ?? 'Your school';
+    final accent = RoleStyles.forRole('Teacher')['accent'] as Color;
+    final profileIncomplete = !auth.isTeacherProfileComplete;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
@@ -116,12 +120,30 @@ class _TeacherHomeTab extends StatelessWidget {
                     child: DashboardHeroHeader(
                       profileUser: user,
                       gradient: RoleStyles.forRole('Teacher')['gradient'] as LinearGradient,
-                      accentColor: RoleStyles.forRole('Teacher')['accent'] as Color,
+                      accentColor: accent,
                       subtitle: schoolName,
                       title: 'Hello, ${user?.fullName ?? 'Educator'}',
                       badgeText: overview.badgeText,
                     ),
                   ),
+                  if (profileIncomplete)
+                    SliverToBoxAdapter(
+                      child: StaffProfileIncompleteBanner(
+                        accentColor: accent,
+                        title: 'Finish your teaching profile',
+                        message:
+                            'Add the grade levels and subjects you teach so your school '
+                            'can assign classes and show your student roster.',
+                        actionLabel: 'Set up grades & subjects',
+                        onAction: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const TeacherProfileSetupScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   SliverToBoxAdapter(
                     child: _buildQuickStats(isDark, overview),
                   ),

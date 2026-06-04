@@ -12,7 +12,10 @@ import '../../widgets/auth/auth_primary_button.dart';
 
 /// Teacher setup: add multiple grades; subjects shown per grade from school curriculum.
 class TeacherProfileSetupScreen extends StatefulWidget {
-  const TeacherProfileSetupScreen({super.key});
+  const TeacherProfileSetupScreen({super.key, this.isFirstLogin = false});
+
+  /// Shown right after sign-in when registration did not include grades/subjects.
+  final bool isFirstLogin;
 
   @override
   State<TeacherProfileSetupScreen> createState() =>
@@ -25,6 +28,7 @@ class _TeacherProfileSetupScreenState extends State<TeacherProfileSetupScreen> {
   String? _activeGradeId;
   final Set<String> _draftSubjectIds = {};
   bool _saving = false;
+  bool _deferring = false;
   bool _loadedExisting = false;
 
   void _loadExistingProfile(AuthProvider auth) {
@@ -129,6 +133,7 @@ class _TeacherProfileSetupScreenState extends State<TeacherProfileSetupScreen> {
         'schoolId': user.schoolId ?? SchoolConfig.defaultSchoolId,
         'teacherProfile': profile.toMap(),
         'teacherSetupComplete': true,
+        'teacherProfileSetupDeferred': false,
         'updatedAt': FieldValue.serverTimestamp(),
       });
       await auth.refreshUserProfile();
@@ -148,6 +153,18 @@ class _TeacherProfileSetupScreenState extends State<TeacherProfileSetupScreen> {
     }
   }
 
+  Future<void> _completeLater() async {
+    setState(() => _deferring = true);
+    final ok = await context.read<AuthProvider>().deferTeacherProfileSetup();
+    if (!mounted) return;
+    setState(() => _deferring = false);
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not continue. Try again.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -155,6 +172,7 @@ class _TeacherProfileSetupScreenState extends State<TeacherProfileSetupScreen> {
     final auth = context.watch<AuthProvider>();
     _loadExistingProfile(auth);
     final isEditing = auth.isTeacherProfileComplete;
+    final showFirstLogin = widget.isFirstLogin && !isEditing;
 
     final pickable = _gradesAvailableToPick(school);
     GradeLevelModel? activeGrade;
@@ -173,7 +191,14 @@ class _TeacherProfileSetupScreenState extends State<TeacherProfileSetupScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
-        title: Text(isEditing ? 'Update teaching profile' : 'Teacher profile'),
+        title: Text(
+          isEditing
+              ? 'Update teaching profile'
+              : showFirstLogin
+                  ? 'Set up your teaching profile'
+                  : 'Teacher profile',
+        ),
+        automaticallyImplyLeading: isEditing,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -181,6 +206,25 @@ class _TeacherProfileSetupScreenState extends State<TeacherProfileSetupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (showFirstLogin) ...[
+                Text(
+                  'Welcome, ${auth.currentUser?.fullName ?? 'Teacher'}',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your account was created without grade or subject details. '
+                  'Add them here so the school can match you to classes and students.',
+                  style: TextStyle(
+                    height: 1.45,
+                    fontSize: 14,
+                    color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -351,9 +395,20 @@ class _TeacherProfileSetupScreenState extends State<TeacherProfileSetupScreen> {
                     ? 'Saving…'
                     : isEditing
                         ? 'Save profile'
-                        : 'Continue to dashboard',
+                        : 'Save and open dashboard',
                 onPressed: _saving || school.grades.isEmpty ? null : _save,
               ),
+              if (showFirstLogin) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton(
+                    onPressed: (_saving || _deferring) ? null : _completeLater,
+                    child: Text(
+                      _deferring ? 'Opening dashboard…' : 'Complete later',
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

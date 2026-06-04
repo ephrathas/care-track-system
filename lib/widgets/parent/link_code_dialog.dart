@@ -8,6 +8,7 @@ class LinkCodeDialog extends StatelessWidget {
   final String message;
   final String linkCode;
   final String childName;
+  final bool showEnrollmentNote;
 
   const LinkCodeDialog({
     super.key,
@@ -15,6 +16,7 @@ class LinkCodeDialog extends StatelessWidget {
     required this.message,
     required this.linkCode,
     required this.childName,
+    this.showEnrollmentNote = true,
   });
 
   static Future<void> show(
@@ -23,6 +25,7 @@ class LinkCodeDialog extends StatelessWidget {
     required String message,
     required String linkCode,
     required String childName,
+    bool showEnrollmentNote = true,
   }) {
     return showDialog(
       context: context,
@@ -31,6 +34,7 @@ class LinkCodeDialog extends StatelessWidget {
         message: message,
         linkCode: linkCode,
         childName: childName,
+        showEnrollmentNote: showEnrollmentNote,
       ),
     );
   }
@@ -49,7 +53,7 @@ class LinkCodeDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withValues(alpha: 0.06),
+              color: AppTheme.primaryBlue.withOpacity(0.06),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Text(

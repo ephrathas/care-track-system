@@ -164,7 +164,7 @@ class _StudentProfileSetupScreenState extends State<StudentProfileSetupScreen> {
       await auth.refreshUserProfile();
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.linkParent);
+      Navigator.pushNamed(context, AppRoutes.linkParent);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -105,7 +105,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (success) {
-      _showSuccessSnackbar('Welcome, ${_nameController.text.trim()}! Account created.');
+      final name = _nameController.text.trim();
+      final role = _selectedRole;
+      final followUp = role == UserRole.teacher.label
+          ? ' After sign-in you can add your grades and subjects.'
+          : role == UserRole.healthcare.label
+              ? ' After sign-in you can add the health services you provide.'
+              : '';
+      _showSuccessSnackbar('Welcome, $name! Account created.$followUp');
       if (mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.roleSelection, (_) => false);
       }
