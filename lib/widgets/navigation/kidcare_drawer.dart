@@ -79,7 +79,7 @@ class KidCareDrawer extends StatelessWidget {
                 borderRadius: BorderRadius.circular(22),
                 boxShadow: [
                   BoxShadow(
-                    color: accent.withOpacity(0.28),
+                    color: accent.withValues(alpha: 0.28),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -134,7 +134,7 @@ class KidCareDrawer extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
+                      color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -213,7 +213,7 @@ class _DrawerTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
-        color: selected ? accent.withOpacity(isDark ? 0.18 : 0.1) : Colors.transparent,
+        color: selected ? accent.withValues(alpha: isDark ? 0.18 : 0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
@@ -226,7 +226,7 @@ class _DrawerTile extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: selected
-                        ? accent.withOpacity(0.18)
+                        ? accent.withValues(alpha: 0.18)
                         : (isDark ? Colors.white10 : AppTheme.warmNeutral),
                     borderRadius: BorderRadius.circular(10),
                   ),

@@ -34,7 +34,7 @@ class MessageThreadTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: unread
-                  ? AppTheme.primaryBlue.withOpacity(0.35)
+                  ? AppTheme.primaryBlue.withValues(alpha: 0.35)
                   : (isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
               width: unread ? 1.5 : 1,
             ),
@@ -44,7 +44,7 @@ class MessageThreadTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+                backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
                 child: Icon(
                   thread.isHealthcareThread
                       ? Icons.medical_services_rounded
@@ -94,7 +94,7 @@ class MessageThreadTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppTheme.primaryBlue.withOpacity(0.85),
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w600,
                         ),
                       ),

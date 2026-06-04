@@ -32,7 +32,7 @@ class KidCareAvatarImage extends StatelessWidget {
       } else if (ProfilePhotoService.isHttpUrl(url)) {
         return CircleAvatar(
           radius: radius,
-          backgroundColor: accent.withOpacity(0.15),
+          backgroundColor: accent.withValues(alpha: 0.15),
           backgroundImage: NetworkImage(url),
           onBackgroundImageError: (_, __) {},
         );
@@ -41,7 +41,7 @@ class KidCareAvatarImage extends StatelessWidget {
 
     return CircleAvatar(
       radius: radius,
-      backgroundColor: accent.withOpacity(0.15),
+      backgroundColor: accent.withValues(alpha: 0.15),
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : '?',
         style: TextStyle(

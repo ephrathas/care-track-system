@@ -69,7 +69,7 @@ class _FirstAdminSetupScreenState extends State<FirstAdminSetupScreen> {
               ),
               const Spacer(),
               Icon(Icons.apartment_rounded,
-                  size: 56, color: AppTheme.primaryBlue.withOpacity(0.9)),
+                  size: 56, color: AppTheme.primaryBlue.withValues(alpha: 0.9)),
               const SizedBox(height: 20),
               Text(
                 'Set up your school',

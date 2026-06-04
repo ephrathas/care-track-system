@@ -29,7 +29,7 @@ class EducationEmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withOpacity(isDark ? 0.12 : 0.08),
+                color: AppTheme.primaryBlue.withValues(alpha: isDark ? 0.12 : 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 48, color: AppTheme.primaryBlue),

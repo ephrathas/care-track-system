@@ -392,9 +392,9 @@ class ChildGamificationProvider extends ChangeNotifier {
       if (todayRecord == null) {
         attendanceTodayLabel = 'Attendance not marked yet today';
       } else {
-        attendanceTodayLabel = todayRecord!.status == AttendanceStatus.present
+        attendanceTodayLabel = todayRecord.status == AttendanceStatus.present
             ? 'Marked present today'
-            : 'Marked ${todayRecord!.status.id} today';
+            : 'Marked ${todayRecord.status.id} today';
       }
       notifyListeners();
     });

@@ -107,7 +107,7 @@ class _HealthcareComposeSheetState extends State<HealthcareComposeSheet> {
             )
           else ...[
             DropdownButtonFormField<ChildModel>(
-              value: _patient,
+              initialValue: _patient,
               decoration: const InputDecoration(
                 labelText: 'Patient',
                 border: OutlineInputBorder(),

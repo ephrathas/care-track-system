@@ -537,7 +537,7 @@ class SchoolAdminProvider with ChangeNotifier {
   }
 
   String get maxGradeLabel => effectiveMaxCatalogGradeLevel > 0
-      ? 'Grade ${effectiveMaxCatalogGradeLevel}'
+      ? 'Grade $effectiveMaxCatalogGradeLevel'
       : 'Not set';
 
   Future<bool> setMaxCatalogGradeLevel(int level) async {

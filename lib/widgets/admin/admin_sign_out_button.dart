@@ -50,7 +50,7 @@ class AdminSignOutButton extends StatelessWidget {
       label: const Text('Sign out'),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppTheme.textSecondary,
-        side: BorderSide(color: AppTheme.inputBorder),
+        side: const BorderSide(color: AppTheme.inputBorder),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );

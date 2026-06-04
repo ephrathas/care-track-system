@@ -271,12 +271,12 @@ class _GovInfoBanner extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryBlue.withOpacity(0.08),
-            AppTheme.softGreen.withOpacity(0.06),
+            AppTheme.primaryBlue.withValues(alpha: 0.08),
+            AppTheme.softGreen.withValues(alpha: 0.06),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.2)),
+        border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,7 +373,7 @@ class _AdminUserTile extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+          backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
           child: const Icon(Icons.shield_rounded, color: AppTheme.primaryBlue, size: 20),
         ),
         title: Row(
@@ -403,7 +403,7 @@ class _AdminUserTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.softGreen.withOpacity(0.12),
+                  color: AppTheme.softGreen.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(

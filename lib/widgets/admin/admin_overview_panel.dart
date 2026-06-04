@@ -104,7 +104,7 @@ class AdminOverviewPanel extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.tune_rounded, color: AppTheme.primaryBlue.withOpacity(0.9)),
+                    Icon(Icons.tune_rounded, color: AppTheme.primaryBlue.withValues(alpha: 0.9)),
                     const SizedBox(width: 10),
                     const Text(
                       'Grade range',
@@ -207,7 +207,7 @@ class _HeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryBlue.withOpacity(0.28),
+            color: AppTheme.primaryBlue.withValues(alpha: 0.28),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -221,7 +221,7 @@ class _HeroCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
+                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.admin_panel_settings_rounded, color: Colors.white, size: 28),
@@ -242,7 +242,7 @@ class _HeroCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       schoolName ?? AppBranding.name,
-                      style: TextStyle(color: Colors.white.withOpacity(0.88), fontSize: 14),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 14),
                     ),
                   ],
                 ),
@@ -253,7 +253,7 @@ class _HeroCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -262,7 +262,7 @@ class _HeroCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'Highest grade: $maxGradeLabel',
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13),
                 ),
               ],
             ),
@@ -303,7 +303,7 @@ class _MetricTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.22)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

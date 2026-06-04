@@ -122,12 +122,12 @@ class AssignmentCompletionSheet extends StatelessWidget {
                   controller: scrollController,
                   children: [
                     if (done.isNotEmpty) ...[
-                      Text(
+                      const Text(
                         'Turned in',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color: const Color(0xFF7ED321),
+                          color: Color(0xFF7ED321),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -210,7 +210,7 @@ class _StudentRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: done
-              ? const Color(0xFF7ED321).withOpacity(0.35)
+              ? const Color(0xFF7ED321).withValues(alpha: 0.35)
               : (isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
         ),
       ),

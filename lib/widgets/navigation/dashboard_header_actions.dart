@@ -12,19 +12,19 @@ class DashboardHeaderActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        DashboardNavLeading(isDark: false, useGlassStyle: true),
+        const DashboardNavLeading(isDark: false, useGlassStyle: true),
         const Spacer(),
         Text(
           AppBranding.headerLabel.toUpperCase(),
           style: TextStyle(
-            color: Colors.white.withOpacity(0.55),
+            color: Colors.white.withValues(alpha: 0.55),
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
           ),
         ),
         const Spacer(),
-        DashboardNavTrailing(isDark: false, useGlassStyle: true),
+        const DashboardNavTrailing(isDark: false, useGlassStyle: true),
       ],
     );
   }
@@ -236,7 +236,7 @@ class _GlassHeaderButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withOpacity(0.14),
+        color: Colors.white.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

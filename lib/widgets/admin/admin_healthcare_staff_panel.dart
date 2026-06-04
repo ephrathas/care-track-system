@@ -108,7 +108,7 @@ class _HealthcareTile extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFFE2894A).withOpacity(0.12),
+          backgroundColor: const Color(0xFFE2894A).withValues(alpha: 0.12),
           child: const Icon(Icons.medical_services_outlined,
               color: Color(0xFFE2894A), size: 20),
         ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_branding.dart';
 import '../../core/constants/role_options.dart';
 import '../../core/layout/app_breakpoints.dart';
-import '../../core/constants/routes.dart';
 import '../../core/navigation/auth_navigation.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
@@ -108,7 +107,7 @@ class _WelcomeBackground extends StatelessWidget {
             right: -40,
             child: _GlowOrb(
               size: 220,
-              color: AppTheme.primaryBlue.withOpacity(isDark ? 0.15 : 0.12),
+              color: AppTheme.primaryBlue.withValues(alpha: isDark ? 0.15 : 0.12),
             ),
           ),
           Positioned(
@@ -116,7 +115,7 @@ class _WelcomeBackground extends StatelessWidget {
             left: -50,
             child: _GlowOrb(
               size: 180,
-              color: AppTheme.softGreen.withOpacity(isDark ? 0.1 : 0.1),
+              color: AppTheme.softGreen.withValues(alpha: isDark ? 0.1 : 0.1),
             ),
           ),
         ],
@@ -211,7 +210,7 @@ class _WelcomeMainCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.25 : 0.07),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.07),
             blurRadius: 28,
             offset: const Offset(0, 10),
           ),

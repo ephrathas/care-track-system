@@ -57,7 +57,7 @@ class DashboardHeroHeader extends StatelessWidget {
           Text(
             subtitle!,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.75),
+              color: Colors.white.withValues(alpha: 0.75),
               fontSize: avatarOnRight ? 14 : 12,
               fontWeight: avatarOnRight ? FontWeight.normal : FontWeight.bold,
             ),
@@ -86,7 +86,7 @@ class DashboardHeroHeader extends StatelessWidget {
           borderRadius: BorderRadius.circular(avatarOnRight ? 22 : 24),
           boxShadow: [
             BoxShadow(
-              color: accentColor.withOpacity(0.28),
+              color: accentColor.withValues(alpha: 0.28),
               blurRadius: 18,
               offset: const Offset(0, 8),
             ),
@@ -120,7 +120,7 @@ class DashboardHeroHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
+                  color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

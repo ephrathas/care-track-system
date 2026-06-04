@@ -89,7 +89,7 @@ class StudentCareSheet extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: accentColor.withOpacity(0.12),
+                backgroundColor: accentColor.withValues(alpha: 0.12),
                 child: Text(
                   student.fullName.isNotEmpty ? student.fullName[0].toUpperCase() : '?',
                   style: TextStyle(

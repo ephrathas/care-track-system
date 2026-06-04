@@ -81,7 +81,7 @@ class AppTheme {
       ),
       navigationBarTheme: _navBarTheme(
         background: isLight ? Colors.white : darkSurface,
-        indicator: primaryBlue.withOpacity(isLight ? 0.12 : 0.25),
+        indicator: primaryBlue.withValues(alpha: isLight ? 0.12 : 0.25),
         brightness: brightness,
       ),
       inputDecorationTheme: InputDecorationTheme(

@@ -52,7 +52,7 @@ class AdminProfileTab extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Tap photo to change',
-                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.9)),
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withValues(alpha: 0.9)),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -68,7 +68,7 @@ class AdminProfileTab extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withOpacity(0.08),
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -151,7 +151,7 @@ class AdminProfileTab extends StatelessWidget {
             label: const Text('Sign out'),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.redAccent,
-              side: BorderSide(color: Colors.redAccent.withOpacity(0.5)),
+              side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.5)),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),

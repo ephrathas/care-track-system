@@ -202,7 +202,7 @@ class _ParentHomeTab extends StatelessWidget {
               label: 'Billing',
               value: '${orderProvider.orders.length}',
               subtitle: 'Order records',
-              accent: Color(0xFFE2894A),
+              accent: const Color(0xFFE2894A),
             ),
           ),
         ],
@@ -272,7 +272,7 @@ class _ParentHomeTab extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withOpacity(0.1),
+              color: AppTheme.primaryBlue.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.child_care_rounded,
@@ -517,7 +517,7 @@ class _InsightPanel extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: color, size: 22),
@@ -678,7 +678,7 @@ class _ProfileTab extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.textSecondary.withOpacity(0.8),
+                color: AppTheme.textSecondary.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 12),

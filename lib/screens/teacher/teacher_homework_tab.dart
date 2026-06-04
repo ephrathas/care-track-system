@@ -13,7 +13,6 @@ import '../../providers/teacher_overview_provider.dart';
 import '../../widgets/common/education_empty_state.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/teacher/assignment_completion_sheet.dart';
-import '../../widgets/teacher/grade_entry_sheet.dart';
 
 class TeacherHomeworkTab extends StatefulWidget {
   const TeacherHomeworkTab({super.key});
@@ -119,7 +118,7 @@ class _TeacherHomeworkTabState extends State<TeacherHomeworkTab> {
                       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<TeacherTeachingSlot>(
-                    value: _selectedSlot,
+                    initialValue: _selectedSlot,
                     dropdownColor: isDark ? AppTheme.darkSurface : Colors.white,
                     decoration: InputDecoration(
                       filled: true,
@@ -358,7 +357,7 @@ class _TeacherHomeworkTabState extends State<TeacherHomeworkTab> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: accent.withOpacity(0.12),
+                                    color: accent.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(

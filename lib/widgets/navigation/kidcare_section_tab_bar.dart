@@ -118,8 +118,8 @@ class _Chip extends StatelessWidget {
           color: isDark ? Colors.white : AppTheme.textPrimary,
         ),
       ),
-      backgroundColor: color.withOpacity(isDark ? 0.18 : 0.1),
-      side: BorderSide(color: color.withOpacity(0.35)),
+      backgroundColor: color.withValues(alpha: isDark ? 0.18 : 0.1),
+      side: BorderSide(color: color.withValues(alpha: 0.35)),
       onPressed: onTap,
     );
   }

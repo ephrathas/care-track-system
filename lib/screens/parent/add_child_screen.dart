@@ -417,7 +417,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 const SizedBox(height: 20),
 
                 DropdownButtonFormField<Gender>(
-                  value: _gender,
+                  initialValue: _gender,
                   items: Gender.values
                       .map(
                         (g) => DropdownMenuItem(
@@ -440,7 +440,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 const SizedBox(height: 20),
 
                 DropdownButtonFormField<RelationshipType>(
-                  value: _relationship,
+                  initialValue: _relationship,
                   items: RelationshipType.values
                       .map(
                         (r) => DropdownMenuItem(
@@ -490,7 +490,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
                 // Grade level
                 DropdownButtonFormField<String>(
-                  value: _selectedGradeId,
+                  initialValue: _selectedGradeId,
                   items: grades
                       .map((g) => DropdownMenuItem(
                             value: g.id,
@@ -533,7 +533,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                           children: [
                             const SizedBox(height: 16),
                             DropdownButtonFormField<String>(
-                              value: _selectedSectionId,
+                              initialValue: _selectedSectionId,
                               items: sections
                                   .map((c) {
                                     final gradeName =
@@ -570,9 +570,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.12),
+                        color: Colors.orange.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.orange.withOpacity(0.35)),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,7 +640,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                                 }),
                                 trackColor: WidgetStateProperty.resolveWith((states) {
                                   if (states.contains(WidgetState.selected)) {
-                                    return AppTheme.primaryBlue.withOpacity(0.45);
+                                    return AppTheme.primaryBlue.withValues(alpha: 0.45);
                                   }
                                   return isDark
                                       ? Colors.grey.shade700
@@ -711,9 +711,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
                             margin: const EdgeInsets.only(top: 8),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.12),
+                              color: Colors.orange.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.orange.withOpacity(0.35)),
+                              border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
                             ),
                             child: Text(
                               'No school doctor for: ${_missingDoctorSpecialties.join(', ')}. '

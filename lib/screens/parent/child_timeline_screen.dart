@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/academic/enrollment_display.dart';
-import '../../core/domain/domain_enums.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/firestore/firestore_academic_repository.dart';
 import '../../models/academic_models.dart';
@@ -298,7 +297,7 @@ class _TimelineEventTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: event.color.withOpacity(0.12),
+              color: event.color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(event.icon, size: 18, color: event.color),

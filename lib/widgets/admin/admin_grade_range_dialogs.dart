@@ -36,7 +36,7 @@ Future<void> showLoadStarterCurriculumDialog(BuildContext context) async {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        value: from,
+                        initialValue: from,
                         decoration: const InputDecoration(labelText: 'From grade'),
                         items: List.generate(12, (i) => i + 1)
                             .map((n) => DropdownMenuItem(value: n, child: Text('Grade $n')))
@@ -52,7 +52,7 @@ Future<void> showLoadStarterCurriculumDialog(BuildContext context) async {
                     const SizedBox(width: 12),
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        value: to,
+                        initialValue: to,
                         decoration: const InputDecoration(labelText: 'Up to grade (max)'),
                         items: toItems
                             .map((n) => DropdownMenuItem(value: n, child: Text('Grade $n')))
@@ -67,7 +67,7 @@ Future<void> showLoadStarterCurriculumDialog(BuildContext context) async {
                   'After load, admins can add grades 1–$to only.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
                   ),
                 ),
               ],
@@ -124,7 +124,7 @@ Future<void> showChangeMaxGradeDialog(BuildContext context) async {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
-              value: max < floor ? floor : max,
+              initialValue: max < floor ? floor : max,
               decoration: const InputDecoration(labelText: 'Up to grade'),
               items: List.generate(12, (i) => i + 1)
                   .where((n) => n >= floor)

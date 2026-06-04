@@ -63,7 +63,7 @@ class GradeTeacherPreviewPanel extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.softGreen.withOpacity(0.12),
+                  color: AppTheme.softGreen.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -163,12 +163,12 @@ class _TeacherAssignmentCard extends StatelessWidget {
         color: isDark ? AppTheme.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? Colors.grey.shade800 : accent.withOpacity(0.2),
+          color: isDark ? Colors.grey.shade800 : accent.withValues(alpha: 0.2),
         ),
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: accent.withOpacity(0.08),
+              color: accent.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -180,7 +180,7 @@ class _TeacherAssignmentCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: accent.withOpacity(0.15),
+              backgroundColor: accent.withValues(alpha: 0.15),
               child: Icon(
                 _iconForKey(teacher.subjectIconKey),
                 color: accent,
@@ -250,7 +250,7 @@ class _TeacherAssignmentCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.softGreen.withOpacity(0.15),
+                  color: AppTheme.softGreen.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(

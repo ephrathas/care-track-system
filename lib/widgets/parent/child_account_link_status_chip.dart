@@ -43,9 +43,9 @@ class ChildAccountLinkStatusChip extends StatelessWidget {
         vertical: compact ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.35)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -58,7 +58,7 @@ class ChildAccountLinkStatusChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: compact ? 10 : 11,
                 fontWeight: FontWeight.w600,
-                color: color.withOpacity(0.95),
+                color: color.withValues(alpha: 0.95),
               ),
             ),
           ),

@@ -184,7 +184,7 @@ class _TeacherProfileSetupScreenState extends State<TeacherProfileSetupScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2894A).withOpacity(0.1),
+                  color: const Color(0xFFE2894A).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Text(

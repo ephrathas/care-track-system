@@ -30,7 +30,7 @@ class WelcomeTrustSection extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: badge.accent.withOpacity(0.12),
+                      color: badge.accent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(badge.icon, color: badge.accent),
@@ -89,7 +89,7 @@ class WelcomeTrustSection extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 11,
-            color: isDark ? Colors.grey[600] : AppTheme.textSecondary.withOpacity(0.75),
+            color: isDark ? Colors.grey[600] : AppTheme.textSecondary.withValues(alpha: 0.75),
           ),
         ),
         const SizedBox(height: 14),

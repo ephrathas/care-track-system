@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../core/config/school_config.dart';
 import '../core/domain/domain_enums.dart';
 import '../data/firestore/firestore_helpers.dart';
 /// When a grade is not ready for enrollment, parents alert admins; admins alert parents when ready.

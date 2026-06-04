@@ -25,7 +25,7 @@ class KidCareLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryColor = color ?? AppTheme.primaryBlue;
     final accentColor = color ?? AppTheme.softGreen;
-    final mutedColor = (color ?? AppTheme.textPrimary).withOpacity(0.65);
+    final mutedColor = (color ?? AppTheme.textPrimary).withValues(alpha: 0.65);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -40,7 +40,7 @@ class KidCareLogo extends StatelessWidget {
                 boxShadow: color == null
                     ? [
                         BoxShadow(
-                          color: AppTheme.primaryBlue.withOpacity(0.22),
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.22),
                           blurRadius: 14,
                           offset: const Offset(0, 6),
                         ),

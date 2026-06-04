@@ -139,7 +139,7 @@ class _ParentStartChatSheetState extends State<ParentStartChatSheet> {
             const Text('Add a child profile first.')
           else ...[
             DropdownButtonFormField<ChildModel>(
-              value: _child,
+              initialValue: _child,
               decoration: const InputDecoration(
                 labelText: 'Your child',
                 border: OutlineInputBorder(),
@@ -177,7 +177,7 @@ class _ParentStartChatSheetState extends State<ParentStartChatSheet> {
               )
             else if (_contacts.isNotEmpty)
               DropdownButtonFormField<UserModel>(
-                value: _contact,
+                initialValue: _contact,
                 decoration: InputDecoration(
                   labelText: _target == _ChatTarget.teacher ? 'Teacher' : 'Doctor',
                   border: const OutlineInputBorder(),

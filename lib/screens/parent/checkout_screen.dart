@@ -133,7 +133,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           children: [
-            _SectionTitle(title: 'Delivery details'),
+            const _SectionTitle(title: 'Delivery details'),
             const SizedBox(height: 12),
             _ReadOnlyField(label: 'Name', value: user?.fullName ?? 'Parent'),
             const SizedBox(height: 12),
@@ -163,7 +163,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               },
             ),
             const SizedBox(height: 24),
-            _SectionTitle(title: 'Order summary'),
+            const _SectionTitle(title: 'Order summary'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),

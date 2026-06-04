@@ -184,7 +184,7 @@ class _SummaryBanner extends StatelessWidget {
 
                   'Attendance + published grades for $childCount ${childCount == 1 ? 'child' : 'children'}',
 
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
 
                 ),
 
@@ -592,7 +592,7 @@ class _StatPill extends StatelessWidget {
 
         decoration: BoxDecoration(
 
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
 
           borderRadius: BorderRadius.circular(12),
 
@@ -732,7 +732,7 @@ class _AttendanceRow extends StatelessWidget {
 
             decoration: BoxDecoration(
 
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
 
               borderRadius: BorderRadius.circular(6),
 

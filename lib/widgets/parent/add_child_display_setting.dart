@@ -28,7 +28,7 @@ class AddChildDisplaySetting extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue.withOpacity(0.1),
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.child_care_rounded, color: AppTheme.primaryBlue, size: 20),
@@ -58,7 +58,7 @@ class AddChildDisplaySetting extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Material(
                 color: selected
-                    ? AppTheme.primaryBlue.withOpacity(isDark ? 0.15 : 0.08)
+                    ? AppTheme.primaryBlue.withValues(alpha: isDark ? 0.15 : 0.08)
                     : (isDark ? AppTheme.darkBackground : AppTheme.warmNeutral),
                 borderRadius: BorderRadius.circular(14),
                 child: InkWell(
@@ -71,7 +71,7 @@ class AddChildDisplaySetting extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: selected
-                            ? AppTheme.primaryBlue.withOpacity(0.45)
+                            ? AppTheme.primaryBlue.withValues(alpha: 0.45)
                             : (isDark ? Colors.grey.shade800 : AppTheme.inputBorder),
                       ),
                     ),

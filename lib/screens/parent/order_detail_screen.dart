@@ -44,6 +44,7 @@ class OrderDetailScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _InfoSection(
             title: 'Items',
+            isDark: isDark,
             child: Column(
               children: [
                 for (final item in order.items) ...[
@@ -81,11 +82,11 @@ class OrderDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
-            isDark: isDark,
           ),
           const SizedBox(height: 12),
           _InfoSection(
             title: 'Delivery',
+            isDark: isDark,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -96,7 +97,6 @@ class OrderDetailScreen extends StatelessWidget {
                 _DetailLine(label: 'Email', value: order.email),
               ],
             ),
-            isDark: isDark,
           ),
         ],
       ),
@@ -118,7 +118,7 @@ class _StatusBanner extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withOpacity(0.75)],
+          colors: [color, color.withValues(alpha: 0.75)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -138,7 +138,7 @@ class _StatusBanner extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             order.formattedDate,
-            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
           ),
         ],
       ),
@@ -197,7 +197,7 @@ class _DetailLine extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 11,
-            color: AppTheme.textSecondary.withOpacity(0.9),
+            color: AppTheme.textSecondary.withValues(alpha: 0.9),
           ),
         ),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),

@@ -34,7 +34,7 @@ class FirestoreAdminRepository implements AdminRepository {
 
   @override
   Future<void> bootstrapSchool(SchoolBootstrapRequest request) async {
-    final schoolId = SchoolConfig.defaultSchoolId;
+    const schoolId = SchoolConfig.defaultSchoolId;
     final schoolRef = _db.collection(FirestoreCollections.schools).doc(schoolId);
     final userRef = _db.collection(FirestoreCollections.users).doc(request.adminUid);
 

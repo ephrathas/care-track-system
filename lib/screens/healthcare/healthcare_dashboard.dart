@@ -65,10 +65,10 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
       ],
       children: [
         _HealthcareHomeTab(user: user),
-        _HealthcarePatientsTab(),
-        _HealthcareAppointmentsTab(),
+        const _HealthcarePatientsTab(),
+        const _HealthcareAppointmentsTab(),
         const _HealthcareMessagesTab(),
-        _HealthcareProfileTab(),
+        const _HealthcareProfileTab(),
       ],
     );
   }
@@ -191,7 +191,7 @@ class _HealthcareHomeTab extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: accent.withOpacity(0.12),
+                                      color: accent.withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                     child: Icon(icon, color: accent, size: 24),
@@ -239,9 +239,9 @@ class _HealthcareHomeTab extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.redAccent.withOpacity(0.08),
+                          color: Colors.redAccent.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
                         ),
                         child: const Row(
                           children: [
@@ -565,7 +565,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                           style: const TextStyle(
                               fontSize: 10, fontWeight: FontWeight.bold)),
                       backgroundColor:
-                          const Color(0xFF4A90E2).withOpacity(0.12),
+                          const Color(0xFF4A90E2).withValues(alpha: 0.12),
                       side: BorderSide.none,
                       padding: EdgeInsets.zero,
                     );
@@ -847,7 +847,7 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                       children: [
                                         CircleAvatar(
                                           radius: 20,
-                                          backgroundColor: const Color(0xFFE2894A).withOpacity(0.12),
+                                          backgroundColor: const Color(0xFFE2894A).withValues(alpha: 0.12),
                                           backgroundImage:
                                               p.imageUrl.isNotEmpty ? NetworkImage(p.imageUrl) : null,
                                           child: p.imageUrl.isEmpty
@@ -1052,7 +1052,7 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE2894A).withOpacity(0.12),
+                              color: const Color(0xFFE2894A).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Icon(Icons.event_note_rounded, color: Color(0xFFE2894A), size: 24),
@@ -1072,7 +1072,7 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: statusColor.withOpacity(0.12),
+                                        color: statusColor.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -1136,7 +1136,7 @@ class _HealthcareProfileTab extends StatelessWidget {
             'Tap your photo to update',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
+                fontSize: 12, color: AppTheme.textSecondary.withValues(alpha: 0.8)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -1156,7 +1156,7 @@ class _HealthcareProfileTab extends StatelessWidget {
                 user?.role ?? 'Healthcare',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              backgroundColor: const Color(0xFFE2894A).withOpacity(0.12),
+              backgroundColor: const Color(0xFFE2894A).withValues(alpha: 0.12),
               side: BorderSide.none,
             ),
           ),

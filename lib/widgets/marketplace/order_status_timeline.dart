@@ -67,7 +67,7 @@ class _TimelineStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dotColor = isComplete ? accent : (isDark ? Colors.grey.shade700 : AppTheme.inputBorder);
-    final lineColor = isComplete && !isLast ? accent.withOpacity(0.35) : (isDark ? Colors.grey.shade800 : AppTheme.inputBorder);
+    final lineColor = isComplete && !isLast ? accent.withValues(alpha: 0.35) : (isDark ? Colors.grey.shade800 : AppTheme.inputBorder);
 
     return IntrinsicHeight(
       child: Row(

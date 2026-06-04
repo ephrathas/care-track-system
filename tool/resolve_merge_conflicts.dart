@@ -25,7 +25,7 @@ void main() {
     count++;
   }
 
-  final healthcarePath = 'lib/screens/healthcare/healthcare_dashboard.dart';
+  const healthcarePath = 'lib/screens/healthcare/healthcare_dashboard.dart';
   final healthcareFile = File(healthcarePath);
   if (healthcareFile.existsSync()) {
     final text = healthcareFile.readAsStringSync();

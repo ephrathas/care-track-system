@@ -269,7 +269,7 @@ class _StudentProfileSetupScreenState extends State<StudentProfileSetupScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.primaryBlue.withOpacity(0.08),
+            color: AppTheme.primaryBlue.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Text(
@@ -331,7 +331,7 @@ class _StudentProfileSetupScreenState extends State<StudentProfileSetupScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<Gender>(
-            value: _gender,
+            initialValue: _gender,
             items: Gender.values
                 .map((g) => DropdownMenuItem(value: g, child: Text(g.id)))
                 .toList(),
@@ -345,7 +345,7 @@ class _StudentProfileSetupScreenState extends State<StudentProfileSetupScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _gradeId,
+            initialValue: _gradeId,
             items: grades
                 .map((g) => DropdownMenuItem(value: g.id, child: Text(g.name)))
                 .toList(),
@@ -396,13 +396,13 @@ class _PathCard extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withOpacity(0.35)),
+            border: Border.all(color: color.withValues(alpha: 0.35)),
           ),
           padding: const EdgeInsets.all(18),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: color.withOpacity(0.15),
+                backgroundColor: color.withValues(alpha: 0.15),
                 child: Icon(icon, color: color),
               ),
               const SizedBox(width: 14),

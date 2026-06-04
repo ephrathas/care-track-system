@@ -65,7 +65,7 @@ class GradeEnrolledStudentsPanel extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 14,
-                      backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+                      backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
                       child: Text(
                         s.fullName.isNotEmpty
                             ? s.fullName[0].toUpperCase()

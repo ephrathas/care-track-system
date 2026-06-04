@@ -6,7 +6,6 @@ import '../../core/catalog/academic_catalog.dart';
 import '../../core/config/school_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/class_room_model.dart';
-import '../../models/class_subject_model.dart';
 import '../../models/grade_level_model.dart';
 import '../../models/subject_model.dart';
 import '../../models/user_model.dart';
@@ -25,9 +24,9 @@ class AdminGradesAndSectionsTab extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: _InfoBanner(
               icon: Icons.school_rounded,
               title: 'Grade levels',
@@ -228,7 +227,7 @@ class _AdminTeachersTabState extends State<AdminTeachersTab> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        _InfoBanner(
+        const _InfoBanner(
           icon: Icons.groups_rounded,
           title: 'How teacher assignment works',
           body: SchoolConfig.gradeOnlyEnrollment
@@ -364,10 +363,10 @@ class _AdminTeachersTabState extends State<AdminTeachersTab> {
           child: Column(
             children: [
               DropdownButtonFormField<String>(
-                value: _classId,
-                decoration: InputDecoration(
+                initialValue: _classId,
+                decoration: const InputDecoration(
                   labelText: SchoolConfig.gradeOnlyEnrollment ? 'Grade' : 'Class',
-                  border: const OutlineInputBorder(
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                 ),
@@ -385,7 +384,7 @@ class _AdminTeachersTabState extends State<AdminTeachersTab> {
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
-                value: _subjectId,
+                initialValue: _subjectId,
                 decoration: const InputDecoration(
                   labelText: 'Subject',
                   border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
@@ -415,7 +414,7 @@ class _AdminTeachersTabState extends State<AdminTeachersTab> {
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
-                value: _teacherId,
+                initialValue: _teacherId,
                 decoration: InputDecoration(
                   labelText: 'Teacher',
                   helperText: _classId == null || _subjectId == null
@@ -490,7 +489,7 @@ class _PendingTeachersPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkSurface : const Color(0xFFFFF8E7),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.withOpacity(0.35)),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,7 +796,7 @@ class _GradeSectionCardState extends State<_GradeSectionCard> {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           leading: CircleAvatar(
-            backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+            backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
             child: Text(
               GradeNaming.displayBadge(widget.grade.name, widget.grade.sortOrder),
               style: const TextStyle(
@@ -927,7 +926,7 @@ class _AddGradeCardState extends State<_AddGradeCard> {
       return _AdminInputCard(
         child: Text(
           'Set your grade range on Home (Load curriculum), then add grades here.',
-          style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.9)),
+          style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.9)),
         ),
       );
     }
@@ -936,7 +935,7 @@ class _AddGradeCardState extends State<_AddGradeCard> {
         child: Text(
           'All grades through Grade $max are already added. '
           'Use Home → Change max to extend the range.',
-          style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.9)),
+          style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.9)),
         ),
       );
     }
@@ -950,7 +949,7 @@ class _AddGradeCardState extends State<_AddGradeCard> {
         children: [
           Expanded(
             child: DropdownButtonFormField<int>(
-              value: _selectedLevel,
+              initialValue: _selectedLevel,
               decoration: InputDecoration(
                 labelText: 'Add grade level',
                 helperText:
@@ -1078,9 +1077,9 @@ class _GradeStaffingPanelState extends State<_GradeStaffingPanel> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.35)),
+            border: Border.all(color: color.withValues(alpha: 0.35)),
           ),
           child: Row(
             children: [
@@ -1158,7 +1157,7 @@ class _GradeStaffingPanelState extends State<_GradeStaffingPanel> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _subjectToAdd,
+                  initialValue: _subjectToAdd,
                   isDense: true,
                   decoration: const InputDecoration(
                     labelText: 'Add subject from school list',
@@ -1256,7 +1255,7 @@ class _SubjectTile extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFF9013FE).withOpacity(0.12),
+          backgroundColor: const Color(0xFF9013FE).withValues(alpha: 0.12),
           child: const Icon(Icons.menu_book_rounded, color: Color(0xFF9013FE)),
         ),
         title: Text(subject.name, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -1310,7 +1309,7 @@ class _TeacherTile extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFFE2894A).withOpacity(0.15),
+          backgroundColor: const Color(0xFFE2894A).withValues(alpha: 0.15),
           child: Text(
             teacher.fullName.isNotEmpty ? teacher.fullName[0].toUpperCase() : 'T',
             style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE2894A)),
@@ -1349,9 +1348,9 @@ class _WarningBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.orange.withOpacity(0.35)),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1393,12 +1392,12 @@ class _InfoBanner extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryBlue.withOpacity(0.08),
-            AppTheme.softGreen.withOpacity(0.06),
+            AppTheme.primaryBlue.withValues(alpha: 0.08),
+            AppTheme.softGreen.withValues(alpha: 0.06),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.2)),
+        border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1442,7 +1441,7 @@ class _AdminInputCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1466,7 +1465,7 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 48, color: AppTheme.textSecondary.withOpacity(0.5)),
+          Icon(icon, size: 48, color: AppTheme.textSecondary.withValues(alpha: 0.5)),
           const SizedBox(height: 12),
           Text(
             message,

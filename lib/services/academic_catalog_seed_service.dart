@@ -5,7 +5,6 @@ import '../core/config/school_config.dart';
 import '../core/domain/domain_enums.dart';
 import '../data/firestore/firestore_helpers.dart';
 import '../models/class_room_model.dart';
-import '../models/class_subject_model.dart';
 import '../models/grade_level_model.dart';
 import '../models/subject_model.dart';
 

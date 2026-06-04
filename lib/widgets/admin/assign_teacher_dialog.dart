@@ -70,7 +70,7 @@ Future<void> showAssignTeacherDialog(
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: selectedId,
+              initialValue: selectedId,
               decoration: const InputDecoration(
                 labelText: 'Teacher',
                 border: OutlineInputBorder(

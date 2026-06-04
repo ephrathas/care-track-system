@@ -45,7 +45,7 @@ class AdminShellHeader extends StatelessWidget implements PreferredSizeWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppTheme.textSecondary.withOpacity(0.9),
+              color: AppTheme.textSecondary.withValues(alpha: 0.9),
             ),
           ),
         ],

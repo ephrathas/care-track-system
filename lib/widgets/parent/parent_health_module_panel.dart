@@ -149,7 +149,7 @@ class ParentHealthModulePanel extends StatelessWidget {
                         return Chip(
                           avatar: Icon(opt?.icon ?? Icons.medical_services_outlined, size: 16),
                           label: Text(opt?.label ?? id, style: const TextStyle(fontSize: 11)),
-                          backgroundColor: AppTheme.softGreen.withOpacity(0.12),
+                          backgroundColor: AppTheme.softGreen.withValues(alpha: 0.12),
                           side: BorderSide.none,
                         );
                       })

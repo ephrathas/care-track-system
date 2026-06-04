@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../core/academic/enrollment_display.dart';
 import '../../core/config/school_config.dart';
 import '../../core/constants/role_styles.dart';
@@ -81,8 +80,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         const _TeacherStudentsTab(),
         const _TeacherAttendanceTab(),
         const TeacherHomeworkTab(),
-        _TeacherMessagesTab(),
-        _TeacherProfileTab(),
+        const _TeacherMessagesTab(),
+        const _TeacherProfileTab(),
       ],
     );
   }
@@ -147,7 +146,7 @@ class _TeacherHomeTab extends StatelessWidget {
                     ),
                   ),
                   if (overview.slots.isEmpty)
-                    SliverFillRemaining(
+                    const SliverFillRemaining(
                       hasScrollBody: false,
                       child: EducationEmptyState(
                         icon: Icons.link_off_rounded,
@@ -377,7 +376,7 @@ class _ClassScheduleCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.12),
+              color: accentColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: accentColor, size: 24),
@@ -405,7 +404,7 @@ class _ClassScheduleCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.06) : AppTheme.warmNeutral,
+              color: isDark ? Colors.white.withValues(alpha: 0.06) : AppTheme.warmNeutral,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -617,7 +616,7 @@ class _TeacherStudentsTabState extends State<_TeacherStudentsTab> {
                             ),
                           ),
                           leading: CircleAvatar(
-                            backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+                            backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
                             child: Text(
                               student.fullName.isNotEmpty
                                   ? student.fullName[0].toUpperCase()
@@ -645,8 +644,8 @@ class _TeacherStudentsTabState extends State<_TeacherStudentsTab> {
                                   style: const TextStyle(fontSize: 10),
                                 ),
                                 backgroundColor: present
-                                    ? Colors.green.withOpacity(0.12)
-                                    : Colors.orange.withOpacity(0.12),
+                                    ? Colors.green.withValues(alpha: 0.12)
+                                    : Colors.orange.withValues(alpha: 0.12),
                                 visualDensity: VisualDensity.compact,
                               ),
                               IconButton(
@@ -781,7 +780,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF7ED321).withOpacity(0.12),
+                              color: const Color(0xFF7ED321).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -799,7 +798,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                     if (overview.slots.length > 1) ...[
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: _classRoomFilter,
+                        initialValue: _classRoomFilter,
                         decoration: InputDecoration(
                           labelText: SchoolConfig.gradeOnlyEnrollment
                               ? 'Filter by grade'
@@ -883,7 +882,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isPresent
-                                    ? const Color(0xFF7ED321).withOpacity(0.3)
+                                    ? const Color(0xFF7ED321).withValues(alpha: 0.3)
                                     : (isDark
                                         ? Colors.grey.shade800
                                         : AppTheme.inputBorder),
@@ -897,8 +896,8 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                                       ? NetworkImage(student.imageUrl)
                                       : null,
                                   backgroundColor: isPresent
-                                      ? const Color(0xFF7ED321).withOpacity(0.12)
-                                      : Colors.redAccent.withOpacity(0.1),
+                                      ? const Color(0xFF7ED321).withValues(alpha: 0.12)
+                                      : Colors.redAccent.withValues(alpha: 0.1),
                                   child: student.imageUrl.isEmpty
                                       ? Text(
                                           student.fullName.isNotEmpty
@@ -939,9 +938,9 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                                 ),
                                 Switch(
                                   value: isPresent,
-                                  activeColor: const Color(0xFF7ED321),
+                                  activeThumbColor: const Color(0xFF7ED321),
                                   activeTrackColor:
-                                      const Color(0xFF7ED321).withOpacity(0.2),
+                                      const Color(0xFF7ED321).withValues(alpha: 0.2),
                                   onChanged: attendance.isSaving
                                       ? null
                                       : (value) async {
@@ -1068,7 +1067,7 @@ class _TeacherProfileTab extends StatelessWidget {
           Text(
             'Tap your photo to update',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withOpacity(0.8)),
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary.withValues(alpha: 0.8)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -1088,7 +1087,7 @@ class _TeacherProfileTab extends StatelessWidget {
                 user?.role ?? 'Teacher',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              backgroundColor: const Color(0xFF7ED321).withOpacity(0.12),
+              backgroundColor: const Color(0xFF7ED321).withValues(alpha: 0.12),
               side: BorderSide.none,
             ),
           ),

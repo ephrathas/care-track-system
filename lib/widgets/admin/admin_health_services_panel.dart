@@ -65,7 +65,7 @@ class _AdminHealthServicesPanelState extends State<AdminHealthServicesPanel> {
           Row(
             children: [
               Icon(Icons.medical_services_outlined,
-                  color: const Color(0xFFE2894A).withOpacity(0.9)),
+                  color: const Color(0xFFE2894A).withValues(alpha: 0.9)),
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(

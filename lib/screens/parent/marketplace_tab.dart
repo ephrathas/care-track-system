@@ -158,7 +158,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
           child: Row(
             children: [
-              Icon(Icons.auto_awesome_rounded, size: 18, color: AppTheme.primaryBlue.withOpacity(0.9)),
+              Icon(Icons.auto_awesome_rounded, size: 18, color: AppTheme.primaryBlue.withValues(alpha: 0.9)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -202,7 +202,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              ProductImage(
+              const ProductImage(
                 assetPath: MarketplaceAssets.promoBackToSchool,
                 networkUrl: MarketplaceAssets.urlPromoBackToSchool,
                 fit: BoxFit.cover,
@@ -211,8 +211,8 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.primaryBlue.withOpacity(0.85),
-                      AppTheme.primaryBlueDark.withOpacity(0.75),
+                      AppTheme.primaryBlue.withValues(alpha: 0.85),
+                      AppTheme.primaryBlueDark.withValues(alpha: 0.75),
                     ],
                   ),
                 ),
@@ -231,7 +231,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.95),
+                              color: Colors.white.withValues(alpha: 0.95),
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
@@ -242,7 +242,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 12,
                               height: 1.35,
                             ),

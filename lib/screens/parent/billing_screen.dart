@@ -39,7 +39,7 @@ class BillingScreen extends StatelessWidget {
               '$childCount child profile(s) currently linked.\n'
               'Real invoices and online payment flow will be added later.',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.95),
+                color: Colors.white.withValues(alpha: 0.95),
                 height: 1.45,
                 fontWeight: FontWeight.w500,
               ),

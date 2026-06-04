@@ -124,7 +124,7 @@ class _PathCard extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.25)),
+            border: Border.all(color: color.withValues(alpha: 0.25)),
           ),
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -133,7 +133,7 @@ class _PathCard extends StatelessWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: color.withOpacity(0.15),
+                    backgroundColor: color.withValues(alpha: 0.15),
                     child: Icon(icon, color: color),
                   ),
                   const SizedBox(width: 12),

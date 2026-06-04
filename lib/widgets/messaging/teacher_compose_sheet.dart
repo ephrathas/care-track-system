@@ -103,7 +103,7 @@ class _TeacherComposeSheetState extends State<TeacherComposeSheet> {
             )
           else
             DropdownButtonFormField<ParentContact>(
-              value: _contact,
+              initialValue: _contact,
               decoration: const InputDecoration(
                 labelText: 'Parent',
                 border: OutlineInputBorder(),

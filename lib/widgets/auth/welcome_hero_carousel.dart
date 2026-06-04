@@ -76,7 +76,7 @@ class _WelcomeHeroCarouselState extends State<WelcomeHeroCarousel> {
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryBlue.withOpacity(widget.isDark ? 0.2 : 0.14),
+                color: AppTheme.primaryBlue.withValues(alpha: widget.isDark ? 0.2 : 0.14),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
@@ -138,9 +138,9 @@ class _WelcomeSlidePage extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.05),
-                  Colors.black.withOpacity(0.15),
-                  Colors.black.withOpacity(isDark ? 0.72 : 0.62),
+                  Colors.black.withValues(alpha: 0.05),
+                  Colors.black.withValues(alpha: 0.15),
+                  Colors.black.withValues(alpha: isDark ? 0.72 : 0.62),
                 ],
                 stops: const [0.0, 0.45, 1.0],
               ),
@@ -156,7 +156,7 @@ class _WelcomeSlidePage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: slide.accent.withOpacity(0.92),
+                    color: slide.accent.withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -190,7 +190,7 @@ class _WelcomeSlidePage extends StatelessWidget {
                 Text(
                   slide.caption,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.92),
+                    color: Colors.white.withValues(alpha: 0.92),
                     fontSize: 13,
                     height: 1.4,
                   ),
@@ -253,9 +253,9 @@ class _SlideImage extends StatelessWidget {
 
   Widget _placeholder() {
     return Container(
-      color: slide.accent.withOpacity(0.15),
+      color: slide.accent.withValues(alpha: 0.15),
       alignment: Alignment.center,
-      child: Icon(slide.icon, size: 56, color: slide.accent.withOpacity(0.5)),
+      child: Icon(slide.icon, size: 56, color: slide.accent.withValues(alpha: 0.5)),
     );
   }
 }
@@ -283,7 +283,7 @@ class _PageIndicators extends StatelessWidget {
           width: active ? 22 : 7,
           height: 7,
           decoration: BoxDecoration(
-            color: active ? accent : accent.withOpacity(0.25),
+            color: active ? accent : accent.withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(4),
           ),
         );

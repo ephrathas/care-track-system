@@ -88,7 +88,7 @@ class _LinkChildScreenState extends State<LinkChildScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<RelationshipType>(
-              value: _relationship,
+              initialValue: _relationship,
               items: RelationshipType.values
                   .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))
                   .toList(),

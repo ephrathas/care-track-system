@@ -104,13 +104,13 @@ class _ChildPhotoAvatarState extends State<ChildPhotoAvatar> {
     } else if (child.imageUrl.isNotEmpty) {
       avatar = CircleAvatar(
         radius: widget.radius,
-        backgroundColor: accent.withOpacity(0.2),
+        backgroundColor: accent.withValues(alpha: 0.2),
         backgroundImage: NetworkImage(child.imageUrl),
       );
     } else {
       avatar = CircleAvatar(
         radius: widget.radius,
-        backgroundColor: accent.withOpacity(0.2),
+        backgroundColor: accent.withValues(alpha: 0.2),
         child: Text(
           child.name.isNotEmpty ? child.name[0].toUpperCase() : 'C',
           style: TextStyle(

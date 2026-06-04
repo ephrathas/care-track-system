@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/config/school_config.dart';
 import '../../core/health/health_concerns.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/firestore/firestore_doctor_matching_repository.dart';
@@ -142,7 +141,7 @@ class AdminDoctorRequestsPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: isDark ? AppTheme.darkSurface : const Color(0xFFFFF8E7),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.orange.withOpacity(0.35)),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

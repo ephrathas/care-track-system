@@ -49,7 +49,7 @@ class LinkCodeDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withOpacity(0.06),
+              color: AppTheme.primaryBlue.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Text(

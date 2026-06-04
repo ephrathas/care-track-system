@@ -15,7 +15,7 @@ class AdminAccountMenu extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.logout_rounded, color: AppTheme.primaryBlue.withOpacity(0.85)),
+        icon: Icon(Icons.logout_rounded, color: AppTheme.primaryBlue.withValues(alpha: 0.85)),
         title: const Text('Sign out?'),
         content: const Text(
           'You will leave the admin console and return to role selection. '
@@ -93,7 +93,7 @@ class AdminAccountMenu extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: CircleAvatar(
           radius: 18,
-          backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+          backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.12),
           child: Text(
             initial,
             style: const TextStyle(
