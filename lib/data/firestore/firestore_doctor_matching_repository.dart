@@ -127,29 +127,71 @@ class FirestoreDoctorMatchingRepository {
     }
   }
 
-  Future<void> notifyParentDoctorAvailable({
+  Future<void> notifyParentDoctorLinked({
     required String parentId,
     required String studentName,
     required String specialtyLabel,
     required String studentId,
+    required String doctorName,
   }) async {
     await _db.collection(FirestoreCollections.notifications).add({
       'recipientId': parentId,
       'recipientRole': 'Parent',
       'type': NotificationType.doctorAvailable.id,
-      'title': 'Doctor now available',
+      'title': 'Healthcare connected',
       'body':
-          'A $specialtyLabel professional is available for $studentName. Open the Health tab to assign them.',
+          '$doctorName ($specialtyLabel) is now linked to $studentName — same as when teachers are assigned to a grade. Open Health or Messages to reach them.',
       'relatedStudentId': studentId,
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
+  Future<bool> hasActiveAssignment({
+    required String studentId,
+    required String specialtyId,
+  }) async {
+    final snap = await _db
+        .collection(FirestoreCollections.studentDoctorAssignments)
+        .where('studentId', isEqualTo: studentId)
+        .where('specialtyId', isEqualTo: specialtyId)
+        .where('status', isEqualTo: 'active')
+        .limit(1)
+        .get();
+    return snap.docs.isNotEmpty;
+  }
+
+  /// When a healthcare professional registers, auto-link waiting families (like teacher assignment).
   Future<void> fulfillPendingRequestsForSpecialty({
     required String schoolId,
     required String specialtyId,
+    String? preferredDoctorUserId,
   }) async {
+    final doctors = await findDoctorsForSpecialty(
+      schoolId: schoolId,
+      specialtyId: specialtyId,
+    );
+    if (doctors.isEmpty) return;
+
+    MatchedDoctor doctor = doctors.first;
+    if (preferredDoctorUserId != null && preferredDoctorUserId.isNotEmpty) {
+      for (final d in doctors) {
+        if (d.doctorId == preferredDoctorUserId) {
+          doctor = d;
+          break;
+        }
+      }
+    }
+
+    final label = HealthConcerns.byId(specialtyId)?.label ?? specialtyId;
+
+    await _autoLinkStudentsAwaitingSpecialty(
+      schoolId: schoolId,
+      specialtyId: specialtyId,
+      doctor: doctor,
+      specialtyLabel: label,
+    );
+
     final snap = await _db
         .collection(FirestoreCollections.doctorMatchRequests)
         .where('schoolId', isEqualTo: schoolId)
@@ -157,21 +199,106 @@ class FirestoreDoctorMatchingRepository {
         .where('status', isEqualTo: 'pending')
         .get();
 
+    if (snap.docs.isEmpty) return;
+
     final batch = _db.batch();
     for (final doc in snap.docs) {
+      final data = doc.data();
+      final studentId = data['studentId'] as String? ?? '';
+      final parentId = data['parentId'] as String? ?? '';
+      final studentName = data['studentName'] as String? ?? 'your child';
+
+      if (studentId.isNotEmpty &&
+          parentId.isNotEmpty &&
+          !await hasActiveAssignment(
+            studentId: studentId,
+            specialtyId: specialtyId,
+          )) {
+        await assignDoctor(
+          schoolId: schoolId,
+          parentId: parentId,
+          studentId: studentId,
+          doctor: doctor,
+          specialtyId: specialtyId,
+        );
+        await notifyParentDoctorLinked(
+          parentId: parentId,
+          studentName: studentName,
+          specialtyLabel: data['specialtyLabel'] as String? ?? label,
+          studentId: studentId,
+          doctorName: doctor.fullName,
+        );
+      }
+
       batch.update(doc.reference, {
         'status': 'fulfilled',
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      final data = doc.data();
-      await notifyParentDoctorAvailable(
-        parentId: data['parentId'] as String? ?? '',
-        studentName: data['studentName'] as String? ?? 'your child',
-        specialtyLabel: data['specialtyLabel'] as String? ?? specialtyId,
-        studentId: data['studentId'] as String? ?? '',
-      );
     }
-    if (snap.docs.isNotEmpty) await batch.commit();
+    await batch.commit();
+  }
+
+  /// Children already enrolled with this health need but no doctor yet.
+  Future<void> _autoLinkStudentsAwaitingSpecialty({
+    required String schoolId,
+    required String specialtyId,
+    required MatchedDoctor doctor,
+    required String specialtyLabel,
+  }) async {
+    final snap = await _db
+        .collection(FirestoreCollections.children)
+        .where('schoolId', isEqualTo: schoolId)
+        .get();
+
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final concerns = List<String>.from(data['healthConcernIds'] ?? []);
+      if (!concerns.contains(specialtyId)) continue;
+      if (data['usesPrivateDoctor'] == true) continue;
+
+      final studentId = doc.id;
+      final parentId = data['parentId'] as String? ?? '';
+      if (parentId.isEmpty) continue;
+      if (await hasActiveAssignment(
+        studentId: studentId,
+        specialtyId: specialtyId,
+      )) {
+        continue;
+      }
+
+      await assignDoctor(
+        schoolId: schoolId,
+        parentId: parentId,
+        studentId: studentId,
+        doctor: doctor,
+        specialtyId: specialtyId,
+      );
+
+      final studentName = data['fullName'] as String? ??
+          data['name'] as String? ??
+          'your child';
+      await notifyParentDoctorLinked(
+        parentId: parentId,
+        studentName: studentName,
+        specialtyLabel: specialtyLabel,
+        studentId: studentId,
+        doctorName: doctor.fullName,
+      );
+
+      final pending = await findPendingRequest(
+        studentId: studentId,
+        specialtyId: specialtyId,
+      );
+      if (pending != null) {
+        await _db
+            .collection(FirestoreCollections.doctorMatchRequests)
+            .doc(pending.id)
+            .update({
+          'status': 'fulfilled',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
   }
 
   Stream<List<DoctorMatchRequest>> watchPendingRequestsForSchool(String schoolId) {
@@ -368,6 +495,7 @@ class FirestoreDoctorMatchingRepository {
       await fulfillPendingRequestsForSpecialty(
         schoolId: schoolId,
         specialtyId: specialtyId,
+        preferredDoctorUserId: doctorUserId,
       );
     }
   }

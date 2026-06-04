@@ -8,6 +8,7 @@ class LinkCodeDialog extends StatelessWidget {
   final String message;
   final String linkCode;
   final String childName;
+  final bool showEnrollmentNote;
 
   const LinkCodeDialog({
     super.key,
@@ -15,6 +16,7 @@ class LinkCodeDialog extends StatelessWidget {
     required this.message,
     required this.linkCode,
     required this.childName,
+    this.showEnrollmentNote = true,
   });
 
   static Future<void> show(
@@ -23,6 +25,7 @@ class LinkCodeDialog extends StatelessWidget {
     required String message,
     required String linkCode,
     required String childName,
+    bool showEnrollmentNote = true,
   }) {
     return showDialog(
       context: context,
@@ -31,6 +34,7 @@ class LinkCodeDialog extends StatelessWidget {
         message: message,
         linkCode: linkCode,
         childName: childName,
+        showEnrollmentNote: showEnrollmentNote,
       ),
     );
   }
@@ -45,19 +49,21 @@ class LinkCodeDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(message, style: const TextStyle(fontSize: 13, height: 1.4)),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(10),
+          if (showEnrollmentNote) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryBlue.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Your parent already sees this child after enrollment. The link code connects '
+                'the student\'s login to that school profile so they can use homework, badges, and profile.',
+                style: TextStyle(fontSize: 11, height: 1.4, color: AppTheme.textSecondary),
+              ),
             ),
-            child: const Text(
-              'Your parent already sees this child after enrollment. The link code connects '
-              'the student\'s login to that school profile so they can use homework, badges, and profile.',
-              style: TextStyle(fontSize: 11, height: 1.4, color: AppTheme.textSecondary),
-            ),
-          ),
+          ],
           const SizedBox(height: 16),
           Center(
             child: Text(

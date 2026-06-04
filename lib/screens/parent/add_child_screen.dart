@@ -39,6 +39,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
   bool _usesPrivateDoctor = false;
   final Set<String> _selectedConcernIds = {HealthConcerns.none};
   List<String> _missingDoctorSpecialties = [];
+  List<String> _availableDoctorSpecialties = [];
   bool _checkingDoctors = false;
 
   final DoctorMatchingService _doctorMatching = DoctorMatchingService();
@@ -48,6 +49,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
       if (!mounted) return;
       setState(() {
         _missingDoctorSpecialties = [];
+        _availableDoctorSpecialties = [];
         _checkingDoctors = false;
       });
       return;
@@ -60,6 +62,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
       if (!mounted) return;
       setState(() {
         _missingDoctorSpecialties = [];
+        _availableDoctorSpecialties = [];
         _checkingDoctors = false;
       });
       return;
@@ -71,11 +74,25 @@ class _AddChildScreenState extends State<AddChildScreen> {
         schoolId: SchoolConfig.defaultSchoolId,
         concernIds: concernIds,
       );
+      final missingLabels = missing.toSet();
+      final available = <String>[];
+      for (final id in concernIds) {
+        final label = HealthConcerns.byId(id)?.label ?? id;
+        if (!missingLabels.contains(label)) {
+          available.add(label);
+        }
+      }
       if (!mounted) return;
-      setState(() => _missingDoctorSpecialties = missing);
+      setState(() {
+        _missingDoctorSpecialties = missing;
+        _availableDoctorSpecialties = available;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _missingDoctorSpecialties = []);
+      setState(() {
+        _missingDoctorSpecialties = [];
+        _availableDoctorSpecialties = [];
+      });
     } finally {
       if (mounted) setState(() => _checkingDoctors = false);
     }
@@ -705,6 +722,30 @@ class _AddChildScreenState extends State<AddChildScreen> {
                           ),
                         if (!_usesPrivateDoctor &&
                             !_checkingDoctors &&
+                            _availableDoctorSpecialties.isNotEmpty)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF7ED321).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFF7ED321).withOpacity(0.35),
+                              ),
+                            ),
+                            child: Text(
+                              'School doctor available for: ${_availableDoctorSpecialties.join(', ')}. '
+                              'After you enroll, your child and you will be linked automatically.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.4,
+                                color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                        if (!_usesPrivateDoctor &&
+                            !_checkingDoctors &&
                             _missingDoctorSpecialties.isNotEmpty)
                           Container(
                             width: double.infinity,
@@ -716,8 +757,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
                               border: Border.all(color: Colors.orange.withOpacity(0.35)),
                             ),
                             child: Text(
-                              'No school doctor for: ${_missingDoctorSpecialties.join(', ')}. '
-                              'You can still enroll — the admin is notified and you will get an alert when a doctor is added.',
+                              'No school doctor yet for: ${_missingDoctorSpecialties.join(', ')}. '
+                              'You can still enroll — when a doctor registers for that service, '
+                              'they will connect to your child automatically (like teachers for a grade).',
                               style: TextStyle(
                                 fontSize: 11,
                                 height: 1.4,
@@ -729,7 +771,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              'If no doctor with the right specialty exists yet, the school admin is notified and you will get an alert when one is added.',
+                              'Works like class teachers: you see who is available now; '
+                              'if a service has no doctor yet, linking happens as soon as one joins.',
                               style: TextStyle(
                                 fontSize: 11,
                                 height: 1.4,

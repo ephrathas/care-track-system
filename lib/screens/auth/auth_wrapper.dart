@@ -97,12 +97,12 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
       return const StudentProfileSetupScreen();
     }
 
-    if (role == UserRole.teacher && !auth.isTeacherProfileComplete) {
-      return const TeacherProfileSetupScreen();
+    if (auth.shouldShowTeacherProfileSetup) {
+      return const TeacherProfileSetupScreen(isFirstLogin: true);
     }
 
-    if (role == UserRole.healthcare && !auth.isHealthcareProfileComplete) {
-      return const HealthcareProfileSetupScreen();
+    if (auth.shouldShowHealthcareProfileSetup) {
+      return const HealthcareProfileSetupScreen(isFirstLogin: true);
     }
 
     if (role == UserRole.admin) {

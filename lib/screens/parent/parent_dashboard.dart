@@ -291,6 +291,16 @@ class _ParentHomeTab extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           const AddChildActionButton(),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.linkChild),
+            icon: const Icon(Icons.link_rounded),
+            label: const Text('Link child who registered first'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+          ),
           if (Provider.of<ParentPreferencesProvider>(context).addChildDisplayMode == AddChildDisplayMode.hidden)
             Padding(
               padding: const EdgeInsets.only(top: 12),

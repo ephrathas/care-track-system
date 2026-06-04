@@ -42,6 +42,10 @@ service cloud.firestore {
       return isAdmin() || isTeacher() || isHealthcare();
     }
 
+    function isChild() {
+      return userRole() == 'Child';
+    }
+
     match /schools/{schoolId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
@@ -103,7 +107,10 @@ service cloud.firestore {
     match /family_link_codes/{id} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (isAdmin() || isParent());
+      allow update, delete: if isSignedIn() && (
+        isAdmin() || isParent() ||
+        (isChild() && request.resource.data.linkedStudentUserId == request.auth.uid)
+      );
     }
 
     match /health_profiles/{studentId} {

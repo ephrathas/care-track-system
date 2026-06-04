@@ -283,6 +283,56 @@ class AuthProvider with ChangeNotifier {
     return user.healthcareProfile?.isSetupComplete ?? false;
   }
 
+  bool get shouldShowTeacherProfileSetup {
+    final user = _currentUser;
+    if (user == null) return false;
+    if (UserRole.fromLabel(user.role) != UserRole.teacher) return false;
+    if (isTeacherProfileComplete) return false;
+    return !user.teacherProfileSetupDeferred;
+  }
+
+  bool get shouldShowHealthcareProfileSetup {
+    final user = _currentUser;
+    if (user == null) return false;
+    if (UserRole.fromLabel(user.role) != UserRole.healthcare) return false;
+    if (isHealthcareProfileComplete) return false;
+    return !user.healthcareProfileSetupDeferred;
+  }
+
+  Future<bool> deferTeacherProfileSetup() async {
+    final user = _currentUser;
+    if (user == null) return false;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'teacherProfileSetupDeferred': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      _currentUser = user.copyWith(teacherProfileSetupDeferred: true);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Defer teacher profile setup: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deferHealthcareProfileSetup() async {
+    final user = _currentUser;
+    if (user == null) return false;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'healthcareProfileSetupDeferred': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      _currentUser = user.copyWith(healthcareProfileSetupDeferred: true);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Defer healthcare profile setup: $e');
+      return false;
+    }
+  }
+
   // 🚪 Sign Out Action
   Future<void> logout() async {
     _isLoading = true;

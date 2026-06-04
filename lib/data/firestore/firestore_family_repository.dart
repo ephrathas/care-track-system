@@ -250,18 +250,21 @@ class FirestoreFamilyRepository {
 
   /// Parent can show this anytime; reads `children.linkCode` or matching code doc.
   Future<String?> getLinkCodeForStudent(String studentId) async {
-    final childDoc = await _children.doc(studentId).get();
-    if (!childDoc.exists) return null;
-
-    final onChild = childDoc.data()?['linkCode'] as String? ?? '';
-    if (onChild.length == 6) return onChild;
-
     final codes = await _db
         .collection(FirestoreCollections.familyLinkCodes)
         .where('studentId', isEqualTo: studentId)
         .limit(1)
         .get();
     if (codes.docs.isNotEmpty) return codes.docs.first.id;
+
+    try {
+      final childDoc = await _children.doc(studentId).get();
+      if (!childDoc.exists) return null;
+      final onChild = childDoc.data()?['linkCode'] as String? ?? '';
+      if (onChild.length == 6) return onChild;
+    } catch (_) {
+      // Students may not have permission to read children/{id} yet.
+    }
 
     return null;
   }

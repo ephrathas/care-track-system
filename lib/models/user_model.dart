@@ -12,6 +12,9 @@ class UserModel {
   final HealthcareProfile? healthcareProfile;
   final String? linkedStudentId;
   final bool mustChangePassword;
+  /// Teacher chose "complete later" — dashboard stays reachable until profile is saved.
+  final bool teacherProfileSetupDeferred;
+  final bool healthcareProfileSetupDeferred;
 
   UserModel({
     required this.uid,
@@ -25,6 +28,8 @@ class UserModel {
     this.healthcareProfile,
     this.linkedStudentId,
     this.mustChangePassword = false,
+    this.teacherProfileSetupDeferred = false,
+    this.healthcareProfileSetupDeferred = false,
   });
 
   UserModel copyWith({
@@ -37,6 +42,8 @@ class UserModel {
     HealthcareProfile? healthcareProfile,
     String? linkedStudentId,
     bool? mustChangePassword,
+    bool? teacherProfileSetupDeferred,
+    bool? healthcareProfileSetupDeferred,
   }) {
     return UserModel(
       uid: uid,
@@ -50,6 +57,10 @@ class UserModel {
       healthcareProfile: healthcareProfile ?? this.healthcareProfile,
       linkedStudentId: linkedStudentId ?? this.linkedStudentId,
       mustChangePassword: mustChangePassword ?? this.mustChangePassword,
+      teacherProfileSetupDeferred:
+          teacherProfileSetupDeferred ?? this.teacherProfileSetupDeferred,
+      healthcareProfileSetupDeferred: healthcareProfileSetupDeferred ??
+          this.healthcareProfileSetupDeferred,
     );
   }
 
@@ -72,6 +83,9 @@ class UserModel {
       ),
       linkedStudentId: map['linkedStudentId'] as String?,
       mustChangePassword: map['mustChangePassword'] == true,
+      teacherProfileSetupDeferred: map['teacherProfileSetupDeferred'] == true,
+      healthcareProfileSetupDeferred:
+          map['healthcareProfileSetupDeferred'] == true,
     );
   }
 
@@ -89,6 +103,9 @@ class UserModel {
         'healthcareProfile': healthcareProfile!.toMap(),
       if (linkedStudentId != null) 'linkedStudentId': linkedStudentId,
       'mustChangePassword': mustChangePassword,
+      if (teacherProfileSetupDeferred) 'teacherProfileSetupDeferred': true,
+      if (healthcareProfileSetupDeferred)
+        'healthcareProfileSetupDeferred': true,
     };
   }
 }

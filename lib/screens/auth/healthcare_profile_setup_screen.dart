@@ -6,13 +6,17 @@ import '../../core/config/school_config.dart';
 import '../../core/health/health_concerns.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/staff_profile_models.dart';
+import '../../data/firestore/firestore_doctor_matching_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/school_admin_provider.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 
 /// Healthcare setup: pick specialties from the school's enabled health services.
 class HealthcareProfileSetupScreen extends StatefulWidget {
-  const HealthcareProfileSetupScreen({super.key});
+  const HealthcareProfileSetupScreen({super.key, this.isFirstLogin = false});
+
+  /// Shown right after sign-in when registration did not include health services.
+  final bool isFirstLogin;
 
   @override
   State<HealthcareProfileSetupScreen> createState() =>
@@ -26,6 +30,7 @@ class _HealthcareProfileSetupScreenState
   final _roomController = TextEditingController();
   final Set<String> _selectedSpecialtyIds = {};
   bool _saving = false;
+  bool _deferring = false;
   bool _loadedExisting = false;
 
   @override
@@ -91,12 +96,19 @@ class _HealthcareProfileSetupScreenState
             : _roomController.text.trim(),
         specialtyIds: allowed..sort(),
       );
+      final schoolId = user.schoolId ?? SchoolConfig.defaultSchoolId;
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'schoolId': user.schoolId ?? SchoolConfig.defaultSchoolId,
+        'schoolId': schoolId,
         'healthcareProfile': profile.toMap(),
         'healthcareSetupComplete': true,
+        'healthcareProfileSetupDeferred': false,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      await FirestoreDoctorMatchingRepository().updateHealthcareSpecialties(
+        doctorUserId: user.uid,
+        specialtyIds: allowed,
+        schoolId: schoolId,
+      );
       await auth.refreshUserProfile();
       if (!mounted) return;
       if (Navigator.of(context).canPop()) {
@@ -114,6 +126,18 @@ class _HealthcareProfileSetupScreenState
     }
   }
 
+  Future<void> _completeLater() async {
+    setState(() => _deferring = true);
+    final ok = await context.read<AuthProvider>().deferHealthcareProfileSetup();
+    if (!mounted) return;
+    setState(() => _deferring = false);
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not continue. Try again.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -121,17 +145,49 @@ class _HealthcareProfileSetupScreenState
     final auth = context.watch<AuthProvider>();
     _loadExistingProfile(auth);
     final isEditing = auth.isHealthcareProfileComplete;
+    final showFirstLogin = widget.isFirstLogin && !isEditing;
 
     final options = HealthConcerns.clinicalForSchool(school.enabledHealthSpecialtyIds);
     if (options.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Healthcare profile')),
-        body: const Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Your school admin has not enabled health services yet. '
-            'Ask them to configure services on the admin Home tab, then return here.',
-            style: TextStyle(height: 1.45),
+        appBar: AppBar(
+          title: Text(
+            showFirstLogin ? 'Set up your clinic profile' : 'Healthcare profile',
+          ),
+          automaticallyImplyLeading: isEditing,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (showFirstLogin) ...[
+                Text(
+                  'Welcome, ${auth.currentUser?.fullName ?? 'Doctor'}',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const Text(
+                'Your school admin has not enabled health services yet. '
+                'Ask them to configure services on the admin Home tab, then return here '
+                'from your Profile tab to select the care you provide.',
+                style: TextStyle(height: 1.45),
+              ),
+              if (showFirstLogin) ...[
+                const SizedBox(height: 32),
+                Center(
+                  child: TextButton(
+                    onPressed: _deferring ? null : _completeLater,
+                    child: Text(
+                      _deferring ? 'Opening dashboard…' : 'Open dashboard for now',
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       );
@@ -140,7 +196,14 @@ class _HealthcareProfileSetupScreenState
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
-        title: Text(isEditing ? 'Update healthcare profile' : 'Healthcare profile'),
+        title: Text(
+          isEditing
+              ? 'Update healthcare profile'
+              : showFirstLogin
+                  ? 'Set up your clinic profile'
+                  : 'Healthcare profile',
+        ),
+        automaticallyImplyLeading: isEditing,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -148,6 +211,25 @@ class _HealthcareProfileSetupScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (showFirstLogin) ...[
+                Text(
+                  'Welcome, ${auth.currentUser?.fullName ?? 'Healthcare professional'}',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your account was created without health services listed. '
+                  'Choose the care you provide so parents and enrolled students can be linked to you.',
+                  style: TextStyle(
+                    height: 1.45,
+                    fontSize: 14,
+                    color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -226,9 +308,20 @@ class _HealthcareProfileSetupScreenState
                     ? 'Saving…'
                     : isEditing
                         ? 'Save profile'
-                        : 'Continue to clinic dashboard',
+                        : 'Save and open dashboard',
                 onPressed: _saving ? null : () => _save(school),
               ),
+              if (showFirstLogin) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton(
+                    onPressed: (_saving || _deferring) ? null : _completeLater,
+                    child: Text(
+                      _deferring ? 'Opening dashboard…' : 'Complete later',
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

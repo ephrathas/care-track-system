@@ -9,7 +9,6 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/kidcare_logo.dart';
 import '../../widgets/auth/role_option_tile.dart';
 import '../../widgets/auth/welcome_hero_carousel.dart';
-import '../../widgets/auth/welcome_trust_section.dart';
 import '../../widgets/auth/welcome_value_strip.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -156,9 +155,6 @@ class _NarrowLayout extends StatelessWidget {
         WelcomeHeroCarousel(isDark: isDark, height: 210),
         const SizedBox(height: 20),
         _WelcomeMainCard(isDark: isDark),
-        const SizedBox(height: 24),
-        WelcomeTrustSection(isDark: isDark),
-        const SizedBox(height: 12),
       ],
     );
   }
@@ -180,13 +176,7 @@ class _WideLayout extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Column(
-                children: [
-                  WelcomeHeroCarousel(isDark: isDark, height: 300),
-                  const SizedBox(height: 20),
-                  WelcomeTrustSection(isDark: isDark),
-                ],
-              ),
+              child: WelcomeHeroCarousel(isDark: isDark, height: 300),
             ),
             const SizedBox(width: 28),
             Expanded(child: _WelcomeMainCard(isDark: isDark)),
