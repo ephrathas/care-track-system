@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/config/school_config.dart';
 import '../core/domain/domain_enums.dart';
+import '../core/firebase/firestore_read.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -70,15 +71,15 @@ class AuthService {
 
   Future<UserModel?> getUserData(String uid) async {
     try {
-      DocumentSnapshot doc = await _db.collection('users').doc(uid).get().timeout(const Duration(seconds: 10));
+      final doc = await readDocumentWithRetry(_db.collection('users').doc(uid));
       if (doc.exists) {
-        final data = Map<String, dynamic>.from(doc.data() as Map<String, dynamic>);
+        final data = Map<String, dynamic>.from(doc.data()!);
         data['uid'] = uid;
         return UserModel.fromMap(data);
       }
       return null;
     } catch (e) {
-      print("Get user data error: $e");
+      print('Get user data error: $e');
       rethrow;
     }
   }

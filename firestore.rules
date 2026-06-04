@@ -9,24 +9,33 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function userDocExists() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     function userDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    function userRole() {
+      return userDocExists() ? userDoc().data.role : '';
+    }
+
     function isAdmin() {
-      return isSignedIn() && userDoc().data.role == 'Admin';
+      return userRole() == 'Admin';
     }
 
     function isParent() {
-      return isSignedIn() && userDoc().data.role == 'Parent';
+      return userRole() == 'Parent';
     }
 
     function isTeacher() {
-      return isSignedIn() && userDoc().data.role == 'Teacher';
+      return userRole() == 'Teacher';
     }
 
     function isHealthcare() {
-      return isSignedIn() && userDoc().data.role == 'Healthcare';
+      return userRole() == 'Healthcare';
     }
 
     match /schools/{schoolId} {

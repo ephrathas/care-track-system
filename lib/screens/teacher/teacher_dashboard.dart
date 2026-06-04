@@ -16,6 +16,9 @@ import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/settings/appearance_setting.dart';
 import '../auth/teacher_profile_setup_screen.dart';
 import '../../widgets/messaging/messages_inbox.dart';
+import '../../widgets/messaging/teacher_compose_sheet.dart';
+import '../../core/constants/routes.dart';
+import '../../providers/messaging_provider.dart';
 import 'teacher_homework_tab.dart';
 import '../../models/student_model.dart';
 import '../../models/user_model.dart';
@@ -44,6 +47,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           label: 'Overview',
         ),
         NavigationDestination(
+          icon: Icon(Icons.groups_outlined),
+          selectedIcon: Icon(Icons.groups_rounded),
+          label: 'Students',
+        ),
+        NavigationDestination(
           icon: Icon(Icons.people_outline_rounded),
           selectedIcon: Icon(Icons.people_rounded),
           label: 'Attendance',
@@ -66,6 +74,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       ],
       children: [
         _TeacherHomeTab(user: user),
+        const _TeacherStudentsTab(),
         const _TeacherAttendanceTab(),
         const TeacherHomeworkTab(),
         _TeacherMessagesTab(),
@@ -386,6 +395,177 @@ class _TaskTile extends StatelessWidget {
               color: accent,
               backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== STUDENTS TAB ====================
+class _TeacherStudentsTab extends StatefulWidget {
+  const _TeacherStudentsTab();
+
+  @override
+  State<_TeacherStudentsTab> createState() => _TeacherStudentsTabState();
+}
+
+class _TeacherStudentsTabState extends State<_TeacherStudentsTab> {
+  String _searchQuery = '';
+
+  Future<void> _messageParent(StudentModel student) async {
+    final teacher = context.read<AuthProvider>().currentUser;
+    if (teacher == null) return;
+
+    final parent = await context.read<MessagingProvider>().parentContactsFromRoster([student]);
+    if (!mounted || parent.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not find parent contact for this student.')),
+      );
+      return;
+    }
+
+    final thread = await context.read<MessagingProvider>().ensureTeacherToParentThread(
+          teacher: teacher,
+          contact: parent.first,
+        );
+    if (!mounted) return;
+    if (thread == null) {
+      final err = context.read<MessagingProvider>().errorMessage;
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      }
+      return;
+    }
+    AppRoutes.push(context, AppRoutes.chat, arguments: thread);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final attendance = context.watch<TeacherAttendanceProvider>();
+    final overview = context.watch<TeacherOverviewProvider>();
+    final schoolAdmin = context.watch<SchoolAdminProvider>();
+
+    if (attendance.isLoading) {
+      return const DashboardTabScaffold(
+        title: 'My Students',
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final roster = attendance.roster;
+    final q = _searchQuery.trim().toLowerCase();
+    final list = q.isEmpty
+        ? roster
+        : roster.where((s) => s.fullName.toLowerCase().contains(q)).toList();
+
+    if (roster.isEmpty) {
+      return DashboardTabScaffold(
+        title: 'My Students',
+        body: EducationEmptyState(
+          icon: overview.slots.isEmpty ? Icons.link_off_rounded : Icons.groups_outlined,
+          title: overview.slots.isEmpty
+              ? 'Waiting for admin assignment'
+              : 'No students on your roster yet',
+          message: overview.slots.isEmpty
+              ? 'Ask admin to assign you in Admin → Staff tab after you register as Teacher.'
+              : 'Students appear here after parents enroll children in your assigned grades.',
+        ),
+      );
+    }
+
+    return DashboardTabScaffold(
+      title: 'My Students',
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => TeacherComposeSheet.show(context),
+        icon: const Icon(Icons.chat_rounded),
+        label: const Text('Message parent'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search students...',
+                prefixIcon: const Icon(Icons.search_rounded),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                filled: true,
+                fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v),
+            ),
+          ),
+          Expanded(
+            child: list.isEmpty
+                ? const Center(child: Text('No students match your search.'))
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 88),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final student = list[index];
+                      final gradeLabel = EnrollmentDisplay.classOrGradeLabel(
+                        schoolAdmin,
+                        student.classRoomId,
+                        gradeLevelId: student.gradeLevelId,
+                      );
+                      final present = attendance.isPresent(student.id);
+                      return Material(
+                        color: isDark ? AppTheme.darkSurface : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        child: ListTile(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
+                            ),
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
+                            child: Text(
+                              student.fullName.isNotEmpty
+                                  ? student.fullName[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            student.fullName,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            gradeLabel,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Chip(
+                                label: Text(
+                                  present ? 'Present' : 'Absent',
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                                backgroundColor: present
+                                    ? Colors.green.withOpacity(0.12)
+                                    : Colors.orange.withOpacity(0.12),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              IconButton(
+                                tooltip: 'Message parent',
+                                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                                onPressed: () => _messageParent(student),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

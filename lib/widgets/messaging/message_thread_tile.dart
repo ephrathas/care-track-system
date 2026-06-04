@@ -46,8 +46,14 @@ class MessageThreadTile extends StatelessWidget {
                 radius: 22,
                 backgroundColor: AppTheme.primaryBlue.withOpacity(0.12),
                 child: Icon(
-                  userId == thread.parentId ? Icons.school_rounded : Icons.person_rounded,
-                  color: AppTheme.primaryBlue,
+                  thread.isHealthcareThread
+                      ? Icons.medical_services_rounded
+                      : userId == thread.parentId
+                          ? Icons.school_rounded
+                          : Icons.person_rounded,
+                  color: thread.isHealthcareThread
+                      ? const Color(0xFFE2894A)
+                      : AppTheme.primaryBlue,
                 ),
               ),
               const SizedBox(width: 14),

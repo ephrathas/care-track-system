@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/messaging_provider.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
+import 'healthcare_compose_sheet.dart';
 import 'message_thread_tile.dart';
 import 'parent_start_chat_sheet.dart';
 import 'teacher_compose_sheet.dart';
@@ -14,12 +15,14 @@ class MessagesInbox extends StatelessWidget {
   final String title;
   final bool showStartConversation;
   final bool isTeacherInbox;
+  final bool isHealthcareInbox;
 
   const MessagesInbox({
     super.key,
     required this.title,
     this.showStartConversation = false,
     this.isTeacherInbox = false,
+    this.isHealthcareInbox = false,
   });
 
   @override
@@ -34,26 +37,37 @@ class MessagesInbox extends StatelessWidget {
           ? null
           : FloatingActionButton.extended(
               onPressed: () {
-                if (isTeacherInbox) {
+                if (isHealthcareInbox) {
+                  HealthcareComposeSheet.show(context);
+                } else if (isTeacherInbox) {
                   TeacherComposeSheet.show(context);
                 } else if (showStartConversation) {
                   ParentStartChatSheet.show(context);
                 }
               },
               icon: const Icon(Icons.edit_rounded),
-              label: Text(isTeacherInbox ? 'Message parent' : 'Message teacher'),
+              label: Text(
+                isHealthcareInbox
+                    ? 'Message parent'
+                    : isTeacherInbox
+                        ? 'Message parent'
+                        : 'New message',
+              ),
             ),
       body: messaging.isLoading
           ? const Center(child: CircularProgressIndicator())
           : messaging.threads.isEmpty
               ? _EmptyInbox(
                   isDark: isDark,
-                  showStartConversation: showStartConversation || isTeacherInbox,
+                  showStartConversation: showStartConversation || isTeacherInbox || isHealthcareInbox,
                   isTeacher: isTeacherInbox,
+                  isHealthcare: isHealthcareInbox,
                   onStart: user == null
                       ? null
                       : () {
-                          if (isTeacherInbox) {
+                          if (isHealthcareInbox) {
+                            HealthcareComposeSheet.show(context);
+                          } else if (isTeacherInbox) {
                             TeacherComposeSheet.show(context);
                           } else {
                             ParentStartChatSheet.show(context);
@@ -85,12 +99,14 @@ class _EmptyInbox extends StatelessWidget {
   final bool isDark;
   final bool showStartConversation;
   final bool isTeacher;
+  final bool isHealthcare;
   final VoidCallback? onStart;
 
   const _EmptyInbox({
     required this.isDark,
     required this.showStartConversation,
     this.isTeacher = false,
+    this.isHealthcare = false,
     this.onStart,
   });
 
@@ -114,9 +130,11 @@ class _EmptyInbox extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              isTeacher
-                  ? 'Message parents of students in your assigned classes only.'
-                  : 'Message teachers assigned to your child\'s class section.',
+              isHealthcare
+                  ? 'Message parents of students assigned to your clinic caseload.'
+                  : isTeacher
+                      ? 'Message parents of students in your assigned classes only.'
+                      : 'Message teachers and doctors connected to your children.',
               textAlign: TextAlign.center,
               style: TextStyle(color: isDark ? Colors.grey[400] : AppTheme.textSecondary, height: 1.4),
             ),
@@ -125,7 +143,9 @@ class _EmptyInbox extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onStart,
                 icon: const Icon(Icons.chat_rounded),
-                label: Text(isTeacher ? 'Message parent' : 'Message teacher'),
+                label: Text(
+                  isHealthcare || isTeacher ? 'Message parent' : 'New message',
+                ),
               ),
             ],
           ],

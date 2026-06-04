@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -11,6 +13,9 @@ class AuthErrorMessages {
     }
     if (error is FirebaseException && error.code == 'permission-denied') {
       return 'Database access denied. Ask your admin to deploy the latest Firestore rules, then try again.';
+    }
+    if (error is TimeoutException) {
+      return 'Could not load your profile in time. Check your internet connection, then try again.';
     }
     return 'Something went wrong. Please try again.';
   }

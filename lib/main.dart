@@ -18,6 +18,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/routes.dart';
+import 'core/firebase/firestore_bootstrap.dart';
 import 'core/navigation/auth_navigation.dart';
 
 void main() async {
@@ -26,6 +27,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await configureFirestore();
 
   runApp(
     MultiProvider(

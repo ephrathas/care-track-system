@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../data/firestore/firestore_doctor_matching_repository.dart';
 import '../models/chat_message_model.dart';
 import '../models/child_model.dart';
 import '../models/message_thread_model.dart';
@@ -227,6 +228,63 @@ class MessagingProvider with ChangeNotifier {
     );
   }
 
+  /// School doctors assigned to a child (parent messaging).
+  Future<List<UserModel>> assignedDoctorsForChild(ChildModel child) async {
+    if (child.usesPrivateDoctor) return [];
+    final repo = FirestoreDoctorMatchingRepository();
+    final assignments =
+        await repo.watchAssignmentsForStudent(child.id).first;
+    final doctors = <UserModel>[];
+    final seen = <String>{};
+    for (final assignment in assignments) {
+      if (!seen.add(assignment.doctorId)) continue;
+      final user = await repo.getUser(assignment.doctorId);
+      if (user != null) doctors.add(user);
+    }
+    return doctors;
+  }
+
+  /// Parent contacts from a doctor's assigned patient list.
+  Future<List<HealthcareParentContact>> parentContactsFromPatients(
+    List<ChildModel> patients,
+  ) async {
+    final byParent = <String, HealthcareParentContact>{};
+    for (final patient in patients) {
+      if (patient.parentId.isEmpty) continue;
+      if (byParent.containsKey(patient.parentId)) continue;
+      final parent = await _db.getUserById(patient.parentId);
+      byParent[patient.parentId] = HealthcareParentContact(
+        parentId: patient.parentId,
+        parentName: parent?.fullName ?? 'Parent',
+        studentId: patient.id,
+        studentName: patient.name,
+      );
+    }
+    final list = byParent.values.toList();
+    list.sort((a, b) => a.parentName.compareTo(b.parentName));
+    return list;
+  }
+
+  Future<MessageThread?> ensureHealthcareToParentThread({
+    required UserModel doctor,
+    required HealthcareParentContact contact,
+  }) async {
+    final child = ChildModel(
+      id: contact.studentId,
+      name: contact.studentName,
+      age: 0,
+      parentId: contact.parentId,
+      imageUrl: '',
+    );
+    return ensureDoctorParentThread(
+      parentId: contact.parentId,
+      parentName: contact.parentName,
+      doctor: doctor,
+      child: child,
+      specialtyLabel: 'School clinic',
+    );
+  }
+
   Future<MessageThread?> ensureDoctorParentThread({
     required String parentId,
     required String parentName,
@@ -346,6 +404,22 @@ class MessagingProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+}
+
+class HealthcareParentContact {
+  final String parentId;
+  final String parentName;
+  final String studentId;
+  final String studentName;
+
+  HealthcareParentContact({
+    required this.parentId,
+    required this.parentName,
+    required this.studentId,
+    required this.studentName,
+  });
+
+  String get subtitle => 'Parent of $studentName';
 }
 
 class ParentContact {

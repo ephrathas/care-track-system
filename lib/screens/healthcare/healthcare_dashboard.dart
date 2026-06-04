@@ -8,11 +8,13 @@ import '../../models/child_model.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/healthcare_provider.dart';
+import '../../providers/school_admin_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/settings/appearance_setting.dart';
+import '../../widgets/messaging/messages_inbox.dart';
 import '../auth/healthcare_profile_setup_screen.dart';
 
 class HealthcareDashboard extends StatefulWidget {
@@ -48,6 +50,11 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
           label: 'Visits',
         ),
         NavigationDestination(
+          icon: Icon(Icons.chat_bubble_outline_rounded),
+          selectedIcon: Icon(Icons.chat_bubble_rounded),
+          label: 'Messages',
+        ),
+        NavigationDestination(
           icon: Icon(Icons.medical_services_outlined),
           selectedIcon: Icon(Icons.medical_services_rounded),
           label: 'Credentials',
@@ -57,6 +64,7 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
         _HealthcareHomeTab(user: user),
         _HealthcarePatientsTab(),
         _HealthcareAppointmentsTab(),
+        const _HealthcareMessagesTab(),
         _HealthcareProfileTab(),
       ],
     );
@@ -84,6 +92,8 @@ class _HealthcareHomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final healthcare = Provider.of<HealthcareProvider>(context);
+    final schoolName =
+        context.watch<SchoolAdminProvider>().school?.name ?? 'School clinic';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final todayVisits = healthcare.todayAppointments;
 
@@ -106,7 +116,7 @@ class _HealthcareHomeTab extends StatelessWidget {
                       accentColor: RoleStyles.forRole('Healthcare')['accent'] as Color,
                       subtitle: 'Healthcare Center',
                       title: 'Hello, ${user?.fullName ?? 'Healthcare Professional'}',
-                      badgeText: 'Metro Pediatrics Clinic • Room 402',
+                      badgeText: '$schoolName • School health',
                       margin: const EdgeInsets.all(20),
                       padding: const EdgeInsets.all(24),
                     ),
@@ -1045,6 +1055,19 @@ class _HealthcareAppointmentsTab extends StatelessWidget {
                     );
                   },
                 ),
+    );
+  }
+}
+
+// ==================== MESSAGES TAB ====================
+class _HealthcareMessagesTab extends StatelessWidget {
+  const _HealthcareMessagesTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MessagesInbox(
+      title: 'Parent Messages',
+      isHealthcareInbox: true,
     );
   }
 }

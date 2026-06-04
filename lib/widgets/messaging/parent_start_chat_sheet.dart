@@ -9,7 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/messaging_provider.dart';
 
-/// Parent picks child → teacher assigned to that class → opens chat.
+/// Parent picks child → teacher or assigned doctor → opens chat.
 class ParentStartChatSheet extends StatefulWidget {
   const ParentStartChatSheet({super.key});
 
@@ -29,45 +29,61 @@ class ParentStartChatSheet extends StatefulWidget {
 }
 
 class _ParentStartChatSheetState extends State<ParentStartChatSheet> {
+  _ChatTarget _target = _ChatTarget.teacher;
   ChildModel? _child;
-  UserModel? _teacher;
-  List<UserModel> _teachers = [];
-  bool _loadingTeachers = false;
+  UserModel? _contact;
+  List<UserModel> _contacts = [];
+  bool _loadingContacts = false;
   bool _starting = false;
 
-  Future<void> _loadTeachers(ChildModel child) async {
+  Future<void> _loadContacts(ChildModel child) async {
     setState(() {
       _child = child;
-      _teacher = null;
-      _loadingTeachers = true;
-      _teachers = [];
+      _contact = null;
+      _loadingContacts = true;
+      _contacts = [];
     });
-    final list = await context.read<MessagingProvider>().teachersForChild(child);
+
+    final messaging = context.read<MessagingProvider>();
+    final list = _target == _ChatTarget.teacher
+        ? await messaging.teachersForChild(child)
+        : await messaging.assignedDoctorsForChild(child);
+
     if (!mounted) return;
     setState(() {
-      _teachers = list;
-      _loadingTeachers = false;
+      _contacts = list;
+      _loadingContacts = false;
     });
   }
 
   Future<void> _start() async {
     final user = context.read<AuthProvider>().currentUser;
     final child = _child;
-    final teacher = _teacher;
-    if (user == null || child == null || teacher == null) return;
+    final contact = _contact;
+    if (user == null || child == null || contact == null) return;
 
     setState(() => _starting = true);
-    final thread = await context.read<MessagingProvider>().ensureThread(
-          parentId: user.uid,
-          parentName: user.fullName,
-          teacher: teacher,
-          child: child,
-        );
+    final messaging = context.read<MessagingProvider>();
+    final thread = _target == _ChatTarget.teacher
+        ? await messaging.ensureThread(
+            parentId: user.uid,
+            parentName: user.fullName,
+            teacher: contact,
+            child: child,
+          )
+        : await messaging.ensureDoctorParentThread(
+            parentId: user.uid,
+            parentName: user.fullName,
+            doctor: contact,
+            child: child,
+            specialtyLabel: 'School clinic',
+          );
+
     if (!mounted) return;
     setState(() => _starting = false);
 
     if (thread == null) {
-      final err = context.read<MessagingProvider>().errorMessage;
+      final err = messaging.errorMessage;
       if (err != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       }
@@ -90,13 +106,33 @@ class _ParentStartChatSheetState extends State<ParentStartChatSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Message a teacher',
+            'Start a conversation',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Only teachers assigned to your child\'s class can be messaged.',
+            'Message teachers assigned to your child\'s class or doctors assigned for health follow-up.',
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          SegmentedButton<_ChatTarget>(
+            segments: const [
+              ButtonSegment(
+                value: _ChatTarget.teacher,
+                label: Text('Teacher'),
+                icon: Icon(Icons.school_outlined, size: 18),
+              ),
+              ButtonSegment(
+                value: _ChatTarget.doctor,
+                label: Text('Doctor'),
+                icon: Icon(Icons.medical_services_outlined, size: 18),
+              ),
+            ],
+            selected: {_target},
+            onSelectionChanged: (values) {
+              setState(() => _target = values.first);
+              if (_child != null) _loadContacts(_child!);
+            },
           ),
           const SizedBox(height: 16),
           if (children.isEmpty)
@@ -112,40 +148,51 @@ class _ParentStartChatSheetState extends State<ParentStartChatSheet> {
                   .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
                   .toList(),
               onChanged: (c) {
-                if (c != null) _loadTeachers(c);
+                if (c != null) _loadContacts(c);
               },
             ),
             const SizedBox(height: 12),
-            if (_child != null && _child!.classRoomId == null)
+            if (_child != null &&
+                _target == _ChatTarget.teacher &&
+                _child!.classRoomId == null)
               Text(
-                'Enroll ${_child!.name} in a grade before messaging.',
+                'Enroll ${_child!.name} in a grade before messaging teachers.',
                 style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
               )
-            else if (_loadingTeachers)
-              const LinearProgressIndicator(minHeight: 2)
-            else if (_child != null && _teachers.isEmpty)
-              const Text(
-                'No teachers assigned to this class yet. Ask the school admin.',
-                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            else if (_child != null &&
+                _target == _ChatTarget.doctor &&
+                _child!.usesPrivateDoctor)
+              Text(
+                '${_child!.name} uses a private doctor — school doctor messaging is not available.',
+                style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
               )
-            else if (_teachers.isNotEmpty)
+            else if (_loadingContacts)
+              const LinearProgressIndicator(minHeight: 2)
+            else if (_child != null && _contacts.isEmpty)
+              Text(
+                _target == _ChatTarget.teacher
+                    ? 'No teachers assigned to this class yet. Ask the school admin.'
+                    : 'No school doctor assigned yet. Enable health follow-up or wait for admin assignment.',
+                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+              )
+            else if (_contacts.isNotEmpty)
               DropdownButtonFormField<UserModel>(
-                value: _teacher,
-                decoration: const InputDecoration(
-                  labelText: 'Teacher',
-                  border: OutlineInputBorder(),
+                value: _contact,
+                decoration: InputDecoration(
+                  labelText: _target == _ChatTarget.teacher ? 'Teacher' : 'Doctor',
+                  border: const OutlineInputBorder(),
                 ),
-                items: _teachers
+                items: _contacts
                     .map((t) => DropdownMenuItem(value: t, child: Text(t.fullName)))
                     .toList(),
-                onChanged: (t) => setState(() => _teacher = t),
+                onChanged: (t) => setState(() => _contact = t),
               ),
           ],
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: _starting || _teacher == null ? null : _start,
+              onPressed: _starting || _contact == null ? null : _start,
               child: _starting
                   ? const SizedBox(
                       width: 22,
@@ -160,3 +207,5 @@ class _ParentStartChatSheetState extends State<ParentStartChatSheet> {
     );
   }
 }
+
+enum _ChatTarget { teacher, doctor }
