@@ -16,6 +16,17 @@ import '../../widgets/parent/child_account_link_status_chip.dart';
 import '../../widgets/parent/parent_child_link_code_action.dart';
 import '../../widgets/parent/parent_health_module_panel.dart';
 import '../../widgets/profile/kidcare_avatar_image.dart';
+import '../../widgets/navigation/kidcare_section_tab_bar.dart';
+
+class ChildTimelineRouteArgs {
+  final ChildModel child;
+  final int initialTabIndex;
+
+  const ChildTimelineRouteArgs({
+    required this.child,
+    this.initialTabIndex = 0,
+  });
+}
 
 class ChildTimelineScreen extends StatefulWidget {
   const ChildTimelineScreen({super.key});
@@ -32,7 +43,17 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _child ??= ModalRoute.of(context)?.settings.arguments as ChildModel?;
+    if (_child != null) return;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is ChildTimelineRouteArgs) {
+      _child = args.child;
+      final tab = args.initialTabIndex.clamp(0, 2);
+      if (_tabController.index != tab) {
+        _tabController.index = tab;
+      }
+    } else if (args is ChildModel) {
+      _child = args;
+    }
   }
 
   @override
@@ -142,16 +163,9 @@ class _ChildTimelineScreenState extends State<ChildTimelineScreen>
                 ),
               ),
             ),
-            bottom: TabBar(
+            bottom: KidCareSectionTabBar(
               controller: _tabController,
-              labelColor: AppTheme.primaryBlue,
-              unselectedLabelColor: isDark ? Colors.grey[400] : AppTheme.textSecondary,
-              indicatorColor: AppTheme.primaryBlue,
-              tabs: const [
-                Tab(text: 'Timeline'),
-                Tab(text: 'Academics'),
-                Tab(text: 'Health'),
-              ],
+              isDark: isDark,
             ),
           ),
         ],

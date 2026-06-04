@@ -188,19 +188,131 @@ class FirestoreStudentRepository implements StudentRepository {
         .where('teacherId', isEqualTo: teacherId)
         .where('isActive', isEqualTo: true)
         .snapshots()
-        .asyncExpand((assignSnap) async* {
+        .asyncExpand((assignSnap) {
       final classIds = assignSnap.docs
           .map((d) => d.data()['classRoomId'] as String? ?? '')
           .where((id) => id.isNotEmpty)
           .toSet()
           .toList();
       if (classIds.isEmpty) {
-        yield <StudentModel>[];
-        return;
+        return Stream.value(<StudentModel>[]);
       }
-      final expanded = await _expandClassIdsForSameGrades(classIds);
-      yield* _watchMergedRosterForClasses(expanded);
+      return Stream.fromFuture(_rosterContextForTeacherClasses(classIds))
+          .asyncExpand(_watchTeacherRoster);
     });
+  }
+
+  Future<({List<String> classRoomIds, List<String> gradeLevelIds})>
+      _rosterContextForTeacherClasses(List<String> classIds) async {
+    final expanded = await _expandClassIdsForSameGrades(classIds);
+    final gradeIds = <String>{};
+    for (final classId in expanded) {
+      final roomDoc =
+          await _db.collection(FirestoreCollections.classRooms).doc(classId).get();
+      final gradeId = roomDoc.data()?['gradeLevelId'] as String? ?? '';
+      if (gradeId.isNotEmpty) gradeIds.add(gradeId);
+    }
+    return (classRoomIds: expanded, gradeLevelIds: gradeIds.toList());
+  }
+
+  Stream<List<StudentModel>> _watchTeacherRoster(
+    ({List<String> classRoomIds, List<String> gradeLevelIds}) ctx,
+  ) {
+    final controller = StreamController<List<StudentModel>>.broadcast();
+    final latest = <String, List<StudentModel>>{};
+    final subs = <StreamSubscription<List<StudentModel>>>[];
+
+    Future<void> emitMerged() async {
+      final byId = <String, StudentModel>{};
+      for (final list in latest.values) {
+        for (final student in list) {
+          byId[student.id] = student;
+        }
+      }
+
+      for (final gradeId in ctx.gradeLevelIds) {
+        final enrollSnap = await _enrollments
+            .where('gradeLevelId', isEqualTo: gradeId)
+            .where('status', isEqualTo: EnrollmentStatus.active.id)
+            .get();
+        for (final doc in enrollSnap.docs) {
+          final enrollment = EnrollmentModel.fromMap(doc.data(), doc.id);
+          if (byId.containsKey(enrollment.studentId)) continue;
+          final childDoc = await _children.doc(enrollment.studentId).get();
+          if (!childDoc.exists) continue;
+          var student =
+              StudentModel.fromMap(childDoc.data()!, enrollment.studentId);
+          if (student.gradeLevelId == null || student.gradeLevelId!.isEmpty) {
+            student = student.copyWith(gradeLevelId: enrollment.gradeLevelId);
+          }
+          if (student.classRoomId == null || student.classRoomId!.isEmpty) {
+            student = student.copyWith(
+              classRoomId: enrollment.classRoomId,
+              activeEnrollmentId: enrollment.id,
+            );
+          }
+          byId[student.id] = student;
+        }
+      }
+
+      final merged = byId.values.toList()
+        ..sort(
+          (a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
+        );
+      if (!controller.isClosed) controller.add(merged);
+    }
+
+    void attach(String key, Stream<List<StudentModel>> stream) {
+      subs.add(
+        stream.listen(
+          (students) {
+            latest[key] = students;
+            emitMerged();
+          },
+          onError: controller.addError,
+        ),
+      );
+    }
+
+    controller.onListen = () {
+      for (final classId in ctx.classRoomIds) {
+        attach('class:$classId', _watchMergedRosterForSingleClass(classId));
+      }
+      if (ctx.gradeLevelIds.isNotEmpty) {
+        attach('grades', _watchStudentsForGradeLevels(ctx.gradeLevelIds));
+      }
+      emitMerged();
+    };
+
+    controller.onCancel = () {
+      for (final sub in subs) {
+        sub.cancel();
+      }
+    };
+
+    return controller.stream;
+  }
+
+  Stream<List<StudentModel>> _watchStudentsForGradeLevels(List<String> gradeIds) {
+    final ids = gradeIds.toSet().toList();
+    if (ids.isEmpty) return Stream.value(const []);
+
+    Query<Map<String, dynamic>> query = _children;
+    if (ids.length == 1) {
+      query = query.where('gradeLevelId', isEqualTo: ids.first);
+    } else {
+      query = query.where(
+        'gradeLevelId',
+        whereIn: ids.length > 10 ? ids.sublist(0, 10) : ids,
+      );
+    }
+
+    return query.snapshots().map(
+          (snap) => snap.docs
+              .map((d) => StudentModel.fromMap(d.data(), d.id))
+              .where((s) => s.gradeLevelId != null && s.gradeLevelId!.isNotEmpty)
+              .toList(),
+        );
   }
 
   /// Includes sibling class rooms in the same grade so enrollments still match
@@ -223,55 +335,6 @@ class FirestoreStudentRepository implements StudentRepository {
       }
     }
     return expanded.toList();
-  }
-
-  Stream<List<StudentModel>> _watchMergedRosterForClasses(List<String> classIds) {
-    final ids = classIds.toSet().toList();
-    if (ids.isEmpty) return Stream.value(const []);
-
-    if (ids.length == 1) {
-      return _watchMergedRosterForSingleClass(ids.first);
-    }
-
-    final controller = StreamController<List<StudentModel>>.broadcast();
-    final latestByClass = <String, List<StudentModel>>{};
-    final subs = <StreamSubscription<List<StudentModel>>>[];
-
-    void emitMerged() {
-      final byId = <String, StudentModel>{};
-      for (final list in latestByClass.values) {
-        for (final student in list) {
-          byId[student.id] = student;
-        }
-      }
-      final merged = byId.values.toList()
-        ..sort(
-          (a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
-        );
-      if (!controller.isClosed) controller.add(merged);
-    }
-
-    controller.onListen = () {
-      for (final classId in ids) {
-        subs.add(
-          _watchMergedRosterForSingleClass(classId).listen(
-            (students) {
-              latestByClass[classId] = students;
-              emitMerged();
-            },
-            onError: controller.addError,
-          ),
-        );
-      }
-    };
-
-    controller.onCancel = () {
-      for (final sub in subs) {
-        sub.cancel();
-      }
-    };
-
-    return controller.stream;
   }
 
   /// Merges active enrollments + live children in the class (linking account does not remove either).
@@ -335,29 +398,6 @@ class FirestoreStudentRepository implements StudentRepository {
     };
 
     return controller.stream;
-  }
-
-  /// Live roster for one or more class rooms — reads enrolled children directly.
-  Stream<List<StudentModel>> _watchStudentsForClassIds(List<String> classIds) {
-    final ids = classIds.toSet().toList();
-    if (ids.isEmpty) return Stream.value(const []);
-
-    if (ids.length == 1) {
-      return watchStudentsForClass(ids.first);
-    }
-
-    return _children
-        .where('classRoomId', whereIn: ids.length > 10 ? ids.sublist(0, 10) : ids)
-        .snapshots()
-        .map((snap) {
-          final students = snap.docs
-              .map((d) => StudentModel.fromMap(d.data(), d.id))
-              .toList();
-          students.sort(
-            (a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
-          );
-          return students;
-        });
   }
 
   @override

@@ -85,7 +85,16 @@ class TeacherOverviewProvider with ChangeNotifier {
   }
 
   int studentCountForClass(String classRoomId) {
-    return roster.where((s) => s.classRoomId == classRoomId).length;
+    final gradeId = _school?.gradeLevelIdForClassRoom(classRoomId);
+    return roster.where((s) {
+      if (s.classRoomId == classRoomId) return true;
+      if (gradeId != null &&
+          gradeId.isNotEmpty &&
+          s.gradeLevelId == gradeId) {
+        return true;
+      }
+      return false;
+    }).length;
   }
 
   void _resolveSlots() {

@@ -14,6 +14,8 @@ import '../../providers/parent_preferences_provider.dart';
 import '../../widgets/profile/kidcare_avatar_image.dart';
 import '../../widgets/parent/child_account_link_status_chip.dart';
 import '../../widgets/parent/parent_child_link_code_action.dart';
+import '../../widgets/navigation/kidcare_section_tab_bar.dart';
+import '../parent/child_timeline_screen.dart';
 import '../../providers/school_admin_provider.dart';
 import '../../widgets/dashboard/dashboard_hero_header.dart';
 import '../../widgets/dashboard/dashboard_section_header.dart';
@@ -413,6 +415,19 @@ class _ChildProfileCard extends StatelessWidget {
                                 isDark ? Colors.grey[400] : AppTheme.textSecondary),
                       ),
                       const SizedBox(height: 8),
+                      KidCareSectionQuickLinks(
+                        onSelectTab: (tab) {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.childTimeline,
+                            arguments: ChildTimelineRouteArgs(
+                              child: child,
+                              initialTabIndex: tab,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 6),
                       ChildAccountLinkStatusChip(child: child, compact: true),
                       const SizedBox(height: 6),
                       Text(
