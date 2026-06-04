@@ -635,12 +635,17 @@ class _AddChildScreenState extends State<AddChildScreen> {
                               ),
                               Switch.adaptive(
                                 value: _usesPrivateDoctor,
-                                activeTrackColor:
-                                    AppTheme.primaryBlue.withValues(alpha: 0.45),
-                                activeThumbColor: Colors.white,
-                                inactiveThumbColor: Colors.white,
-                                inactiveTrackColor:
-                                    isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                                thumbColor: WidgetStateProperty.resolveWith((states) {
+                                  return Colors.white;
+                                }),
+                                trackColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) {
+                                    return AppTheme.primaryBlue.withOpacity(0.45);
+                                  }
+                                  return isDark
+                                      ? Colors.grey.shade700
+                                      : Colors.grey.shade300;
+                                }),
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (v) {
