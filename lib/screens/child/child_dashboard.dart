@@ -117,7 +117,10 @@ class _ChildLiveDataBinderState extends State<_ChildLiveDataBinder> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _syncIfNeeded();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _syncIfNeeded();
+    });
   }
 
   @override

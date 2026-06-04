@@ -46,6 +46,12 @@ service cloud.firestore {
       return userRole() == 'Child';
     }
 
+    function linkedStudentId() {
+      return userDocExists() && userDoc().data.linkedStudentId is string
+        ? userDoc().data.linkedStudentId
+        : '';
+    }
+
     match /schools/{schoolId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
@@ -80,18 +86,25 @@ service cloud.firestore {
     match /children/{studentId} {
       allow read: if isSignedIn() && (
         isStaff() ||
-        resource.data.parentId == request.auth.uid
+        resource.data.parentId == request.auth.uid ||
+        resource.data.studentUserId == request.auth.uid ||
+        (isChild() && studentId == linkedStudentId())
       );
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (
         isAdmin() ||
         resource.data.parentId == request.auth.uid ||
-        request.resource.data.parentId == request.auth.uid
+        request.resource.data.parentId == request.auth.uid ||
+        resource.data.studentUserId == request.auth.uid ||
+        request.resource.data.studentUserId == request.auth.uid
       );
     }
 
     match /enrollments/{id} {
-      allow read: if isSignedIn() && (isStaff() || isParent());
+      allow read: if isSignedIn() && (
+        isStaff() || isParent() ||
+        (isChild() && resource.data.studentId == linkedStudentId())
+      );
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isAdmin() || isParent());
     }
