@@ -23,6 +23,7 @@ import 'teacher_homework_tab.dart';
 import '../../models/student_model.dart';
 import '../../models/user_model.dart';
 import '../../widgets/common/education_empty_state.dart';
+import '../../widgets/care/student_care_sheet.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -73,7 +74,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         ),
       ],
       children: [
-        _TeacherHomeTab(user: user),
+        _TeacherHomeTab(
+          user: user,
+          onQuickAction: (index) => setState(() => _navIndex = index),
+        ),
         const _TeacherStudentsTab(),
         const _TeacherAttendanceTab(),
         const TeacherHomeworkTab(),
@@ -87,8 +91,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 // ==================== OVERVIEW TAB ====================
 class _TeacherHomeTab extends StatelessWidget {
   final UserModel? user;
+  final ValueChanged<int> onQuickAction;
 
-  const _TeacherHomeTab({this.user});
+  const _TeacherHomeTab({
+    this.user,
+    required this.onQuickAction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +125,13 @@ class _TeacherHomeTab extends StatelessWidget {
                   ),
                   SliverToBoxAdapter(
                     child: _buildQuickStats(isDark, overview),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _TeacherQuickActions(
+                      isDark: isDark,
+                      rosterCount: overview.rosterCount,
+                      onQuickAction: onQuickAction,
+                    ),
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
@@ -261,6 +276,71 @@ class _TeacherHomeTab extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _TeacherQuickActions extends StatelessWidget {
+  final bool isDark;
+  final int rosterCount;
+  final ValueChanged<int> onQuickAction;
+
+  const _TeacherQuickActions({
+    required this.isDark,
+    required this.rosterCount,
+    required this.onQuickAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = [
+      (Icons.groups_rounded, 'My students', 1),
+      (Icons.how_to_reg_rounded, 'Attendance', 2),
+      (Icons.assignment_rounded, 'Homework', 3),
+      (Icons.chat_rounded, 'Messages', 4),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick actions',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            rosterCount > 0
+                ? 'Track $rosterCount student${rosterCount == 1 ? '' : 's'}, mark attendance, publish work, and message families.'
+                : 'Once students enroll, use these tools every day.',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.grey[400] : AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: actions.map((a) {
+              return ActionChip(
+                avatar: Icon(a.$1, size: 18, color: const Color(0xFF7ED321)),
+                label: Text(a.$2),
+                onPressed: () => onQuickAction(a.$3),
+                backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+                side: BorderSide(
+                  color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -525,6 +605,11 @@ class _TeacherStudentsTabState extends State<_TeacherStudentsTab> {
                         color: isDark ? AppTheme.darkSurface : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         child: ListTile(
+                          onTap: () => StudentCareSheet.show(
+                            context,
+                            student: student,
+                            accentColor: const Color(0xFF7ED321),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: BorderSide(

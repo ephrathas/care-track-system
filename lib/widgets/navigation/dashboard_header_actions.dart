@@ -12,11 +12,7 @@ class DashboardHeaderActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _GlassHeaderButton(
-          icon: Icons.menu_rounded,
-          tooltip: 'Menu',
-          onPressed: () => DashboardShellScope.of(context).openDrawer(),
-        ),
+        DashboardNavLeading(isDark: false, useGlassStyle: true),
         const Spacer(),
         Text(
           AppBranding.headerLabel.toUpperCase(),
@@ -28,12 +24,123 @@ class DashboardHeaderActions extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        _GlassHeaderButton(
+        DashboardNavTrailing(isDark: false, useGlassStyle: true),
+      ],
+    );
+  }
+}
+
+/// Resolves drawer vs back vs home for toolbar leading slot.
+class DashboardNavLeading extends StatelessWidget {
+  final bool isDark;
+  final bool useGlassStyle;
+
+  const DashboardNavLeading({
+    super.key,
+    required this.isDark,
+    this.useGlassStyle = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final shell = DashboardShellScope.maybeOf(context);
+    if (shell != null) {
+      return _buildButton(
+        icon: Icons.menu_rounded,
+        tooltip: 'Menu',
+        onPressed: shell.openDrawer,
+      );
+    }
+
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      return _buildButton(
+        icon: Icons.arrow_back_rounded,
+        tooltip: 'Back',
+        onPressed: () => navigator.pop(),
+      );
+    }
+
+    return const SizedBox(width: 40);
+  }
+
+  Widget _buildButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    if (useGlassStyle) {
+      return _GlassHeaderButton(
+        icon: icon,
+        tooltip: tooltip,
+        onPressed: onPressed,
+      );
+    }
+    return _NeutralHeaderButton(
+      icon: icon,
+      tooltip: tooltip,
+      isDark: isDark,
+      onPressed: onPressed,
+    );
+  }
+}
+
+/// Resolves quick panel vs home-to-dashboard for toolbar trailing slot.
+class DashboardNavTrailing extends StatelessWidget {
+  final bool isDark;
+  final bool useGlassStyle;
+  final List<Widget>? extraActions;
+
+  const DashboardNavTrailing({
+    super.key,
+    required this.isDark,
+    this.useGlassStyle = false,
+    this.extraActions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final shell = DashboardShellScope.maybeOf(context);
+    final children = <Widget>[
+      if (extraActions != null) ...extraActions!,
+      if (shell != null)
+        _buildButton(
           icon: Icons.auto_awesome_motion_rounded,
           tooltip: 'Quick panel',
-          onPressed: () => DashboardShellScope.of(context).openEndDrawer(),
+          onPressed: shell.openEndDrawer,
+        )
+      else if (Navigator.of(context).canPop())
+        _buildButton(
+          icon: Icons.home_rounded,
+          tooltip: 'Back to dashboard',
+          onPressed: () {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
         ),
-      ],
+    ];
+
+    if (children.isEmpty) return const SizedBox(width: 40);
+    if (children.length == 1) return children.first;
+    return Row(mainAxisSize: MainAxisSize.min, children: children);
+  }
+
+  Widget _buildButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    if (useGlassStyle) {
+      return _GlassHeaderButton(
+        icon: icon,
+        tooltip: tooltip,
+        onPressed: onPressed,
+      );
+    }
+    return _NeutralHeaderButton(
+      icon: icon,
+      tooltip: tooltip,
+      isDark: isDark,
+      onPressed: onPressed,
     );
   }
 }
@@ -57,12 +164,7 @@ class DashboardCompactToolbar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       child: Row(
         children: [
-          _NeutralHeaderButton(
-            icon: Icons.menu_rounded,
-            tooltip: 'Menu',
-            isDark: isDark,
-            onPressed: () => DashboardShellScope.of(context).openDrawer(),
-          ),
+          DashboardNavLeading(isDark: isDark),
           if (title != null) ...[
             const SizedBox(width: 12),
             Expanded(
@@ -80,17 +182,9 @@ class DashboardCompactToolbar extends StatelessWidget {
             ),
           ] else
             const Spacer(),
-          if (trailingActions != null) ...[
-            for (final action in trailingActions!) ...[
-              action,
-              const SizedBox(width: 8),
-            ],
-          ],
-          _NeutralHeaderButton(
-            icon: Icons.auto_awesome_motion_rounded,
-            tooltip: 'Quick panel',
+          DashboardNavTrailing(
             isDark: isDark,
-            onPressed: () => DashboardShellScope.of(context).openEndDrawer(),
+            extraActions: trailingActions,
           ),
         ],
       ),
@@ -107,12 +201,7 @@ class DashboardToolbarLeading extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(left: 8),
-      child: _NeutralHeaderButton(
-        icon: Icons.menu_rounded,
-        tooltip: 'Menu',
-        isDark: isDark,
-        onPressed: () => DashboardShellScope.of(context).openDrawer(),
-      ),
+      child: DashboardNavLeading(isDark: isDark),
     );
   }
 }
@@ -126,12 +215,7 @@ class DashboardToolbarTrailing extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: _NeutralHeaderButton(
-        icon: Icons.auto_awesome_motion_rounded,
-        tooltip: 'Quick panel',
-        isDark: isDark,
-        onPressed: () => DashboardShellScope.of(context).openEndDrawer(),
-      ),
+      child: DashboardNavTrailing(isDark: isDark),
     );
   }
 }

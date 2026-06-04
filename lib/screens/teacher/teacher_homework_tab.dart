@@ -12,6 +12,7 @@ import '../../providers/teacher_homework_provider.dart';
 import '../../providers/teacher_overview_provider.dart';
 import '../../widgets/common/education_empty_state.dart';
 import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
+import '../../widgets/teacher/assignment_completion_sheet.dart';
 import '../../widgets/teacher/grade_entry_sheet.dart';
 
 class TeacherHomeworkTab extends StatefulWidget {
@@ -328,13 +329,15 @@ class _TeacherHomeworkTabState extends State<TeacherHomeworkTab> {
                     final due = assignment.dueAt != null
                         ? DateFormat('MMM d, yyyy').format(assignment.dueAt!)
                         : 'No due date';
+                    final turnedIn = homework.submissionCountFor(assignment.id);
+                    final total = overview.studentCountForClass(assignment.classRoomId);
 
                     return Material(
                       color: isDark ? AppTheme.darkSurface : Colors.white,
                       borderRadius: BorderRadius.circular(18),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(18),
-                        onTap: () => GradeEntrySheet.show(
+                        onTap: () => AssignmentCompletionSheet.show(
                           context,
                           assignment: assignment,
                           roster: roster,
@@ -420,12 +423,20 @@ class _TeacherHomeworkTabState extends State<TeacherHomeworkTab> {
                                       ),
                                     ),
                                     const Spacer(),
-                                    const Text(
-                                      'Tap to grade',
+                                    Icon(Icons.task_alt_rounded,
+                                        size: 14,
+                                        color: turnedIn > 0
+                                            ? const Color(0xFF7ED321)
+                                            : AppTheme.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$turnedIn / $total turned in',
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
-                                        color: AppTheme.primaryBlue,
+                                        color: turnedIn > 0
+                                            ? const Color(0xFF7ED321)
+                                            : AppTheme.textSecondary,
                                       ),
                                     ),
                                   ],

@@ -31,7 +31,7 @@ class _ChildDashboardState extends State<ChildDashboard> {
     final user = context.watch<AuthProvider>().currentUser;
     return Stack(
       children: [
-        const _ChildHomeworkBinder(),
+        const _ChildLiveDataBinder(),
         KidCareDashboardShell(
       selectedIndex: _navIndex,
       onIndexChanged: (index) => setState(() => _navIndex = index),
@@ -75,14 +75,14 @@ class _ChildDashboardState extends State<ChildDashboard> {
   }
 }
 
-class _ChildHomeworkBinder extends StatefulWidget {
-  const _ChildHomeworkBinder();
+class _ChildLiveDataBinder extends StatefulWidget {
+  const _ChildLiveDataBinder();
 
   @override
-  State<_ChildHomeworkBinder> createState() => _ChildHomeworkBinderState();
+  State<_ChildLiveDataBinder> createState() => _ChildLiveDataBinderState();
 }
 
-class _ChildHomeworkBinderState extends State<_ChildHomeworkBinder> {
+class _ChildLiveDataBinderState extends State<_ChildLiveDataBinder> {
   String? _bindKey;
 
   void _syncIfNeeded() {
@@ -91,16 +91,25 @@ class _ChildHomeworkBinderState extends State<_ChildHomeworkBinder> {
     final school = context.read<SchoolAdminProvider>();
     final linkedId = user?.linkedStudentId;
     final isLinked = linkedId != null && linkedId.isNotEmpty;
+
+    var classRoomId = linked?.classRoomId;
+    if ((classRoomId == null || classRoomId.isEmpty) &&
+        linked?.gradeLevelId != null &&
+        linked!.gradeLevelId!.isNotEmpty) {
+      classRoomId = school.primaryClassForGrade(linked.gradeLevelId!)?.id;
+    }
+
     final key =
-        '$isLinked|${linked?.id ?? linkedId}|${linked?.classRoomId}|${school.subjects.length}';
+        '$isLinked|${linked?.id ?? linkedId}|$classRoomId|${linked?.gradeLevelId}|${school.subjects.length}|${school.classes.length}';
     if (key == _bindKey) return;
     _bindKey = key;
 
-    context.read<ChildGamificationProvider>().bindHomework(
+    context.read<ChildGamificationProvider>().bindStudentExperience(
           isAccountLinked: isLinked,
           studentId: linked?.id ?? linkedId,
-          classRoomId: linked?.classRoomId,
+          classRoomId: classRoomId,
           subjectNameFor: school.subjectNameForId,
+          linkedChild: linked,
         );
   }
 
@@ -126,8 +135,13 @@ class _ChildHomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<ChildGamificationProvider>(context);
+    final linked = context.watch<ChildProvider>().linkedChild;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final status = game.homeworkStatusMessage;
+    final schedule = game.activeSchedule;
+    final displayName = linked?.name.isNotEmpty == true
+        ? linked!.name
+        : (user?.fullName ?? 'Explorer');
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
@@ -138,7 +152,7 @@ class _ChildHomeTab extends StatelessWidget {
             SliverToBoxAdapter(
               child: _PlayfulHeader(
                 user: user,
-                name: user?.fullName ?? 'Explorer',
+                name: displayName,
                 level: game.currentLevel,
                 xp: game.currentXp,
                 xpProgress: game.xpProgress,
@@ -191,6 +205,13 @@ class _ChildHomeTab extends StatelessWidget {
                   ),
                 ),
               ),
+            if (game.attendanceTodayLabel != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: _AttendanceChip(label: game.attendanceTodayLabel!, isDark: isDark),
+                ),
+              ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -204,7 +225,7 @@ class _ChildHomeTab extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.2),
                     ),
-                    if (game.currentScheduleItem != null)
+                    if (game.isScheduleLive)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
@@ -212,9 +233,9 @@ class _ChildHomeTab extends StatelessWidget {
                           color: const Color(0xFF7ED321).withOpacity(0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          'Live now',
-                          style: TextStyle(
+                        child: Text(
+                          game.currentScheduleItem != null ? 'Live now' : 'Your classes',
+                          style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF7ED321),
@@ -225,26 +246,41 @@ class _ChildHomeTab extends StatelessWidget {
                 ),
               ),
             ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final item = ChildGamificationProvider.schedule[index];
-                  final isCurrent = game.currentScheduleItem?.time == item.time;
-                  final isNext = game.nextScheduleItem?.time == item.time;
+            if (schedule.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _HomeworkStatusBanner(
+                    message: game.isScheduleLive
+                        ? 'Your class schedule will appear when teachers are assigned to your grade.'
+                        : 'Link your parent code and enroll in a grade to see your real school day.',
+                    isDark: isDark,
+                  ),
+                ),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = schedule[index];
+                    final isCurrent = game.currentScheduleItem?.time == item.time &&
+                        game.currentScheduleItem?.title == item.title;
+                    final isNext = game.nextScheduleItem?.time == item.time &&
+                        game.nextScheduleItem?.title == item.title;
 
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                    child: _ScheduleCard(
-                      item: item,
-                      isDark: isDark,
-                      isCurrent: isCurrent,
-                      isNext: isNext,
-                    ),
-                  );
-                },
-                childCount: ChildGamificationProvider.schedule.length,
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      child: _ScheduleCard(
+                        item: item,
+                        isDark: isDark,
+                        isCurrent: isCurrent,
+                        isNext: isNext,
+                      ),
+                    );
+                  },
+                  childCount: schedule.length,
+                ),
               ),
-            ),
             const SliverToBoxAdapter(child: SizedBox(height: 32)),
           ],
         ),
@@ -342,6 +378,49 @@ class _PlayfulHeader extends StatelessWidget {
                 ),
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttendanceChip extends StatelessWidget {
+  final String label;
+  final bool isDark;
+
+  const _AttendanceChip({required this.label, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final present = label.toLowerCase().contains('present');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: (present ? const Color(0xFF7ED321) : Colors.orange)
+            .withOpacity(isDark ? 0.15 : 0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: (present ? const Color(0xFF7ED321) : Colors.orange).withOpacity(0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            present ? Icons.check_circle_rounded : Icons.schedule_rounded,
+            size: 20,
+            color: present ? const Color(0xFF7ED321) : Colors.orange,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppTheme.textPrimary,
+              ),
+            ),
           ),
         ],
       ),
@@ -624,40 +703,61 @@ class _ScheduleCard extends StatelessWidget {
 class _ChildHomeworkTab extends StatelessWidget {
   const _ChildHomeworkTab();
 
-  void _completeTask(BuildContext context, ChildQuest quest) {
-    final game = Provider.of<ChildGamificationProvider>(context, listen: false);
+  Future<void> _completeTask(BuildContext context, ChildQuest quest) async {
+    final game = context.read<ChildGamificationProvider>();
+    final user = context.read<AuthProvider>().currentUser;
+    final linked = context.read<ChildProvider>().linkedChild;
+    final studentName = linked?.name.isNotEmpty == true
+        ? linked!.name
+        : (user?.fullName ?? 'Student');
 
-    final unlockedBadge = game.completeQuest(
-      quest.id,
-      onLevelUp: () => _showLevelUpDialog(context, game.currentLevel),
-    );
+    if (game.isSubmittingQuest) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.emoji_events_rounded, color: Colors.amber),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Quest completed! Earned +${quest.xp} XP!',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.white),
+    try {
+      final unlockedBadge = await game.completeQuestAsync(
+        questId: quest.id,
+        studentName: studentName,
+        submittedByUserId: user?.uid ?? '',
+        onLevelUp: () => _showLevelUpDialog(context, game.currentLevel),
+      );
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Turned in! +${quest.xp} XP — your teacher can see this.',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          backgroundColor: const Color(0xFF7ED321),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
         ),
-        backgroundColor: const Color(0xFF7ED321),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+      );
 
-    if (unlockedBadge != null) {
-      Future.delayed(const Duration(milliseconds: 400), () {
-        if (context.mounted) _showBadgeUnlockDialog(context, unlockedBadge);
-      });
+      if (unlockedBadge != null) {
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (context.mounted) _showBadgeUnlockDialog(context, unlockedBadge);
+        });
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not turn in homework. Check your connection and try again.'),
+        ),
+      );
     }
   }
 
@@ -831,7 +931,7 @@ class _ChildHomeworkTab extends StatelessWidget {
 class _QuestTile extends StatefulWidget {
   final ChildQuest task;
   final bool isDark;
-  final VoidCallback onClaim;
+  final Future<void> Function() onClaim;
 
   const _QuestTile(
       {required this.task, required this.isDark, required this.onClaim});
@@ -848,6 +948,7 @@ class _QuestTileState extends State<_QuestTile> {
     final task = widget.task;
     final completed = task.completed;
     final accent = task.color;
+    final submitting = context.watch<ChildGamificationProvider>().isSubmittingQuest;
 
     return AnimatedScale(
       scale: _pressed ? 0.98 : 1.0,
@@ -938,7 +1039,7 @@ class _QuestTileState extends State<_QuestTile> {
                 onTapUp: (_) => setState(() => _pressed = false),
                 onTapCancel: () => setState(() => _pressed = false),
                 child: ElevatedButton(
-                  onPressed: widget.onClaim,
+                  onPressed: submitting ? null : () => widget.onClaim(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accent,
                     shape: RoundedRectangleBorder(
@@ -946,11 +1047,20 @@ class _QuestTileState extends State<_QuestTile> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
                   ),
-                  child: const Text('Claim',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12)),
+                  child: submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Turn in',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12)),
                 ),
               ),
           ],
@@ -985,20 +1095,52 @@ class _ChildRewardsTab extends StatelessWidget {
           ),
         ),
       ],
-      body: GridView.builder(
-        padding: const EdgeInsets.all(20),
+      body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 14,
-          childAspectRatio: 0.88,
-        ),
-        itemCount: badges.length,
-        itemBuilder: (context, index) {
-          final badge = badges[index];
-          return _BadgeCard(badge: badge, isDark: isDark);
-        },
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.darkSurface : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? Colors.grey.shade800 : AppTheme.inputBorder,
+                  ),
+                ),
+                child: Text(
+                  'Badges unlock when you turn in homework: Science Explorer (science task), '
+                  'Math Whiz (3 tasks), Fast Learner (all tasks). Progress saves to your school profile.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.45,
+                    color: isDark ? Colors.grey[300] : AppTheme.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 14,
+                childAspectRatio: 0.88,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final badge = badges[index];
+                  return _BadgeCard(badge: badge, isDark: isDark);
+                },
+                childCount: badges.length,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

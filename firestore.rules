@@ -151,6 +151,11 @@ service cloud.firestore {
       allow write: if isSignedIn() && (isAdmin() || isTeacher());
     }
 
+    match /assignment_submissions/{id} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+    }
+
     match /attendance/{id} {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && (isAdmin() || isTeacher());

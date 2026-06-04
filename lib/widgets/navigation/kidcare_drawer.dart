@@ -29,7 +29,18 @@ class KidCareDrawer extends StatelessWidget {
         if (item.tabIndex != null) onTabSelected?.call(item.tabIndex!);
         break;
       case KidCareDrawerAction.route:
-        if (item.route != null) Navigator.pushNamed(context, item.route!);
+        if (item.route != null) {
+          final navigator = Navigator.of(context);
+          var found = false;
+          navigator.popUntil((route) {
+            if (route.settings.name == item.route) {
+              found = true;
+              return true;
+            }
+            return route.isFirst;
+          });
+          if (!found) navigator.pushNamed(item.route!);
+        }
         break;
       case KidCareDrawerAction.logout:
         kidCareLogout(context);

@@ -15,6 +15,9 @@ import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/settings/appearance_setting.dart';
 import '../../widgets/messaging/messages_inbox.dart';
+import '../../core/constants/routes.dart';
+import '../../providers/messaging_provider.dart';
+import '../../services/database_service.dart';
 import '../auth/healthcare_profile_setup_screen.dart';
 
 class HealthcareDashboard extends StatefulWidget {
@@ -366,6 +369,31 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
       if (patient.id == id) return patient;
     }
     return null;
+  }
+
+  Future<void> _messageParent(ChildModel patient) async {
+    final doctor = context.read<AuthProvider>().currentUser;
+    if (doctor == null) return;
+
+    final parentUser = await DatabaseService().getUserById(patient.parentId);
+    final thread = await context.read<MessagingProvider>().ensureHealthcareToParentThread(
+          doctor: doctor,
+          contact: HealthcareParentContact(
+            parentId: patient.parentId,
+            parentName: parentUser?.fullName ?? 'Parent',
+            studentId: patient.id,
+            studentName: patient.name,
+          ),
+        );
+    if (!mounted) return;
+    if (thread == null) {
+      final err = context.read<MessagingProvider>().errorMessage;
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      }
+      return;
+    }
+    AppRoutes.push(context, AppRoutes.chat, arguments: thread);
   }
 
   void _openGrowthSheet(ChildModel patient) {
@@ -894,7 +922,22 @@ class _HealthcarePatientsTabState extends State<_HealthcarePatientsTab> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 12),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton.icon(
+                                        onPressed: () => _messageParent(p),
+                                        icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                                        label: const Text('Message parent',
+                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(0xFF7ED321),
+                                          side: const BorderSide(color: Color(0xFF7ED321)),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
                                     Row(
                                       children: [
                                         Expanded(

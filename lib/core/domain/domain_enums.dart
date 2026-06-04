@@ -53,6 +53,7 @@ enum AttendanceStatus {
 enum NotificationType {
   enrollmentCreated('enrollment_created'),
   assignmentAdded('assignment_added'),
+  homeworkSubmitted('homework_submitted'),
   gradePublished('grade_published'),
   attendanceAlert('attendance_alert'),
   healthAppointment('health_appointment'),
@@ -121,6 +122,7 @@ class FirestoreCollections {
   static const children = 'children';
   static const enrollments = 'enrollments';
   static const assignments = 'assignments';
+  static const assignmentSubmissions = 'assignment_submissions';
   static const assessments = 'assessments';
   static const attendance = 'attendance';
   static const healthProfiles = 'health_profiles';

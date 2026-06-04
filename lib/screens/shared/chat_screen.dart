@@ -16,6 +16,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
+  int _lastMessageCount = 0;
 
   @override
   void initState() {
@@ -43,28 +44,40 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool animated = true}) {
     if (!_scrollController.hasClients) return;
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    final max = _scrollController.position.maxScrollExtent;
+    if (animated) {
+      _scrollController.animateTo(
+        max,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    } else {
+      _scrollController.jumpTo(max);
+    }
   }
 
   Future<void> _send(MessageThread thread) async {
     final user = context.read<AuthProvider>().currentUser;
     if (user == null) return;
 
-    await context.read<MessagingProvider>().sendMessage(
-          thread: thread,
-          sender: user,
-          text: _textController.text,
-        );
+    final messaging = context.read<MessagingProvider>();
+    await messaging.sendMessage(
+      thread: thread,
+      sender: user,
+      text: _textController.text,
+    );
+
+    if (!mounted) return;
+    final err = messaging.errorMessage;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not send: $err')),
+      );
+      return;
+    }
+
     _textController.clear();
     _scrollToBottom();
   }
@@ -86,11 +99,18 @@ class _ChatScreenState extends State<ChatScreen> {
     final otherName = thread.otherPartyName(user.uid);
     final messages = messaging.activeMessages;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    if (messages.length != _lastMessageCount) {
+      _lastMessageCount = messages.length;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    }
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.warmNeutral,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

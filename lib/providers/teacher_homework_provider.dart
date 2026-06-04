@@ -20,22 +20,56 @@ class TeacherHomeworkProvider with ChangeNotifier {
         _students = students ?? FirestoreStudentRepository();
 
   List<AssignmentModel> assignments = [];
+  List<AssignmentSubmissionModel> submissions = [];
   bool isLoading = true;
   String? error;
 
-  StreamSubscription<List<AssignmentModel>>? _sub;
+  StreamSubscription<List<AssignmentModel>>? _assignmentsSub;
+  StreamSubscription<List<AssignmentSubmissionModel>>? _submissionsSub;
+
+  int submissionCountFor(String assignmentId) =>
+      submissions.where((s) => s.assignmentId == assignmentId).length;
+
+  Set<String> submittedStudentIdsFor(String assignmentId) => submissions
+      .where((s) => s.assignmentId == assignmentId)
+      .map((s) => s.studentId)
+      .toSet();
 
   void startListening(String teacherId) {
-    _sub?.cancel();
+    _assignmentsSub?.cancel();
+    _submissionsSub?.cancel();
     isLoading = true;
     error = null;
     notifyListeners();
 
-    _sub = _academic.watchAssignmentsForTeacher(teacherId).listen(
-      (list) {
-        assignments = list;
+    var assignmentsReady = false;
+    var submissionsReady = false;
+
+    void maybeDone() {
+      if (assignmentsReady && submissionsReady) {
         isLoading = false;
         notifyListeners();
+      }
+    }
+
+    _assignmentsSub = _academic.watchAssignmentsForTeacher(teacherId).listen(
+      (list) {
+        assignments = list;
+        assignmentsReady = true;
+        maybeDone();
+      },
+      onError: (e) {
+        error = e.toString();
+        isLoading = false;
+        notifyListeners();
+      },
+    );
+
+    _submissionsSub = _academic.watchSubmissionsForTeacher(teacherId).listen(
+      (list) {
+        submissions = list;
+        submissionsReady = true;
+        maybeDone();
       },
       onError: (e) {
         error = e.toString();
@@ -119,9 +153,12 @@ class TeacherHomeworkProvider with ChangeNotifier {
   }
 
   void stopListening() {
-    _sub?.cancel();
-    _sub = null;
+    _assignmentsSub?.cancel();
+    _assignmentsSub = null;
+    _submissionsSub?.cancel();
+    _submissionsSub = null;
     assignments = [];
+    submissions = [];
     isLoading = true;
   }
 

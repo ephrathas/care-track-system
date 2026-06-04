@@ -22,6 +22,9 @@ class ChildModel {
   final double? latestHeight;
   final double? latestWeight;
   final String lastCheckup;
+  final int gamificationXp;
+  final int gamificationLevel;
+  final List<String> unlockedBadges;
 
   ChildModel({
     required this.id,
@@ -45,6 +48,9 @@ class ChildModel {
     this.latestHeight,
     this.latestWeight,
     this.lastCheckup = '',
+    this.gamificationXp = 0,
+    this.gamificationLevel = 1,
+    this.unlockedBadges = const [],
   });
 
   String get heightLabel =>
@@ -63,7 +69,9 @@ class ChildModel {
   factory ChildModel.fromMap(Map<String, dynamic> map, String documentId) {
     return ChildModel(
       id: documentId,
-      name: map['name'] ?? '',
+      name: (map['name'] as String?)?.trim().isNotEmpty == true
+          ? map['name'] as String
+          : (map['fullName'] as String? ?? ''),
       age: map['age'] ?? 0,
       parentId: map['parentId'] ?? '',
       schoolId: map['schoolId'] ?? '',
@@ -85,6 +93,9 @@ class ChildModel {
       latestHeight: (map['latestHeight'] as num?)?.toDouble(),
       latestWeight: (map['latestWeight'] as num?)?.toDouble(),
       lastCheckup: map['lastCheckup'] ?? '',
+      gamificationXp: (map['gamificationXp'] as num?)?.toInt() ?? 0,
+      gamificationLevel: (map['gamificationLevel'] as num?)?.toInt() ?? 1,
+      unlockedBadges: List<String>.from(map['unlockedBadges'] ?? []),
     );
   }
 

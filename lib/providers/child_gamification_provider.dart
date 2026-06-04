@@ -2,8 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../core/domain/domain_enums.dart';
 import '../data/firestore/firestore_academic_repository.dart';
+import '../data/firestore/firestore_school_structure_repository.dart';
 import '../models/academic_models.dart';
+import '../models/child_model.dart';
+import '../models/class_subject_model.dart';
 
 class ChildQuest {
   final String id;
@@ -81,12 +85,24 @@ class ChildGamificationProvider extends ChangeNotifier {
 
   final List<ChildQuest> quests = [];
   final Set<String> _completedQuestIds = {};
+  final Map<String, AssignmentModel> _assignmentsById = {};
+  String? _activeStudentId;
+  bool isSubmittingQuest = false;
 
   bool isLiveHomework = false;
   bool isHomeworkLoading = false;
   String? homeworkStatusMessage;
 
   StreamSubscription<List<AssignmentModel>>? _homeworkSub;
+  StreamSubscription<Set<String>>? _completionsSub;
+  StreamSubscription<List<ClassSubjectModel>>? _scheduleSub;
+  StreamSubscription<List<AttendanceRecordModel>>? _attendanceSub;
+  List<ClassSubjectModel> _lastClassSubjects = [];
+  String? Function(String subjectId)? _cachedSubjectNameFor;
+
+  final List<ScheduleItem> todaySchedule = [];
+  String? attendanceTodayLabel;
+  bool isScheduleLive = false;
 
   final List<ChildBadge> badges = [
     ChildBadge(
@@ -180,11 +196,14 @@ class ChildGamificationProvider extends ChangeNotifier {
     return 'New Explorer';
   }
 
+  List<ScheduleItem> get activeSchedule =>
+      todaySchedule.isNotEmpty ? todaySchedule : schedule;
+
   ScheduleItem? get currentScheduleItem {
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
     ScheduleItem? active;
-    for (final item in schedule) {
+    for (final item in activeSchedule) {
       final itemMinutes = item.hour * 60 + item.minute;
       if (itemMinutes <= nowMinutes) active = item;
     }
@@ -194,11 +213,191 @@ class ChildGamificationProvider extends ChangeNotifier {
   ScheduleItem? get nextScheduleItem {
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
-    for (final item in schedule) {
+    for (final item in activeSchedule) {
       final itemMinutes = item.hour * 60 + item.minute;
       if (itemMinutes > nowMinutes) return item;
     }
     return null;
+  }
+
+  static const _slotTimes = [
+    (8, 30),
+    (10, 0),
+    (11, 30),
+    (13, 30),
+    (15, 0),
+  ];
+
+  /// Loads saved XP, level, and badges from the linked `children` profile.
+  void applyGamificationFromChild(ChildModel? child) {
+    if (child == null) return;
+    if (child.gamificationXp > 0) currentXp = child.gamificationXp;
+    if (child.gamificationLevel >= 1) currentLevel = child.gamificationLevel;
+    for (final badge in badges) {
+      badge.unlocked = child.unlockedBadges.contains(badge.title);
+    }
+    notifyListeners();
+  }
+
+  void bindStudentExperience({
+    required bool isAccountLinked,
+    required String? studentId,
+    required String? classRoomId,
+    required String? Function(String subjectId) subjectNameFor,
+    ChildModel? linkedChild,
+  }) {
+    applyGamificationFromChild(linkedChild);
+    bindHomework(
+      isAccountLinked: isAccountLinked,
+      studentId: studentId,
+      classRoomId: classRoomId,
+      subjectNameFor: subjectNameFor,
+    );
+    bindTodaySchedule(
+      classRoomId: classRoomId,
+      subjectNameFor: subjectNameFor,
+    );
+    bindAttendanceToday(studentId: studentId);
+  }
+
+  void bindTodaySchedule({
+    required String? classRoomId,
+    required String? Function(String subjectId) subjectNameFor,
+  }) {
+    _scheduleSub?.cancel();
+    todaySchedule.clear();
+    isScheduleLive = false;
+
+    if (classRoomId == null || classRoomId.isEmpty) {
+      notifyListeners();
+      return;
+    }
+
+    final structure = FirestoreSchoolStructureRepository();
+    _cachedSubjectNameFor = subjectNameFor;
+    _scheduleSub = structure.watchClassSubjects(classRoomId).listen(
+      (assignments) {
+        _lastClassSubjects = assignments;
+        _rebuildTodaySchedule();
+      },
+      onError: (_) {
+        isScheduleLive = false;
+        notifyListeners();
+      },
+    );
+  }
+
+  void _rebuildTodaySchedule() {
+    final subjectNameFor = _cachedSubjectNameFor;
+    if (subjectNameFor == null) return;
+    todaySchedule
+      ..clear()
+      ..addAll(_scheduleFromSubjects(_lastClassSubjects, subjectNameFor));
+    isScheduleLive = todaySchedule.isNotEmpty;
+    notifyListeners();
+  }
+
+  List<ScheduleItem> _scheduleFromSubjects(
+    List<ClassSubjectModel> subjects,
+    String? Function(String subjectId) subjectNameFor,
+  ) {
+    if (subjects.isEmpty) return [];
+
+    final sorted = List<ClassSubjectModel>.from(subjects)
+      ..sort((a, b) {
+        final an = subjectNameFor(a.subjectId) ?? '';
+        final bn = subjectNameFor(b.subjectId) ?? '';
+        return an.compareTo(bn);
+      });
+
+    final items = <ScheduleItem>[];
+    for (var i = 0; i < sorted.length; i++) {
+      final subjectName = subjectNameFor(sorted[i].subjectId) ?? 'Class';
+      final slot = _slotTimes[i % _slotTimes.length];
+      final hour = slot.$1;
+      final minute = slot.$2;
+      final timeLabel = _formatTime(hour, minute);
+      items.add(
+        ScheduleItem(
+          time: timeLabel,
+          title: '$subjectName Class',
+          subtitle: 'With your ${subjectName.toLowerCase()} teacher',
+          icon: _iconForSubject(subjectName),
+          color: _questColors[i % _questColors.length],
+          hour: hour,
+          minute: minute,
+        ),
+      );
+    }
+
+    for (final quest in quests.where((q) => !q.completed)) {
+      items.add(
+        ScheduleItem(
+          time: 'After school',
+          title: 'Homework: ${quest.title}',
+          subtitle: quest.dueDate,
+          icon: Icons.assignment_rounded,
+          color: quest.color,
+          hour: 16,
+          minute: 0,
+        ),
+      );
+    }
+
+    items.sort((a, b) {
+      final am = a.hour * 60 + a.minute;
+      final bm = b.hour * 60 + b.minute;
+      return am.compareTo(bm);
+    });
+    return items;
+  }
+
+  static String _formatTime(int hour, int minute) {
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final h = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    final m = minute.toString().padLeft(2, '0');
+    return '$h:$m $period';
+  }
+
+  static IconData _iconForSubject(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('math')) return Icons.calculate_rounded;
+    if (n.contains('english') || n.contains('reading')) return Icons.menu_book_rounded;
+    if (n.contains('science')) return Icons.biotech_rounded;
+    if (n.contains('art') || n.contains('music')) return Icons.palette_rounded;
+    if (n.contains('sport') || n.contains('physical')) return Icons.sports_soccer_rounded;
+    return Icons.school_rounded;
+  }
+
+  void bindAttendanceToday({required String? studentId}) {
+    _attendanceSub?.cancel();
+    attendanceTodayLabel = null;
+    if (studentId == null || studentId.isEmpty) {
+      notifyListeners();
+      return;
+    }
+
+    _attendanceSub = _academic
+        .watchRecentAttendanceForStudent(studentId, maxRecords: 3)
+        .listen((records) {
+      final today = DateTime.now();
+      AttendanceRecordModel? todayRecord;
+      for (final r in records) {
+        final d = r.date;
+        if (d.year == today.year && d.month == today.month && d.day == today.day) {
+          todayRecord = r;
+          break;
+        }
+      }
+      if (todayRecord == null) {
+        attendanceTodayLabel = 'Attendance not marked yet today';
+      } else {
+        attendanceTodayLabel = todayRecord!.status == AttendanceStatus.present
+            ? 'Marked present today'
+            : 'Marked ${todayRecord!.status.id} today';
+      }
+      notifyListeners();
+    });
   }
 
   void bindHomework({
@@ -209,7 +408,11 @@ class ChildGamificationProvider extends ChangeNotifier {
   }) {
     _homeworkSub?.cancel();
     _homeworkSub = null;
+    _completionsSub?.cancel();
+    _completionsSub = null;
     quests.clear();
+    _assignmentsById.clear();
+    _activeStudentId = studentId;
     isLiveHomework = false;
     isHomeworkLoading = false;
     homeworkStatusMessage = null;
@@ -221,25 +424,41 @@ class ChildGamificationProvider extends ChangeNotifier {
       return;
     }
 
-    if (classRoomId == null || classRoomId.isEmpty) {
-      isLiveHomework = true;
-      homeworkStatusMessage =
-          'Your parent needs to enroll you in a class before homework appears here.';
-      notifyListeners();
-      return;
-    }
-
     isLiveHomework = true;
     isHomeworkLoading = true;
+    homeworkStatusMessage = null;
     notifyListeners();
 
-    _homeworkSub = _academic.watchAssignmentsForStudent(studentId).listen(
+    _completionsSub =
+        _academic.watchCompletedAssignmentIdsForStudent(studentId).listen(
+      (completedIds) {
+        _completedQuestIds
+          ..clear()
+          ..addAll(completedIds);
+        if (_assignmentsById.isNotEmpty) {
+          _syncQuestsFromAssignments(
+            _assignmentsById.values.toList(),
+            subjectNameFor,
+          );
+        }
+        notifyListeners();
+      },
+    );
+
+    _homeworkSub = _academic
+        .watchAssignmentsForStudent(studentId, classRoomIdHint: classRoomId)
+        .listen(
       (assignments) {
         _syncQuestsFromAssignments(assignments, subjectNameFor);
         isHomeworkLoading = false;
-        homeworkStatusMessage = assignments.isEmpty
-            ? 'No homework from your teachers yet — check back soon!'
-            : null;
+        if (assignments.isEmpty) {
+          homeworkStatusMessage = classRoomId == null || classRoomId.isEmpty
+              ? 'Ask your parent to finish enrolling you in a grade — then homework from teachers will appear.'
+              : 'No homework from your teachers yet — check back soon!';
+        } else {
+          homeworkStatusMessage = null;
+        }
+        _rebuildTodaySchedule();
         notifyListeners();
       },
       onError: (_) {
@@ -253,7 +472,18 @@ class ChildGamificationProvider extends ChangeNotifier {
   void unbindHomework() {
     _homeworkSub?.cancel();
     _homeworkSub = null;
+    _completionsSub?.cancel();
+    _completionsSub = null;
+    _assignmentsById.clear();
+    _activeStudentId = null;
+    _scheduleSub?.cancel();
+    _scheduleSub = null;
+    _attendanceSub?.cancel();
+    _attendanceSub = null;
     quests.clear();
+    todaySchedule.clear();
+    isScheduleLive = false;
+    attendanceTodayLabel = null;
     isLiveHomework = false;
     isHomeworkLoading = false;
     homeworkStatusMessage = null;
@@ -266,9 +496,11 @@ class ChildGamificationProvider extends ChangeNotifier {
   ) {
     final previousCompleted = Set<String>.from(_completedQuestIds);
     quests.clear();
+    _assignmentsById.clear();
 
     for (var i = 0; i < assignments.length; i++) {
       final a = assignments[i];
+      _assignmentsById[a.id] = a;
       final subject = subjectNameFor(a.subjectId) ?? 'Subject';
       quests.add(
         ChildQuest(
@@ -293,18 +525,48 @@ class ChildGamificationProvider extends ChangeNotifier {
     return 'Due in ${diff.inDays} days';
   }
 
-  String? completeQuest(String id, {required void Function() onLevelUp}) {
+  /// Student turns in homework — saved to Firestore and teacher is notified.
+  Future<String?> completeQuestAsync({
+    required String questId,
+    required String studentName,
+    required String submittedByUserId,
+    required void Function() onLevelUp,
+  }) async {
     ChildQuest? quest;
     for (final q in quests) {
-      if (q.id == id) {
+      if (q.id == questId) {
         quest = q;
         break;
       }
     }
-    if (quest == null || quest.completed) return null;
+    final assignment = _assignmentsById[questId];
+    final studentId = _activeStudentId;
+    if (quest == null ||
+        quest.completed ||
+        assignment == null ||
+        studentId == null ||
+        studentId.isEmpty) {
+      return null;
+    }
+
+    isSubmittingQuest = true;
+    notifyListeners();
+
+    try {
+      await _academic.submitHomeworkCompletion(
+        assignment: assignment,
+        studentId: studentId,
+        studentName: studentName,
+        submittedByUserId: submittedByUserId,
+      );
+    } catch (_) {
+      isSubmittingQuest = false;
+      notifyListeners();
+      rethrow;
+    }
 
     quest.completed = true;
-    _completedQuestIds.add(id);
+    _completedQuestIds.add(questId);
     currentXp += quest.xp;
 
     String? unlockedBadge;
@@ -326,8 +588,26 @@ class ChildGamificationProvider extends ChangeNotifier {
       onLevelUp();
     }
 
+    await _persistGamification(studentId);
+
+    isSubmittingQuest = false;
+    _rebuildTodaySchedule();
     notifyListeners();
     return unlockedBadge;
+  }
+
+  Future<void> _persistGamification(String studentId) async {
+    final unlocked = badges.where((b) => b.unlocked).map((b) => b.title).toList();
+    try {
+      await _academic.saveStudentGamification(
+        studentId: studentId,
+        xp: currentXp,
+        level: currentLevel,
+        unlockedBadges: unlocked,
+      );
+    } catch (_) {
+      // XP still applies locally if offline.
+    }
   }
 
   String? _unlockBadge(String title) {
@@ -340,6 +620,9 @@ class ChildGamificationProvider extends ChangeNotifier {
   @override
   void dispose() {
     _homeworkSub?.cancel();
+    _completionsSub?.cancel();
+    _scheduleSub?.cancel();
+    _attendanceSub?.cancel();
     super.dispose();
   }
 }

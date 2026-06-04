@@ -165,3 +165,60 @@ class AssignmentModel {
         'attachmentUrls': attachmentUrls,
       };
 }
+
+/// Student turned in homework — visible to the assigning teacher.
+class AssignmentSubmissionModel {
+  final String id;
+  final String assignmentId;
+  final String schoolId;
+  final String classRoomId;
+  final String teacherId;
+  final String studentId;
+  final String studentName;
+  final String assignmentTitle;
+  final String submittedByUserId;
+  final DateTime submittedAt;
+
+  const AssignmentSubmissionModel({
+    required this.id,
+    required this.assignmentId,
+    required this.schoolId,
+    required this.classRoomId,
+    required this.teacherId,
+    required this.studentId,
+    required this.studentName,
+    required this.assignmentTitle,
+    required this.submittedByUserId,
+    required this.submittedAt,
+  });
+
+  static String compositeId(String assignmentId, String studentId) =>
+      '${assignmentId}_$studentId';
+
+  factory AssignmentSubmissionModel.fromMap(Map<String, dynamic> map, String id) {
+    return AssignmentSubmissionModel(
+      id: id,
+      assignmentId: map['assignmentId'] as String? ?? '',
+      schoolId: map['schoolId'] as String? ?? '',
+      classRoomId: map['classRoomId'] as String? ?? '',
+      teacherId: map['teacherId'] as String? ?? '',
+      studentId: map['studentId'] as String? ?? '',
+      studentName: map['studentName'] as String? ?? '',
+      assignmentTitle: map['assignmentTitle'] as String? ?? '',
+      submittedByUserId: map['submittedByUserId'] as String? ?? '',
+      submittedAt: FirestoreHelpers.toDateTime(map['submittedAt']) ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'assignmentId': assignmentId,
+        'schoolId': schoolId,
+        'classRoomId': classRoomId,
+        'teacherId': teacherId,
+        'studentId': studentId,
+        'studentName': studentName,
+        'assignmentTitle': assignmentTitle,
+        'submittedByUserId': submittedByUserId,
+        'submittedAt': submittedAt,
+      };
+}

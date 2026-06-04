@@ -17,6 +17,9 @@ class FirestoreAcademicRepository implements AcademicRepository {
   CollectionReference<Map<String, dynamic>> get _attendance =>
       _db.collection(FirestoreCollections.attendance);
 
+  CollectionReference<Map<String, dynamic>> get _submissions =>
+      _db.collection(FirestoreCollections.assignmentSubmissions);
+
   static DateTime _dayStart(DateTime date) =>
       DateTime(date.year, date.month, date.day);
 
@@ -88,19 +91,71 @@ class FirestoreAcademicRepository implements AcademicRepository {
   }
 
   @override
-  Stream<List<AssignmentModel>> watchAssignmentsForStudent(String studentId) {
+  Stream<List<AssignmentModel>> watchAssignmentsForStudent(
+    String studentId, {
+    String? classRoomIdHint,
+  }) {
+    if (classRoomIdHint != null && classRoomIdHint.isNotEmpty) {
+      return watchAssignmentsForClass(classRoomIdHint);
+    }
+
     return _db
         .collection(FirestoreCollections.children)
         .doc(studentId)
         .snapshots()
         .asyncExpand((snap) {
       if (!snap.exists) return Stream.value(const <AssignmentModel>[]);
-      final classRoomId = snap.data()?['classRoomId'] as String? ?? '';
-      if (classRoomId.isEmpty) {
-        return Stream.value(const <AssignmentModel>[]);
-      }
-      return watchAssignmentsForClass(classRoomId);
+      return Stream.fromFuture(
+        _resolveClassRoomIdFromChildData(
+          studentId: studentId,
+          data: snap.data() ?? {},
+        ),
+      ).asyncExpand((room) {
+        if (room == null || room.isEmpty) {
+          return Stream.value(const <AssignmentModel>[]);
+        }
+        return watchAssignmentsForClass(room);
+      });
     });
+  }
+
+  Future<String?> _resolveClassRoomIdFromChildData({
+    required String studentId,
+    required Map<String, dynamic> data,
+  }) async {
+    var classRoomId = data['classRoomId'] as String? ?? '';
+    if (classRoomId.isNotEmpty) return classRoomId;
+
+    final enrollmentId = data['activeEnrollmentId'] as String? ?? '';
+    if (enrollmentId.isNotEmpty) {
+      final enr =
+          await _db.collection(FirestoreCollections.enrollments).doc(enrollmentId).get();
+      classRoomId = enr.data()?['classRoomId'] as String? ?? '';
+      if (classRoomId.isNotEmpty) return classRoomId;
+    }
+
+    final activeEnrollments = await _db
+        .collection(FirestoreCollections.enrollments)
+        .where('studentId', isEqualTo: studentId)
+        .where('status', isEqualTo: EnrollmentStatus.active.id)
+        .limit(1)
+        .get();
+    if (activeEnrollments.docs.isNotEmpty) {
+      classRoomId = activeEnrollments.docs.first.data()['classRoomId'] as String? ?? '';
+      if (classRoomId.isNotEmpty) return classRoomId;
+    }
+
+    final gradeLevelId = data['gradeLevelId'] as String? ?? '';
+    if (gradeLevelId.isNotEmpty) {
+      final rooms = await _db
+          .collection(FirestoreCollections.classRooms)
+          .where('gradeLevelId', isEqualTo: gradeLevelId)
+          .limit(1)
+          .get();
+      if (rooms.docs.isNotEmpty) return rooms.docs.first.id;
+    }
+
+    return null;
   }
 
   List<AssignmentModel> _mapAssignments(
@@ -131,6 +186,106 @@ class FirestoreAcademicRepository implements AcademicRepository {
       ),
     );
     return ref.id;
+  }
+
+  @override
+  Future<void> submitHomeworkCompletion({
+    required AssignmentModel assignment,
+    required String studentId,
+    required String studentName,
+    required String submittedByUserId,
+  }) async {
+    final docId =
+        AssignmentSubmissionModel.compositeId(assignment.id, studentId);
+    await _submissions.doc(docId).set(
+      FirestoreHelpers.withTimestamps(
+        {
+          'assignmentId': assignment.id,
+          'schoolId': assignment.schoolId,
+          'classRoomId': assignment.classRoomId,
+          'teacherId': assignment.teacherId,
+          'studentId': studentId,
+          'studentName': studentName,
+          'assignmentTitle': assignment.title,
+          'submittedByUserId': submittedByUserId,
+          'submittedAt': FieldValue.serverTimestamp(),
+        },
+        isCreate: true,
+      ),
+      SetOptions(merge: true),
+    );
+
+    if (assignment.teacherId.isNotEmpty) {
+      try {
+        await _db.collection(FirestoreCollections.notifications).add({
+          'schoolId': assignment.schoolId,
+          'recipientId': assignment.teacherId,
+          'userId': assignment.teacherId,
+          'type': NotificationType.homeworkSubmitted.id,
+          'title': 'Homework turned in',
+          'body': '$studentName completed "${assignment.title}".',
+          'relatedStudentId': studentId,
+          'relatedEntityId': assignment.id,
+          'read': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } catch (_) {
+        // Best-effort teacher alert.
+      }
+    }
+  }
+
+  @override
+  Stream<Set<String>> watchCompletedAssignmentIdsForStudent(String studentId) {
+    return _submissions
+        .where('studentId', isEqualTo: studentId)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => d.data()['assignmentId'] as String? ?? '')
+            .where((id) => id.isNotEmpty)
+            .toSet());
+  }
+
+  @override
+  Stream<List<AssignmentSubmissionModel>> watchSubmissionsForAssignment(
+    String assignmentId,
+  ) {
+    return _submissions
+        .where('assignmentId', isEqualTo: assignmentId)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => AssignmentSubmissionModel.fromMap(d.data(), d.id))
+            .toList());
+  }
+
+  @override
+  Stream<List<AssignmentSubmissionModel>> watchSubmissionsForTeacher(
+    String teacherId,
+  ) {
+    return _submissions
+        .where('teacherId', isEqualTo: teacherId)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => AssignmentSubmissionModel.fromMap(d.data(), d.id))
+            .toList());
+  }
+
+  @override
+  Future<void> saveStudentGamification({
+    required String studentId,
+    required int xp,
+    required int level,
+    required List<String> unlockedBadges,
+  }) async {
+    await _db.collection(FirestoreCollections.children).doc(studentId).set(
+      {
+        'gamificationXp': xp,
+        'gamificationLevel': level,
+        'unlockedBadges': unlockedBadges,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
   }
 
   @override
