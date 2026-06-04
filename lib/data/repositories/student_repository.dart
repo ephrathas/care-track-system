@@ -1,3 +1,4 @@
+import '../../core/academic/teacher_roster_scope.dart';
 import '../../models/enrollment_model.dart';
 import '../../models/student_model.dart';
 
@@ -20,8 +21,11 @@ abstract class StudentRepository {
   Stream<List<StudentModel>> watchStudentsForClass(String classRoomId);
   Stream<EnrollmentModel?> watchActiveEnrollment(String studentId);
 
-  /// Teacher roster — active enrollments in classes they teach.
-  Stream<List<StudentModel>> watchStudentsForTeacher(String teacherId);
+  /// Teacher roster — students in grades/classes this teacher teaches.
+  Stream<List<StudentModel>> watchStudentsForTeacher(
+    String teacherId, {
+    TeacherRosterScope? scopeHint,
+  });
 
   /// Student self-login link.
   Future<void> linkStudentAccount({

@@ -1,4 +1,5 @@
 import '../catalog/academic_catalog.dart';
+import '../config/school_config.dart';
 
 /// Normalizes grade names so "Grade 1" and "grade 1" are treated as duplicates.
 class GradeNaming {
@@ -43,8 +44,11 @@ class SectionEnrollmentStatus {
 
   String get blockingMessage {
     if (!hasSubjectSlots) {
-      return 'This class has no subjects set up yet. Ask the school admin to configure '
-          'subjects and assign teachers before enrolling.';
+      return SchoolConfig.gradeOnlyEnrollment
+          ? 'This grade has no subjects set up yet. Ask the school admin to configure '
+              'subjects and assign teachers before enrolling.'
+          : 'This class has no subjects set up yet. Ask the school admin to configure '
+              'subjects and assign teachers before enrolling.';
     }
     if (unassignedSubjectNames.isEmpty) return '';
     final subjects = unassignedSubjectNames.join(', ');

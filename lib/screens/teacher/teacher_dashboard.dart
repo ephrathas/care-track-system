@@ -136,7 +136,7 @@ class _TeacherHomeTab extends StatelessWidget {
                       hasScrollBody: false,
                       child: EducationEmptyState(
                         icon: Icons.link_off_rounded,
-                        title: 'Not assigned to a class yet',
+                        title: 'Not assigned to a grade yet',
                         message: SchoolConfig.gradeOnlyEnrollment
                             ? 'After you register as Teacher, ask your admin to open '
                                 'Admin → Staff tab, link your account to the school, '
@@ -156,13 +156,15 @@ class _TeacherHomeTab extends StatelessWidget {
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                             child: _ClassScheduleCard(
                               time: count == 0
-                                  ? 'No students enrolled'
+                                  ? 'No students in this grade yet'
                                   : '$count student${count == 1 ? '' : 's'}',
                               title: slot.subjectName,
-                              grade: EnrollmentDisplay.teacherSlotLine(
-                                slot.gradeName,
-                                slot.className,
-                              ),
+                              grade: SchoolConfig.gradeOnlyEnrollment
+                                  ? slot.gradeName
+                                  : EnrollmentDisplay.teacherSlotLine(
+                                      slot.gradeName,
+                                      slot.className,
+                                    ),
                               icon: slot.icon,
                               accentColor: slot.accentColor,
                               isDark: isDark,
@@ -197,7 +199,7 @@ class _TeacherHomeTab extends StatelessWidget {
         Icons.people_rounded
       ),
       (
-        'Classes',
+        SchoolConfig.gradeOnlyEnrollment ? 'Grades' : 'Classes',
         '${overview.slots.length}',
         'Teaching slots',
         const Color(0xFF4A90E2),
@@ -447,20 +449,21 @@ class _TeacherStudentsTabState extends State<_TeacherStudentsTab> {
     final overview = context.watch<TeacherOverviewProvider>();
     final schoolAdmin = context.watch<SchoolAdminProvider>();
 
-    if (attendance.isLoading) {
+    if (attendance.isLoading && overview.isLoading) {
       return const DashboardTabScaffold(
         title: 'My Students',
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    final roster = attendance.roster;
+    final roster = overview.roster.isNotEmpty ? overview.roster : attendance.roster;
     final q = _searchQuery.trim().toLowerCase();
     final list = q.isEmpty
         ? roster
         : roster.where((s) => s.fullName.toLowerCase().contains(q)).toList();
 
     if (roster.isEmpty) {
+      final loadError = overview.error ?? attendance.error;
       return DashboardTabScaffold(
         title: 'My Students',
         body: EducationEmptyState(
@@ -468,9 +471,15 @@ class _TeacherStudentsTabState extends State<_TeacherStudentsTab> {
           title: overview.slots.isEmpty
               ? 'Waiting for admin assignment'
               : 'No students on your roster yet',
-          message: overview.slots.isEmpty
-              ? 'Ask admin to assign you in Admin → Staff tab after you register as Teacher.'
-              : 'Students appear here after parents enroll children in your assigned grades.',
+          message: loadError != null
+              ? (loadError.contains('permission-denied')
+                  ? 'Firestore blocked reading students. Deploy the latest rules: '
+                      'run "firebase deploy --only firestore:rules" in the project folder, '
+                      'then restart the app.\n\n$loadError'
+                  : 'Could not load roster: $loadError')
+              : overview.slots.isEmpty
+                  ? 'Ask admin to assign you in Admin → Staff tab after you register as Teacher.'
+                  : 'Students appear here after parents enroll children in your assigned grade.',
         ),
       );
     }
@@ -585,10 +594,17 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
   String _searchQuery = '';
   String? _classRoomFilter;
 
-  List<StudentModel> _filter(List<StudentModel> students) {
+  List<StudentModel> _filter(List<StudentModel> students, SchoolAdminProvider admin) {
     var list = students;
     if (_classRoomFilter != null && _classRoomFilter!.isNotEmpty) {
-      list = list.where((s) => s.classRoomId == _classRoomFilter).toList();
+      if (SchoolConfig.gradeOnlyEnrollment) {
+        final gradeId = admin.gradeLevelIdForClassRoom(_classRoomFilter!);
+        if (gradeId != null && gradeId.isNotEmpty) {
+          list = list.where((s) => s.gradeLevelId == gradeId).toList();
+        }
+      } else {
+        list = list.where((s) => s.classRoomId == _classRoomFilter).toList();
+      }
     }
     if (_searchQuery.trim().isEmpty) return list;
     final q = _searchQuery.toLowerCase();
@@ -603,6 +619,7 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
     final teacherId = context.watch<AuthProvider>().currentUser?.uid;
     final attendance = context.watch<TeacherAttendanceProvider>();
     final overview = context.watch<TeacherOverviewProvider>();
+    final schoolAdmin = context.watch<SchoolAdminProvider>();
 
     if (teacherId == null) {
       return const DashboardTabScaffold(
@@ -611,15 +628,15 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
       );
     }
 
-    if (attendance.isLoading) {
+    if (attendance.isLoading && overview.isLoading) {
       return const DashboardTabScaffold(
         title: 'Attendance Registry',
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    final roster = attendance.roster;
-    final list = _filter(roster);
+    final roster = overview.roster.isNotEmpty ? overview.roster : attendance.roster;
+    final list = _filter(roster, schoolAdmin);
     final presentCount =
         list.where((s) => attendance.isPresent(s.id)).length;
     final rate = list.isEmpty
@@ -636,8 +653,8 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
               : 'No students on your roster yet',
           message: overview.slots.isEmpty
               ? 'Ask admin to assign you in Admin → Staff tab after you register as Teacher.'
-              : 'Students appear here after parents enroll children in your assigned grades '
-                  '(${overview.slots.map((s) => EnrollmentDisplay.teacherSlotLine(s.gradeName, s.className)).toSet().join(', ')}).',
+              : 'Students appear here after parents enroll children in your assigned grade '
+                  '(${overview.slots.map((s) => SchoolConfig.gradeOnlyEnrollment ? s.gradeName : EnrollmentDisplay.teacherSlotLine(s.gradeName, s.className)).toSet().join(', ')}).',
         ),
       );
     }
@@ -699,7 +716,9 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                       DropdownButtonFormField<String>(
                         value: _classRoomFilter,
                         decoration: InputDecoration(
-                          labelText: 'Filter by section',
+                          labelText: SchoolConfig.gradeOnlyEnrollment
+                              ? 'Filter by grade'
+                              : 'Filter by section',
                           filled: true,
                           fillColor: isDark ? AppTheme.darkSurface : Colors.white,
                           border: OutlineInputBorder(
@@ -711,16 +730,18 @@ class _TeacherAttendanceTabState extends State<_TeacherAttendanceTab> {
                         items: [
                           const DropdownMenuItem(
                             value: null,
-                            child: Text('All my sections'),
+                            child: Text('All my grades'),
                           ),
                           ...overview.slots.map(
                             (s) => DropdownMenuItem(
                               value: s.classRoomId,
                               child: Text(
-                                EnrollmentDisplay.teacherSlotLine(
-                                  s.gradeName,
-                                  s.className,
-                                ),
+                                SchoolConfig.gradeOnlyEnrollment
+                                    ? s.gradeName
+                                    : EnrollmentDisplay.teacherSlotLine(
+                                        s.gradeName,
+                                        s.className,
+                                      ),
                               ),
                             ),
                           ),
@@ -909,9 +930,9 @@ class _HonestNextStepsCard extends StatelessWidget {
           Text(
             rosterCount == 0
                 ? 'Once admin assigns you (Staff tab) and parents enroll students in your '
-                    'sections, mark attendance here and publish homework from the Homework tab.'
-                : 'You have $rosterCount student(s) across your assigned sections. '
-                    'Mark attendance daily and publish homework for each class + subject you teach.',
+                    'grade, mark attendance here and publish homework from the Homework tab.'
+                : 'You have $rosterCount student(s) in your grade(s). '
+                    'Mark attendance daily and publish homework for each subject you teach.',
             style: TextStyle(
               fontSize: 13,
               height: 1.45,

@@ -1,4 +1,5 @@
 import '../core/domain/domain_enums.dart';
+import '../data/firestore/firestore_helpers.dart';
 
 class EnrollmentModel {
   final String id;
@@ -34,9 +35,8 @@ class EnrollmentModel {
       classRoomId: map['classRoomId'] as String? ?? '',
       gradeLevelId: map['gradeLevelId'] as String? ?? '',
       status: EnrollmentStatus.fromId(map['status'] as String?),
-      enrolledAt: DateTime.tryParse(map['enrolledAt']?.toString() ?? '') ??
-          DateTime.now(),
-      withdrawnAt: DateTime.tryParse(map['withdrawnAt']?.toString() ?? ''),
+      enrolledAt: FirestoreHelpers.toDateTime(map['enrolledAt']) ?? DateTime.now(),
+      withdrawnAt: FirestoreHelpers.toDateTime(map['withdrawnAt']),
     );
   }
 

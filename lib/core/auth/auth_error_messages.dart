@@ -11,11 +11,24 @@ class AuthErrorMessages {
     if (error is FirebaseAuthException) {
       return fromCode(error.code, fallback: error.message);
     }
-    if (error is FirebaseException && error.code == 'permission-denied') {
-      return 'Database access denied. Ask your admin to deploy the latest Firestore rules, then try again.';
+    if (error is FirebaseException) {
+      if (error.code == 'permission-denied') {
+        return 'Database access denied. Ask your admin to deploy the latest Firestore rules, then try again.';
+      }
+      if (error.code == 'unavailable' || error.code == 'deadline-exceeded') {
+        return 'Could not reach the database. Check your internet connection, then try again.';
+      }
+      if (error.code == 'internal') {
+        return 'Database connection error. Refresh the page and try signing in again.';
+      }
     }
     if (error is TimeoutException) {
       return 'Could not load your profile in time. Check your internet connection, then try again.';
+    }
+    final message = error.toString();
+    if (message.contains('INTERNAL ASSERTION') ||
+        message.contains('firestore') && message.contains('Unexpected state')) {
+      return 'Database connection error. Refresh the page (Ctrl+F5) and try signing in again.';
     }
     return 'Something went wrong. Please try again.';
   }

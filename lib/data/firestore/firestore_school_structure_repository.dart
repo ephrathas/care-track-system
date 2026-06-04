@@ -223,10 +223,11 @@ class FirestoreSchoolStructureRepository implements SchoolStructureRepository {
     return _db
         .collection(FirestoreCollections.classSubjects)
         .where('teacherId', isEqualTo: teacherId)
-        .where('isActive', isEqualTo: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => ClassSubjectModel.fromMap(d.data(), d.id)).toList());
+        .map((snap) => snap.docs
+            .map((d) => ClassSubjectModel.fromMap(d.data(), d.id))
+            .where((a) => a.isActive)
+            .toList());
   }
 
   @override

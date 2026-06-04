@@ -766,6 +766,8 @@ class SchoolAdminProvider with ChangeNotifier {
         previousTeacherId = doc.data()['teacherId'] as String? ?? '';
         await doc.reference.update({
           'teacherId': teacherId,
+          if (gradeLevelId != null && gradeLevelId.isNotEmpty)
+            'gradeLevelId': gradeLevelId,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
@@ -778,6 +780,20 @@ class SchoolAdminProvider with ChangeNotifier {
             teacherId: teacherId,
           ),
         );
+        if (gradeLevelId != null && gradeLevelId.isNotEmpty) {
+          final created = await FirebaseFirestore.instance
+              .collection(FirestoreCollections.classSubjects)
+              .where('classRoomId', isEqualTo: classRoomId)
+              .where('subjectId', isEqualTo: subjectId)
+              .where('teacherId', isEqualTo: teacherId)
+              .limit(1)
+              .get();
+          if (created.docs.isNotEmpty) {
+            await created.docs.first.reference.update({
+              'gradeLevelId': gradeLevelId,
+            });
+          }
+        }
       }
 
       // Core assignment succeeded — optional steps must not show a false failure.

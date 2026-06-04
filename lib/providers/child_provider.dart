@@ -229,7 +229,12 @@ class ChildProvider with ChangeNotifier {
         usesPrivateDoctor: usesPrivateDoctor,
       );
 
-      await _dbService.setChild(childId, child);
+      await _dbService.setChild(
+        childId,
+        child,
+        fullName: name,
+        schemaVersion: SchoolConfig.currentStudentSchemaVersion,
+      );
 
       await _family.createRelationship(
         parentId: parentId,

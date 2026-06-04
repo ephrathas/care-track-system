@@ -123,14 +123,14 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
 
     if (role == UserRole.teacher) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        final overview = Provider.of<TeacherOverviewProvider>(context, listen: false);
         Provider.of<MessagingProvider>(context, listen: false)
             .startListeningForTeacher(user.uid);
-        Provider.of<TeacherOverviewProvider>(context, listen: false)
-            .startListening(teacherId: user.uid, school: schoolAdmin);
+        overview.startListening(teacherId: user.uid, school: schoolAdmin);
         Provider.of<TeacherHomeworkProvider>(context, listen: false)
             .startListening(user.uid);
         Provider.of<TeacherAttendanceProvider>(context, listen: false)
-            .startListening(user.uid);
+            .bindToOverview(overview);
       });
       return const TeacherDashboard();
     }

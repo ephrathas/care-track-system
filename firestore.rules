@@ -38,6 +38,10 @@ service cloud.firestore {
       return userRole() == 'Healthcare';
     }
 
+    function isStaff() {
+      return isAdmin() || isTeacher() || isHealthcare();
+    }
+
     match /schools/{schoolId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
@@ -70,7 +74,10 @@ service cloud.firestore {
     }
 
     match /children/{studentId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isStaff() ||
+        resource.data.parentId == request.auth.uid
+      );
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (
         isAdmin() ||
@@ -80,7 +87,7 @@ service cloud.firestore {
     }
 
     match /enrollments/{id} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (isStaff() || isParent());
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isAdmin() || isParent());
     }

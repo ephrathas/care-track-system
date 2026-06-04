@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/academic/enrollment_display.dart';
+import '../core/academic/grade_naming.dart';
 import '../core/config/school_config.dart';
 import '../data/firestore/firestore_school_structure_repository.dart';
 import '../data/firestore/firestore_student_repository.dart';
@@ -39,7 +40,9 @@ class TeacherOverviewProvider with ChangeNotifier {
 
   String get badgeText {
     if (slots.isEmpty) {
-      return 'No class assignments yet — ask admin to link you';
+      return SchoolConfig.gradeOnlyEnrollment
+          ? 'No grade assignments yet — ask admin to link you'
+          : 'No class assignments yet — ask admin to link you';
     }
     if (slots.length == 1) {
       final s = slots.first;
@@ -58,7 +61,11 @@ class TeacherOverviewProvider with ChangeNotifier {
     error = null;
     notifyListeners();
 
-    _schoolListener = _resolveSlots;
+    _schoolListener = () {
+      _resolveSlots();
+      _restartRosterWatch();
+      notifyListeners();
+    };
     school.addListener(_schoolListener!);
 
     _assignmentsSub = _structure.watchTeacherAssignments(teacherId).listen(
@@ -66,6 +73,7 @@ class TeacherOverviewProvider with ChangeNotifier {
         _rawAssignments = list;
         isLoading = false;
         _resolveSlots();
+        _restartRosterWatch();
         notifyListeners();
       },
       onError: (e) {
@@ -74,11 +82,47 @@ class TeacherOverviewProvider with ChangeNotifier {
         notifyListeners();
       },
     );
+  }
 
-    _rosterSub = _students.watchStudentsForTeacher(teacherId).listen(
+  /// Same class room IDs the admin panel uses for "Enrolled students (N)".
+  Set<String> _classRoomIdsForRoster() {
+    final school = _school;
+    final ids = <String>{};
+    for (final slot in slots) {
+      if (slot.classRoomId.isNotEmpty) {
+        ids.add(slot.classRoomId);
+      }
+      if (school != null) {
+        final gradeId = school.gradeLevelIdForClassRoom(slot.classRoomId);
+        if (gradeId != null && gradeId.isNotEmpty) {
+          final primary = school.primaryClassForGrade(gradeId);
+          if (primary != null) ids.add(primary.id);
+        }
+      }
+    }
+    return ids;
+  }
+
+  void _restartRosterWatch() {
+    _rosterSub?.cancel();
+
+    final classRoomIds = _classRoomIdsForRoster();
+    if (classRoomIds.isEmpty) {
+      roster = [];
+      rosterCount = 0;
+      notifyListeners();
+      return;
+    }
+
+    _rosterSub = _students.watchStudentsForClassRooms(classRoomIds).listen(
       (students) {
         roster = students;
         rosterCount = students.length;
+        error = null;
+        notifyListeners();
+      },
+      onError: (e) {
+        error = e.toString();
         notifyListeners();
       },
     );
@@ -86,12 +130,26 @@ class TeacherOverviewProvider with ChangeNotifier {
 
   int studentCountForClass(String classRoomId) {
     final gradeId = _school?.gradeLevelIdForClassRoom(classRoomId);
+    final gradeName = gradeId != null ? _school?.gradeNameForId(gradeId) : null;
+    final gradeKey = gradeName != null && gradeName.isNotEmpty
+        ? GradeNaming.normalizeKey(gradeName)
+        : null;
+
     return roster.where((s) {
       if (s.classRoomId == classRoomId) return true;
       if (gradeId != null &&
           gradeId.isNotEmpty &&
           s.gradeLevelId == gradeId) {
         return true;
+      }
+      if (gradeKey != null && _school != null) {
+        final sName = _school!.gradeNameForId(s.gradeLevelId ?? '') ??
+            _school!.gradeNameForClassRoom(s.classRoomId ?? '');
+        if (sName != null &&
+            sName.isNotEmpty &&
+            GradeNaming.normalizeKey(sName) == gradeKey) {
+          return true;
+        }
       }
       return false;
     }).length;

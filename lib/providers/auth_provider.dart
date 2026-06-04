@@ -96,6 +96,7 @@ class AuthProvider with ChangeNotifier {
       );
     } catch (e) {
       _isLoading = false;
+      debugPrint('Login error: $e');
       _errorMessage = AuthErrorMessages.fromException(e);
       notifyListeners();
       return false;

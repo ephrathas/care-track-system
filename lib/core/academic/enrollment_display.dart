@@ -18,9 +18,13 @@ class EnrollmentDisplay {
     }
     if (gradeLevelId == null &&
         (classRoomId == null || classRoomId.isEmpty)) {
-      return '$age years old • Class not assigned';
+      return SchoolConfig.gradeOnlyEnrollment
+          ? '$age years old • Grade not assigned'
+          : '$age years old • Class not assigned';
     }
-    return '$age years old • Class not assigned';
+    return SchoolConfig.gradeOnlyEnrollment
+        ? '$age years old • Grade not assigned'
+        : '$age years old • Class not assigned';
   }
 
   /// Short class/grade label for reports and headers.

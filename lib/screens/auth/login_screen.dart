@@ -118,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Sign in to access your child updates, classrooms, and health records.',
+                            'Sign in to access your child updates, grades, and health records.',
                             style: TextStyle(
                               color: isDark ? Colors.grey[400] : Colors.grey[600],
                               fontSize: 14,

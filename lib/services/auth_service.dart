@@ -79,8 +79,23 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Get user data error: $e');
-      rethrow;
+      print('Get user data error (retry path): $e');
+      try {
+        final doc = await _db
+            .collection('users')
+            .doc(uid)
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 15));
+        if (doc.exists) {
+          final data = Map<String, dynamic>.from(doc.data()!);
+          data['uid'] = uid;
+          return UserModel.fromMap(data);
+        }
+        return null;
+      } catch (e2) {
+        print('Get user data error (fallback): $e2');
+        rethrow;
+      }
     }
   }
 

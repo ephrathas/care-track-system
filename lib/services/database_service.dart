@@ -22,9 +22,22 @@ class DatabaseService {
   }
 
   // 👶 Function to save a child with a pre-generated ID (useful for photo uploads)
-  Future<void> setChild(String childId, ChildModel child) async {
+  Future<void> setChild(
+    String childId,
+    ChildModel child, {
+    String? fullName,
+    int? schemaVersion,
+  }) async {
     try {
-      await _db.collection('children').doc(childId).set(child.toMap()).timeout(const Duration(seconds: 10));
+      final data = child.toMap();
+      if (fullName != null && fullName.isNotEmpty) {
+        data['fullName'] = fullName;
+        data['name'] = fullName;
+      }
+      if (schemaVersion != null) {
+        data['schemaVersion'] = schemaVersion;
+      }
+      await _db.collection('children').doc(childId).set(data).timeout(const Duration(seconds: 10));
       print("Child set successfully!");
     } catch (e) {
       print("Error setting child: $e");

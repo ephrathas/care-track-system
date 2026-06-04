@@ -5,19 +5,17 @@ import 'package:flutter/foundation.dart';
 import '../core/config/school_config.dart';
 import '../core/domain/domain_enums.dart';
 import '../data/firestore/firestore_academic_repository.dart';
-import '../data/firestore/firestore_student_repository.dart';
 import '../models/academic_models.dart';
 import '../models/student_model.dart';
+import 'teacher_overview_provider.dart';
 
+/// Attendance uses the same roster as [TeacherOverviewProvider] so counts match the UI.
 class TeacherAttendanceProvider with ChangeNotifier {
-  final FirestoreStudentRepository _students;
   final FirestoreAcademicRepository _academic;
 
   TeacherAttendanceProvider({
-    FirestoreStudentRepository? students,
     FirestoreAcademicRepository? academic,
-  })  : _students = students ?? FirestoreStudentRepository(),
-        _academic = academic ?? FirestoreAcademicRepository();
+  }) : _academic = academic ?? FirestoreAcademicRepository();
 
   List<StudentModel> roster = [];
   final Map<String, bool> presentByStudentId = {};
@@ -25,30 +23,44 @@ class TeacherAttendanceProvider with ChangeNotifier {
   bool isSaving = false;
   String? error;
 
-  StreamSubscription<List<StudentModel>>? _rosterSub;
   final List<StreamSubscription<List<AttendanceRecordModel>>> _classSubs = [];
+  VoidCallback? _overviewListener;
+  TeacherOverviewProvider? _overview;
 
   DateTime get _today => DateTime.now();
 
-  void startListening(String teacherId) {
+  void bindToOverview(TeacherOverviewProvider overview) {
+    if (_overview == overview) return;
     stopListening();
-    isLoading = true;
-    notifyListeners();
+    _overview = overview;
+    isLoading = overview.isLoading;
+    roster = List<StudentModel>.from(overview.roster);
+    error = overview.error;
 
-    _rosterSub = _students.watchStudentsForTeacher(teacherId).listen(
-      (list) async {
-        roster = list;
-        await _reloadTodayAttendance();
-        _resubscribeClassStreams(list);
-        isLoading = false;
+    _overviewListener = () => _syncFromOverview();
+    overview.addListener(_overviewListener!);
+    _syncFromOverview();
+  }
+
+  void _syncFromOverview() {
+    final overview = _overview;
+    if (overview == null) return;
+
+    isLoading = overview.isLoading;
+    error = overview.error;
+    final nextRoster = List<StudentModel>.from(overview.roster);
+    final rosterChanged = roster.length != nextRoster.length ||
+        roster.any((s) => !nextRoster.any((n) => n.id == s.id));
+    roster = nextRoster;
+
+    if (rosterChanged) {
+      unawaited(_reloadTodayAttendance().then((_) {
+        _resubscribeClassStreams(roster);
         notifyListeners();
-      },
-      onError: (e) {
-        error = e.toString();
-        isLoading = false;
-        notifyListeners();
-      },
-    );
+      }));
+    } else {
+      notifyListeners();
+    }
   }
 
   void _resubscribeClassStreams(List<StudentModel> list) {
@@ -110,7 +122,7 @@ class TeacherAttendanceProvider with ChangeNotifier {
     try {
       final classRoomId = student.classRoomId ?? '';
       if (classRoomId.isEmpty) {
-        error = 'Student has no class assignment.';
+        error = 'Student has no grade assignment.';
         return;
       }
 
@@ -138,14 +150,18 @@ class TeacherAttendanceProvider with ChangeNotifier {
   }
 
   void stopListening() {
-    _rosterSub?.cancel();
-    _rosterSub = null;
+    if (_overviewListener != null && _overview != null) {
+      _overview!.removeListener(_overviewListener!);
+    }
+    _overviewListener = null;
+    _overview = null;
     for (final sub in _classSubs) {
       sub.cancel();
     }
     _classSubs.clear();
     roster = [];
     presentByStudentId.clear();
+    isLoading = true;
   }
 
   @override
