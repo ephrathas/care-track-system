@@ -43,6 +43,10 @@ class MessagingProvider with ChangeNotifier {
     startListeningForTeacher(doctorId);
   }
 
+  void startListeningForStudent(String studentUserId) {
+    _listen(_db.getMessageThreadsForStudent(studentUserId));
+  }
+
   void _listen(Stream<List<MessageThread>> stream) {
     _isLoading = true;
     _errorMessage = null;
@@ -285,6 +289,55 @@ class MessagingProvider with ChangeNotifier {
     );
   }
 
+  Future<MessageThread?> ensureHealthcareToStudentThread({
+    required UserModel doctor,
+    required ChildModel child,
+  }) async {
+    _errorMessage = null;
+    final studentUserId = child.studentUserId;
+    if (studentUserId == null || studentUserId.isEmpty) {
+      _errorMessage =
+          '${child.name} has not linked their student login yet. Message the parent instead.';
+      notifyListeners();
+      return null;
+    }
+
+    final existing = await _db.findThreadForParticipants(
+      parentId: studentUserId,
+      teacherId: doctor.uid,
+      studentId: child.id,
+      threadType: 'healthcare_student',
+    );
+    if (existing != null) return existing;
+
+    final thread = MessageThread(
+      id: '',
+      parentId: studentUserId,
+      teacherId: doctor.uid,
+      parentName: child.name,
+      teacherName: doctor.fullName,
+      lastMessage: 'Clinic follow-up started',
+      lastMessageAt: DateTime.now(),
+      studentId: child.id,
+      studentName: child.name,
+      threadType: 'healthcare_student',
+    );
+
+    final id = await _db.createMessageThread(thread);
+    return MessageThread(
+      id: id,
+      parentId: thread.parentId,
+      teacherId: thread.teacherId,
+      parentName: thread.parentName,
+      teacherName: thread.teacherName,
+      lastMessage: thread.lastMessage,
+      lastMessageAt: thread.lastMessageAt,
+      studentId: thread.studentId,
+      studentName: thread.studentName,
+      threadType: thread.threadType,
+    );
+  }
+
   Future<MessageThread?> ensureDoctorParentThread({
     required String parentId,
     required String parentName,
@@ -366,7 +419,7 @@ class MessagingProvider with ChangeNotifier {
       await _db.sendChatMessage(
         threadId: thread.id,
         message: message,
-        senderIsParent: sender.role == 'Parent',
+        senderIsParent: sender.role == 'Parent' || sender.role == 'Child',
       );
     } catch (e) {
       _errorMessage = e.toString();

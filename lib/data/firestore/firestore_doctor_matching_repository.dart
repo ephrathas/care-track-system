@@ -322,6 +322,18 @@ class FirestoreDoctorMatchingRepository {
       studentId: studentId,
     );
 
+    final parentUser = await getUser(parentId);
+    final studentUserId = childData?['studentUserId'] as String? ?? '';
+    await _ensureHealthcareCommunicationThreads(
+      parentId: parentId,
+      parentName: parentUser?.fullName ?? 'Parent',
+      studentId: studentId,
+      studentName: studentName,
+      studentUserId: studentUserId.isEmpty ? null : studentUserId,
+      doctor: doctor,
+      specialtyLabel: label,
+    );
+
     final pending = await findPendingRequest(
       studentId: studentId,
       specialtyId: specialtyId,
@@ -380,5 +392,76 @@ class FirestoreDoctorMatchingRepository {
     final data = Map<String, dynamic>.from(doc.data()!);
     data['uid'] = doc.id;
     return UserModel.fromMap(data);
+  }
+
+  Future<void> _ensureHealthcareCommunicationThreads({
+    required String parentId,
+    required String parentName,
+    required String studentId,
+    required String studentName,
+    required String? studentUserId,
+    required MatchedDoctor doctor,
+    required String specialtyLabel,
+  }) async {
+    await _ensureThreadIfMissing(
+      parentId: parentId,
+      parentName: parentName,
+      doctor: doctor,
+      studentId: studentId,
+      studentName: studentName,
+      threadType: 'healthcare',
+      lastMessage: 'Health follow-up started ($specialtyLabel)',
+    );
+
+    if (studentUserId != null && studentUserId.isNotEmpty) {
+      await _ensureThreadIfMissing(
+        parentId: studentUserId,
+        parentName: studentName,
+        doctor: doctor,
+        studentId: studentId,
+        studentName: studentName,
+        threadType: 'healthcare_student',
+        lastMessage: 'Your school doctor is available for $specialtyLabel follow-up.',
+      );
+    }
+  }
+
+  Future<void> _ensureThreadIfMissing({
+    required String parentId,
+    required String parentName,
+    required MatchedDoctor doctor,
+    required String studentId,
+    required String studentName,
+    required String threadType,
+    required String lastMessage,
+  }) async {
+    final existing = await _db
+        .collection(FirestoreCollections.messageThreads)
+        .where('parentId', isEqualTo: parentId)
+        .where('teacherId', isEqualTo: doctor.doctorId)
+        .where('studentId', isEqualTo: studentId)
+        .where('threadType', isEqualTo: threadType)
+        .limit(1)
+        .get();
+    if (existing.docs.isNotEmpty) return;
+
+    await _db.collection(FirestoreCollections.messageThreads).add(
+      FirestoreHelpers.withTimestamps(
+        {
+          'parentId': parentId,
+          'teacherId': doctor.doctorId,
+          'parentName': parentName,
+          'teacherName': doctor.fullName,
+          'lastMessage': lastMessage,
+          'lastMessageAt': DateTime.now().toIso8601String(),
+          'studentId': studentId,
+          'studentName': studentName,
+          'threadType': threadType,
+          'unreadByParent': true,
+          'unreadByTeacher': false,
+        },
+        isCreate: true,
+      ),
+    );
   }
 }

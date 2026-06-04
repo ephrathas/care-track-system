@@ -3,11 +3,16 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/child_model.dart';
+import '../../models/message_thread_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/healthcare_provider.dart';
 import '../../providers/messaging_provider.dart';
+import '../../services/database_service.dart';
 
-/// Doctor picks a parent from assigned patients → opens chat.
+enum _HealthcareComposeTarget { parent, student }
+
+/// Doctor picks a patient → messages parent and/or linked student.
 class HealthcareComposeSheet extends StatefulWidget {
   const HealthcareComposeSheet({super.key});
 
@@ -27,43 +32,41 @@ class HealthcareComposeSheet extends StatefulWidget {
 }
 
 class _HealthcareComposeSheetState extends State<HealthcareComposeSheet> {
-  HealthcareParentContact? _contact;
-  List<HealthcareParentContact> _contacts = [];
-  bool _loading = true;
+  ChildModel? _patient;
+  _HealthcareComposeTarget _target = _HealthcareComposeTarget.parent;
   bool _starting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
-  }
-
-  Future<void> _load() async {
-    final patients = context.read<HealthcareProvider>().patients;
-    final contacts =
-        await context.read<MessagingProvider>().parentContactsFromPatients(patients);
-    if (!mounted) return;
-    setState(() {
-      _contacts = contacts;
-      _loading = false;
-    });
-  }
 
   Future<void> _start() async {
     final doctor = context.read<AuthProvider>().currentUser;
-    final contact = _contact;
-    if (doctor == null || contact == null) return;
+    final patient = _patient;
+    if (doctor == null || patient == null) return;
 
     setState(() => _starting = true);
-    final thread = await context.read<MessagingProvider>().ensureHealthcareToParentThread(
-          doctor: doctor,
-          contact: contact,
-        );
+    final messaging = context.read<MessagingProvider>();
+    MessageThread? thread;
+    if (_target == _HealthcareComposeTarget.parent) {
+      final parentUser = await DatabaseService().getUserById(patient.parentId);
+      thread = await messaging.ensureHealthcareToParentThread(
+        doctor: doctor,
+        contact: HealthcareParentContact(
+          parentId: patient.parentId,
+          parentName: parentUser?.fullName ?? 'Parent',
+          studentId: patient.id,
+          studentName: patient.name,
+        ),
+      );
+    } else {
+      thread = await messaging.ensureHealthcareToStudentThread(
+        doctor: doctor,
+        child: patient,
+      );
+    }
+
     if (!mounted) return;
     setState(() => _starting = false);
 
     if (thread == null) {
-      final err = context.read<MessagingProvider>().errorMessage;
+      final err = messaging.errorMessage;
       if (err != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       }
@@ -76,7 +79,10 @@ class _HealthcareComposeSheetState extends State<HealthcareComposeSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final patients = context.watch<HealthcareProvider>().patients;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
+    final canMessageStudent =
+        _patient?.studentUserId != null && _patient!.studentUserId!.isNotEmpty;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 20, 24, bottom + 24),
@@ -85,51 +91,76 @@ class _HealthcareComposeSheetState extends State<HealthcareComposeSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Message a parent',
+            'Message about a patient',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Only parents of students assigned to you or with clinic access appear here.',
+            'Contact the parent or the student (after they link their login code).',
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 16),
-          if (_loading)
-            const LinearProgressIndicator(minHeight: 2)
-          else if (_contacts.isEmpty)
+          if (patients.isEmpty)
             const Text(
-              'No assigned patients yet. Parents appear after health follow-up and assignment.',
+              'No assigned patients yet. Students appear after health follow-up and doctor assignment.',
               style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             )
-          else
-            DropdownButtonFormField<HealthcareParentContact>(
-              value: _contact,
+          else ...[
+            DropdownButtonFormField<ChildModel>(
+              value: _patient,
               decoration: const InputDecoration(
-                labelText: 'Parent',
+                labelText: 'Patient',
                 border: OutlineInputBorder(),
               ),
-              items: _contacts
-                  .map(
-                    (c) => DropdownMenuItem(
-                      value: c,
-                      child: Text('${c.parentName} (${c.subtitle})'),
-                    ),
-                  )
+              items: patients
+                  .map((p) => DropdownMenuItem(value: p, child: Text(p.name)))
                   .toList(),
-              onChanged: (c) => setState(() => _contact = c),
+              onChanged: (p) => setState(() => _patient = p),
             ),
+            const SizedBox(height: 12),
+            SegmentedButton<_HealthcareComposeTarget>(
+              segments: const [
+                ButtonSegment(
+                  value: _HealthcareComposeTarget.parent,
+                  label: Text('Parent'),
+                  icon: Icon(Icons.family_restroom_outlined, size: 18),
+                ),
+                ButtonSegment(
+                  value: _HealthcareComposeTarget.student,
+                  label: Text('Student'),
+                  icon: Icon(Icons.school_outlined, size: 18),
+                ),
+              ],
+              selected: {_target},
+              onSelectionChanged: canMessageStudent
+                  ? (values) => setState(() => _target = values.first)
+                  : null,
+            ),
+            if (_target == _HealthcareComposeTarget.student && !canMessageStudent)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '${_patient?.name ?? 'This student'} has not linked their student app yet.',
+                  style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
+                ),
+              ),
+          ],
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: _starting || _contact == null ? null : _start,
+              onPressed: _starting || _patient == null ? null : _start,
               child: _starting
                   ? const SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Open conversation'),
+                  : Text(
+                      _target == _HealthcareComposeTarget.parent
+                          ? 'Message parent'
+                          : 'Message student',
+                    ),
             ),
           ),
         ],

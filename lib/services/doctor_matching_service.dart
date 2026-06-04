@@ -1,4 +1,3 @@
-import '../core/config/school_config.dart';
 import '../core/health/health_concerns.dart';
 import '../data/firestore/firestore_doctor_matching_repository.dart';
 
@@ -49,39 +48,31 @@ class DoctorMatchingService {
         specialtyId: specialtyId,
       );
 
-      if (doctors.length == 1) {
+      if (doctors.isEmpty) {
+        final requestId = await _repo.createMatchRequest(
+          schoolId: schoolId,
+          parentId: parentId,
+          studentId: studentId,
+          studentName: studentName,
+          specialtyId: specialtyId,
+        );
+        await _repo.notifyAdminsOfDoctorRequest(
+          schoolId: schoolId,
+          studentName: studentName,
+          specialtyLabel: HealthConcerns.byId(specialtyId)?.label ?? specialtyId,
+          requestId: requestId,
+          parentId: parentId,
+        );
+      } else {
+        final doctor = doctors.first;
         await _repo.assignDoctor(
           schoolId: schoolId,
           parentId: parentId,
           studentId: studentId,
-          doctor: doctors.first,
+          doctor: doctor,
           specialtyId: specialtyId,
         );
-      } else {
-        await _repo.notifyParentDoctorAvailable(
-          parentId: parentId,
-          studentName: studentName,
-          specialtyLabel: HealthConcerns.byId(specialtyId)?.label ?? specialtyId,
-          studentId: studentId,
-        );
       }
-      continue;
-
-      final requestId = await _repo.createMatchRequest(
-        schoolId: schoolId,
-        parentId: parentId,
-        studentId: studentId,
-        studentName: studentName,
-        specialtyId: specialtyId,
-      );
-
-      await _repo.notifyAdminsOfDoctorRequest(
-        schoolId: schoolId,
-        studentName: studentName,
-        specialtyLabel: HealthConcerns.byId(specialtyId)?.label ?? specialtyId,
-        requestId: requestId,
-        parentId: parentId,
-      );
     }
   }
 }

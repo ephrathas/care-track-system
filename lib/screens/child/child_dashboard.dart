@@ -12,6 +12,7 @@ import '../../widgets/dashboard/dashboard_tab_scaffold.dart';
 import '../../widgets/navigation/kidcare_dashboard_shell.dart';
 import '../../widgets/profile/user_profile_avatar.dart';
 import '../../widgets/settings/appearance_setting.dart';
+import '../../widgets/messaging/messages_inbox.dart';
 
 class ChildDashboard extends StatefulWidget {
   const ChildDashboard({super.key});
@@ -51,6 +52,11 @@ class _ChildDashboardState extends State<ChildDashboard> {
           label: 'My Badges',
         ),
         NavigationDestination(
+          icon: Icon(Icons.chat_bubble_outline_rounded),
+          selectedIcon: Icon(Icons.chat_bubble_rounded),
+          label: 'Messages',
+        ),
+        NavigationDestination(
           icon: Icon(Icons.face_outlined),
           selectedIcon: Icon(Icons.face_rounded),
           label: 'My Profile',
@@ -60,6 +66,7 @@ class _ChildDashboardState extends State<ChildDashboard> {
         _ChildHomeTab(onOpenTasks: _goToTasks, user: user),
         const _ChildHomeworkTab(),
         const _ChildRewardsTab(),
+        const _ChildMessagesTab(),
         const _ChildProfileTab(),
       ],
         ),
@@ -1075,6 +1082,19 @@ class _BadgeCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ==================== MESSAGES TAB ====================
+class _ChildMessagesTab extends StatelessWidget {
+  const _ChildMessagesTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MessagesInbox(
+      title: 'Clinic Messages',
+      showStartConversation: false,
     );
   }
 }

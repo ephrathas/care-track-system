@@ -133,6 +133,15 @@ class DatabaseService {
         .map(_mapThreadsSorted);
   }
 
+  Stream<List<MessageThread>> getMessageThreadsForStudent(String studentUserId) {
+    return _db
+        .collection('message_threads')
+        .where('parentId', isEqualTo: studentUserId)
+        .where('threadType', isEqualTo: 'healthcare_student')
+        .snapshots()
+        .map(_mapThreadsSorted);
+  }
+
   List<MessageThread> _mapThreadsSorted(QuerySnapshot<Map<String, dynamic>> snapshot) {
     final threads = snapshot.docs
         .map((doc) => MessageThread.fromMap(doc.data(), doc.id))

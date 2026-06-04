@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/config/school_config.dart';
@@ -186,15 +188,153 @@ class FirestoreStudentRepository implements StudentRepository {
         .where('teacherId', isEqualTo: teacherId)
         .where('isActive', isEqualTo: true)
         .snapshots()
-        .asyncExpand((assignSnap) {
+        .asyncExpand((assignSnap) async* {
       final classIds = assignSnap.docs
           .map((d) => d.data()['classRoomId'] as String? ?? '')
           .where((id) => id.isNotEmpty)
           .toSet()
           .toList();
-      if (classIds.isEmpty) return Stream.value(<StudentModel>[]);
-      return _watchStudentsForClassIds(classIds);
+      if (classIds.isEmpty) {
+        yield <StudentModel>[];
+        return;
+      }
+      final expanded = await _expandClassIdsForSameGrades(classIds);
+      yield* _watchMergedRosterForClasses(expanded);
     });
+  }
+
+  /// Includes sibling class rooms in the same grade so enrollments still match
+  /// when parents use a different room id than the teacher's staffed section.
+  Future<List<String>> _expandClassIdsForSameGrades(List<String> classIds) async {
+    final expanded = classIds.toSet();
+    for (final classId in classIds) {
+      final roomDoc =
+          await _db.collection(FirestoreCollections.classRooms).doc(classId).get();
+      if (!roomDoc.exists) continue;
+      final gradeId = roomDoc.data()?['gradeLevelId'] as String? ?? '';
+      if (gradeId.isEmpty) continue;
+      final siblings = await _db
+          .collection(FirestoreCollections.classRooms)
+          .where('gradeLevelId', isEqualTo: gradeId)
+          .where('isActive', isEqualTo: true)
+          .get();
+      for (final doc in siblings.docs) {
+        expanded.add(doc.id);
+      }
+    }
+    return expanded.toList();
+  }
+
+  Stream<List<StudentModel>> _watchMergedRosterForClasses(List<String> classIds) {
+    final ids = classIds.toSet().toList();
+    if (ids.isEmpty) return Stream.value(const []);
+
+    if (ids.length == 1) {
+      return _watchMergedRosterForSingleClass(ids.first);
+    }
+
+    final controller = StreamController<List<StudentModel>>.broadcast();
+    final latestByClass = <String, List<StudentModel>>{};
+    final subs = <StreamSubscription<List<StudentModel>>>[];
+
+    void emitMerged() {
+      final byId = <String, StudentModel>{};
+      for (final list in latestByClass.values) {
+        for (final student in list) {
+          byId[student.id] = student;
+        }
+      }
+      final merged = byId.values.toList()
+        ..sort(
+          (a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
+        );
+      if (!controller.isClosed) controller.add(merged);
+    }
+
+    controller.onListen = () {
+      for (final classId in ids) {
+        subs.add(
+          _watchMergedRosterForSingleClass(classId).listen(
+            (students) {
+              latestByClass[classId] = students;
+              emitMerged();
+            },
+            onError: controller.addError,
+          ),
+        );
+      }
+    };
+
+    controller.onCancel = () {
+      for (final sub in subs) {
+        sub.cancel();
+      }
+    };
+
+    return controller.stream;
+  }
+
+  /// Merges active enrollments + live children in the class (linking account does not remove either).
+  Stream<List<StudentModel>> _watchMergedRosterForSingleClass(String classRoomId) {
+    final controller = StreamController<List<StudentModel>>.broadcast();
+    List<EnrollmentModel> enrollments = const [];
+    List<StudentModel> byClassRoom = const [];
+
+    Future<void> emitMerged() async {
+      final byId = <String, StudentModel>{};
+
+      for (final student in byClassRoom) {
+        byId[student.id] = student;
+      }
+
+      for (final enrollment in enrollments) {
+        if (byId.containsKey(enrollment.studentId)) continue;
+        final doc = await _children.doc(enrollment.studentId).get();
+        if (!doc.exists) continue;
+        var student = StudentModel.fromMap(doc.data()!, enrollment.studentId);
+        if (student.classRoomId == null || student.classRoomId!.isEmpty) {
+          student = student.copyWith(
+            classRoomId: enrollment.classRoomId,
+            gradeLevelId: enrollment.gradeLevelId,
+            activeEnrollmentId: enrollment.id,
+          );
+        }
+        byId[student.id] = student;
+      }
+
+      final merged = byId.values.toList()
+        ..sort(
+          (a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
+        );
+      if (!controller.isClosed) controller.add(merged);
+    }
+
+    late StreamSubscription<List<EnrollmentModel>> enrollSub;
+    late StreamSubscription<List<StudentModel>> childSub;
+
+    controller.onListen = () {
+      enrollSub = watchEnrollmentsByClass(classRoomId).listen(
+        (value) {
+          enrollments = value;
+          emitMerged();
+        },
+        onError: controller.addError,
+      );
+      childSub = watchStudentsForClass(classRoomId).listen(
+        (value) {
+          byClassRoom = value;
+          emitMerged();
+        },
+        onError: controller.addError,
+      );
+    };
+
+    controller.onCancel = () {
+      enrollSub.cancel();
+      childSub.cancel();
+    };
+
+    return controller.stream;
   }
 
   /// Live roster for one or more class rooms — reads enrolled children directly.

@@ -141,6 +141,8 @@ class _AuthenticatedRouterState extends State<_AuthenticatedRouter> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Provider.of<ChildProvider>(context, listen: false)
               .startListeningToLinkedChild(linkedId);
+          Provider.of<MessagingProvider>(context, listen: false)
+              .startListeningForStudent(user.uid);
         });
       }
       return const ChildDashboard();

@@ -31,10 +31,16 @@ class MessageThread {
     this.unreadByTeacher = false,
   });
 
-  bool get isHealthcareThread => threadType == 'healthcare';
+  bool get isHealthcareStudentThread => threadType == 'healthcare_student';
+
+  bool get isHealthcareThread =>
+      threadType == 'healthcare' || threadType == 'healthcare_student';
 
   String? get contextLabel {
     if (studentName != null && studentName!.isNotEmpty) {
+      if (isHealthcareStudentThread) {
+        return 'Clinic chat: $studentName';
+      }
       return isHealthcareThread
           ? 'Health follow-up: $studentName'
           : 'Re: $studentName';

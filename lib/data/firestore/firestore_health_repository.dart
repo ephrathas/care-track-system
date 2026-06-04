@@ -107,11 +107,9 @@ class FirestoreHealthRepository implements HealthRepository {
         if (!doc.exists) continue;
         final child = ChildModel.fromMap(doc.data()!, doc.id);
         final directlyAssigned = assignedIds.contains(id);
-        if (!child.healthModuleEnabled && !directlyAssigned) continue;
-        if (directlyAssigned &&
-            child.assignedDoctorId != null &&
-            child.assignedDoctorId!.isNotEmpty &&
-            child.assignedDoctorId != healthcareUserId) {
+        if (!child.healthModuleEnabled &&
+            !directlyAssigned &&
+            child.healthConcernIds.isEmpty) {
           continue;
         }
         patients.add(child);
