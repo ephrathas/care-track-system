@@ -44,7 +44,7 @@ class StudentParentLinkCodeAction {
           '"Link with code", and enter this number. '
           'You stay signed in on your account.',
       linkCode: code,
-      childName: user.fullName,
+      childName: user!.fullName,
       showEnrollmentNote: false,
     );
   }
